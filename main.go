@@ -3,16 +3,22 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"math/rand"
 	"net"
 	"strings"
 )
 
-var users []net.Conn
+var users map[string]User
 
 type User struct {
-	Addr net.Addr
+	Conn  net.Conn
+	Name  string
+	Color string
+}
+
+type Message struct {
+	Text string
 	Name string
-	Msg  string
 }
 
 func main() {
@@ -23,7 +29,8 @@ func main() {
 	}
 	defer ln.Close()
 
-	ch := make(chan User)
+	users = make(map[string]User)
+	ch := make(chan Message)
 	go receiver(ch)
 
 	for {
@@ -31,31 +38,56 @@ func main() {
 		if err != nil {
 			fmt.Println("error 2")
 		}
-
 		go newUser(conn, ch)
-		users = append(users, conn)
 	}
 }
 
-func receiver(ch chan User) {
-	for user := range ch {
-		for _, conn := range users {
-			if user.Addr != conn.RemoteAddr() {
-				conn.Write([]byte(user.Msg))
+func receiver(ch chan Message) {
+	for message := range ch {
+		fmt.Println("Number of users: ", len(users))
+		for _, user := range users {
+			if user.Name != message.Name {
+				user.Conn.Write([]byte(users[message.Name].Color + message.Name + "> \x1b[0m" + message.Text + "\n"))
 			}
 		}
 	}
 }
 
-func newUser(conn net.Conn, ch chan User) {
+func newUser(conn net.Conn, ch chan Message) {
 	conn.Write([]byte("What is your name?\n"))
 	name, err := bufio.NewReader(conn).ReadString('\n')
 	if err != nil {
 		fmt.Println("error 3")
 	}
-
 	name = strings.Trim(name, "\n")
-	conn.Write([]byte("Hi " + name + ", welcome to chatroom\n"))
+
+	if users[name].Name == "" {
+		colorCode := rand.Intn(8) + 90 // ANSI codes for foreground colors (30-37)
+		color := fmt.Sprintf("\x1b[%dm", colorCode)
+
+		users[name] = User{
+			Conn:  conn,
+			Name:  name,
+			Color: color,
+		}
+
+		ch <- Message{
+			Text: "I have joined the chat",
+			Name: name,
+		}
+		conn.Write([]byte("Hi " + name + ", welcome to chatroom\n"))
+	} else {
+		users[name] = User{
+			Conn:  conn,
+			Name:  name,
+			Color: users[name].Color,
+		}
+		ch <- Message{
+			Text: "I am Back!",
+			Name: name,
+		}
+		conn.Write([]byte("Hi " + name + ", welcome back\n"))
+	}
 
 	for {
 		response, err := bufio.NewReader(conn).ReadString('\n')
@@ -65,9 +97,8 @@ func newUser(conn net.Conn, ch chan User) {
 		}
 		response = strings.Trim(response, "\n")
 
-		ch <- User{
-			Msg:  name + "> " + response + "\n",
-			Addr: conn.RemoteAddr(),
+		ch <- Message{
+			Text: response,
 			Name: name,
 		}
 	}
