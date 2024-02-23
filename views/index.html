@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html data-theme="cupcake">
+<html data-theme="valentine">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,26 +7,59 @@
     <link rel="stylesheet" href="public/style.css">
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.7.2/dist/full.min.css" rel="stylesheet" type="text/css" />
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="public/main.js"></script>
 </head>
 <body>
+    <main class="container mx-auto">
+    {{template "navbar"}}
     <div class="flex flex-col w-full lg:flex-row">
-        <div class="grid flex-grow h-32 card bg-base-300 rounded-box place-items-center">
-            <h2>Users</h2>
+        <div class="grid flex-grow card bg-base-300 rounded-box place-items-center">
+            <a class="text-lg font-bold text-center">Users</a>
             <ul>
                 {{range .Users}}
                     <li>{{.Name}}</li>
                 {{end}}
             </ul>
+
         </div> 
         <div class="divider lg:divider-horizontal"></div> 
-        <div class="grid flex-grow h-32 card bg-base-300 rounded-box place-items-center">
-            Messages
-            <ul>
-            {{range .Messages}}
-                <li>{{.Name}}: {{.Text}} {{formatTime .TimeStamp}}</li>
-            {{end}}
-            </ul>
+        <div class="grid flex-grow card bg-base-300 rounded-box p-2">
+            <a class="text-lg font-bold text-center">Messages</a>
+            
+            {{template "chatroom" .}}
         </div>
       </div>
+      <div class="toast hidden" id="errorMsg">
+      </div>
+    </main>
+    <script>
+        let error = getCookie("error");
+        if(error != ''){
+            let toast = document.getElementById('errorMsg');
+            toast.classList.remove('hidden');
+            toast.innerHTML =
+            `<div class="alert alert-info">
+            <span>`+error+`</span>
+            </div>`
+        }
+        removeCookie('error');
+
+        let nameCookie = getCookie('name');
+        let messageField = document.getElementById(nameCookie)
+        messageField.classList.remove('chat-start')
+        messageField.classList.add('chat-end')
+
+        if(nameCookie != ''){
+            document.getElementById('userform').classList.add('hidden')
+            document.getElementById('username').innerHTML = nameCookie
+        }
+
+        function logout(){
+            removeCookie('name');
+            document.getElementById('userform').classList.remove('hidden')
+            document.getElementById('username').parentElement.classList.add('hidden')
+        }
+
+    </script>
 </body>
 </html>

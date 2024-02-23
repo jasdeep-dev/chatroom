@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net"
 	"time"
 )
@@ -21,7 +22,35 @@ type Message struct {
 	Name      string
 }
 
+var currentUser string
+var genericMessage map[string]string
+var messageChannel = make(chan Message)
+
+func init() {
+	// Initialize the map inside an init function
+	genericMessage = make(map[string]string)
+	genericMessage["joined"] = "I have joined the chat."
+	genericMessage["welcome"] = "Welcome to chatroom."
+	genericMessage["welcomeBack"] = "Welcome back!"
+}
 func main() {
+	go receiver()
+
 	go startHTTP()
 	startTerminal()
+}
+
+func receiver() {
+	for message := range messageChannel {
+		fmt.Println("Number of users: ", len(users))
+		messages = append(messages, message)
+
+		for _, user := range users {
+			if user.Name != message.Name && user.Conn != nil {
+				user.Conn.Write(
+					[]byte(users[message.Name].Color + message.Name + "> \x1b[0m" + message.Text + "\n"),
+				)
+			}
+		}
+	}
 }

@@ -11,38 +11,25 @@ import (
 
 func startTerminal() {
 	fmt.Println("Starting server")
-	ln, err := net.Listen("tcp", ":8000")
+	ln, err := net.Listen("tcp", "0.0.0.0:8000")
+
 	if err != nil {
 		fmt.Println("error 1")
 	}
 	defer ln.Close()
 
 	users = make(map[string]User)
-	ch := make(chan Message)
-	go receiver(ch)
 
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
 			fmt.Println("error 2")
 		}
-		go newUser(conn, ch)
+		go newUser(conn)
 	}
 }
 
-func receiver(ch chan Message) {
-	for message := range ch {
-		fmt.Println("Number of users: ", len(users))
-		messages = append(messages, message)
-		for _, user := range users {
-			if user.Name != message.Name {
-				user.Conn.Write([]byte(users[message.Name].Color + message.Name + "> \x1b[0m" + message.Text + "\n"))
-			}
-		}
-	}
-}
-
-func newUser(conn net.Conn, ch chan Message) {
+func newUser(conn net.Conn) {
 	conn.Write([]byte("What is your name?\n"))
 	name, err := bufio.NewReader(conn).ReadString('\n')
 	if err != nil {
@@ -60,26 +47,29 @@ func newUser(conn net.Conn, ch chan Message) {
 			Color: color,
 		}
 
-		ch <- Message{
-			Text:      "I have joined the chat",
+		messageChannel <- Message{
+			Text:      genericMessage["joined"],
 			Name:      name,
 			TimeStamp: time.Now(),
 		}
 
-		conn.Write([]byte("Hi " + name + ", welcome to chatroom\n"))
+		conn.Write([]byte("Hi " + name + ", " + genericMessage["welcome"] + "\n"))
 	} else {
-		users[name].Conn.Close()
+		if users[name].Conn != nil {
+			users[name].Conn.Close()
+		}
+
 		users[name] = User{
 			Conn:  conn,
 			Name:  name,
 			Color: users[name].Color,
 		}
-		ch <- Message{
+		messageChannel <- Message{
 			Text:      "I am Back!",
 			Name:      name,
 			TimeStamp: time.Now(),
 		}
-		conn.Write([]byte("Hi " + name + ", welcome back\n"))
+		conn.Write([]byte("Hi " + name + ", " + genericMessage["welcomeBack"] + "\n"))
 	}
 
 	for {
@@ -90,7 +80,7 @@ func newUser(conn net.Conn, ch chan Message) {
 		}
 		response = strings.Trim(response, "\n")
 
-		ch <- Message{
+		messageChannel <- Message{
 			Text:      response,
 			Name:      name,
 			TimeStamp: time.Now(),
