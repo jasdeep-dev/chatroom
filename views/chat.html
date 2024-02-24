@@ -1,29 +1,33 @@
 {{define "chatroom"}}
 {{ $currentUser := .CurrentUser}}
-{{range .Messages}}
+	<div class="overflow-scroll" id="textchat">
+	{{range .Messages}}
 
-	{{if eq $currentUser .Name}}
-		<div class="chat chat-end" id="{{ .Name }}">
-			<div class="chat-header">
-				<span class="capitalize">{{.Name}}</span>
-				<!-- <time class="text-xs opacity-50">{{formatTime .TimeStamp}}</time> -->
+		{{if eq $currentUser .Name}}
+			<div class="chat chat-end" id="{{ .Name }}">
+				<div class="chat-header">
+					<span class="capitalize">{{.Name}}</span>
+					<!-- <time class="text-xs opacity-50">{{formatTime .TimeStamp}}</time> -->
+				</div>
+				<div class="chat-bubble">{{.Text}}</div>
+				<!-- <div class="chat-footer opacity-50">Seen</div> -->
 			</div>
-			<div class="chat-bubble">{{.Text}}</div>
-			<!-- <div class="chat-footer opacity-50">Seen</div> -->
-		</div>
-	{{else}}
-		<div class="chat chat-start" id="{{ .Name }}">
-			<div class="chat-header">
-				<span class="capitalize">{{.Name}}</span>
-				<!-- <time class="text-xs opacity-50">{{formatTime .TimeStamp}}</time> -->
+		{{else}}
+			<div class="chat chat-start" id="{{ .Name }}">
+				<div class="chat-header">
+					<span class="capitalize">{{.Name}}</span>
+					<!-- <time class="text-xs opacity-50">{{formatTime .TimeStamp}}</time> -->
+				</div>
+				<div class="chat-bubble">{{.Text}}</div>
+				<!-- <div class="chat-footer opacity-50">Seen</div> -->
 			</div>
-			<div class="chat-bubble">{{.Text}}</div>
-			<!-- <div class="chat-footer opacity-50">Seen</div> -->
-		</div>
+		{{end}}
 	{{end}}
-{{end}}
-<div class="">
-	{{template "userform"}}
-	{{template "messageform"}}
-</div>
+	</div>
+	<div>
+	{{if eq $currentUser ""}}
+	{{else}}
+		{{template "messageform"}}
+	{{end}}
+	</div>
 {{end}}

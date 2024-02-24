@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net"
 	"time"
 )
@@ -22,9 +23,8 @@ type Message struct {
 	Name      string
 }
 
-var currentUser string
 var genericMessage map[string]string
-var messageChannel = make(chan Message)
+var messageChannel = make(chan Message, 100)
 
 func init() {
 	// Initialize the map inside an init function
@@ -34,6 +34,10 @@ func init() {
 	genericMessage["welcomeBack"] = "Welcome back!"
 }
 func main() {
+	err := readConfigFromFile("./config.json")
+	if err != nil {
+		log.Fatal("Could not read the config file: ", err)
+	}
 	go receiver()
 
 	go startHTTP()

@@ -1,19 +1,7 @@
-{{define "userform"}}
-<form method="post" action="/user" id="userform" >
-    <label>
-        Name: 
-        <input type="text" placeholder="Type here" class="input input-bordered" name="name"/>
-    </label> 
-    <button type="submit" class="btn">Join the chat</button>
-</form>
-{{end}}
 {{define "messageform"}}
-<form method="post" action="/message" id="messageform" >
+<form method="post" action="/message" id="messageform">
     <label class="form-control">
-        <div class="label">
-          <span class="label-text">Message</span>
-        </div>
-        <input type="text" placeholder="Type here" class="input input-bordered" name="message"/>
-      </label>
+      <input type="text" placeholder="Messages" class="input input-bordered" name="message"/>
+    </label>
 </form>
 {{end}}

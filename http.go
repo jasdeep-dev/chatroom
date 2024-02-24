@@ -21,8 +21,8 @@ func startHTTP() {
 	http.HandleFunc("/user", userHandler)
 	http.HandleFunc("/message", messageHandler)
 
-	fmt.Println("Server listening on port 8080...")
-	http.ListenAndServe(":8080", nil) // Start the server on port 8080
+	fmt.Println("HTTP Server listening on", Settings.HttpServer)
+	http.ListenAndServe(Settings.HttpServer, nil) // Start the server on port 8080
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
@@ -36,10 +36,16 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := TemplateData{
-		Users:       users,
-		Messages:    messages,
-		CurrentUser: currentUser,
+	cookie, err := r.Cookie("name")
+	data := TemplateData{}
+	if err != nil {
+		fmt.Println("Error in cookies", err)
+	} else {
+		data = TemplateData{
+			Users:       users,
+			Messages:    messages,
+			CurrentUser: cookie.Value,
+		}
 	}
 
 	err = tmpl.ExecuteTemplate(w, "index.html", data)
@@ -61,22 +67,27 @@ func userHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	name := r.Form.Get("name")
 
-	if users[name].Name != "" {
+	_, ok := users[name]
+	if ok {
 		http.SetCookie(w, &http.Cookie{
-			Name:  "error",
-			Value: "User already exists",
+			Name:     "error",
+			Value:    "User already exists",
+			Path:     "/",
+			SameSite: http.SameSiteLaxMode,
 		})
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
+
 	users[name] = User{Name: name}
 
-	currentUser = name
 	http.SetCookie(w, &http.Cookie{
-		Name:  "name",
-		Value: name,
-		Path:  "/",
+		Name:     "name",
+		Value:    name,
+		Path:     "/",
+		SameSite: http.SameSiteLaxMode,
 	})
+
 	messageChannel <- Message{
 		TimeStamp: time.Now(),
 		Text:      genericMessage["joined"],
@@ -97,12 +108,12 @@ func messageHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		fmt.Println("Error in cookies", err)
-	}
-
-	messageChannel <- Message{
-		TimeStamp: time.Now(),
-		Text:      inputMessage,
-		Name:      cookie.Value,
+	} else {
+		messageChannel <- Message{
+			TimeStamp: time.Now(),
+			Text:      inputMessage,
+			Name:      cookie.Value,
+		}
 	}
 
 	http.Redirect(w, r, "/", http.StatusSeeOther)

@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"math/rand"
 	"net"
@@ -10,8 +11,9 @@ import (
 )
 
 func startTerminal() {
-	fmt.Println("Starting server")
-	ln, err := net.Listen("tcp", "0.0.0.0:8000")
+	fmt.Println("TCP Server listening on", Settings.TcpServer)
+
+	ln, err := net.Listen("tcp", Settings.TcpServer)
 
 	if err != nil {
 		fmt.Println("error 1")
@@ -35,55 +37,97 @@ func newUser(conn net.Conn) {
 	if err != nil {
 		fmt.Println("error 3")
 	}
-	name = strings.Trim(name, "\n")
+	name = strings.TrimSpace(name)
 
-	if users[name].Name == "" {
-		colorCode := rand.Intn(8) + 90 // ANSI codes for foreground colors (30-37)
-		color := fmt.Sprintf("\x1b[%dm", colorCode)
-
-		users[name] = User{
-			Conn:  conn,
-			Name:  name,
-			Color: color,
+	user, ok := users[name]
+	if !ok {
+		err := createNewUser(conn, name)
+		if err != nil {
+			conn.Write([]byte("error in creating users" + err.Error()))
+			conn.Close()
+			return
 		}
 
-		messageChannel <- Message{
-			Text:      genericMessage["joined"],
-			Name:      name,
-			TimeStamp: time.Now(),
-		}
-
-		conn.Write([]byte("Hi " + name + ", " + genericMessage["welcome"] + "\n"))
+		sendMessage(conn, Settings.JoinedMessage, name)
 	} else {
-		if users[name].Conn != nil {
-			users[name].Conn.Close()
+		if user.Conn != nil {
+			user.Conn.Close()
 		}
 
-		users[name] = User{
-			Conn:  conn,
-			Name:  name,
-			Color: users[name].Color,
-		}
-		messageChannel <- Message{
-			Text:      "I am Back!",
-			Name:      name,
-			TimeStamp: time.Now(),
-		}
-		conn.Write([]byte("Hi " + name + ", " + genericMessage["welcomeBack"] + "\n"))
+		updateConnection(name, conn)
+		sendMessage(conn, Settings.WelcomeBackMessage, name)
 	}
 
 	for {
-		response, err := bufio.NewReader(conn).ReadString('\n')
+		ReadMessage(conn, name)
+	}
+}
+
+func createNewUser(conn net.Conn, name string) error {
+	name = strings.TrimSpace(name)
+
+	if name == "" {
+		return fmt.Errorf("name is empty")
+	}
+	//limit the users
+	if len(users) >= Settings.MaxUsers {
+		conn.Write([]byte("Sorry, too many users. Please try again later!\n"))
+		conn.Close()
+		return errors.New("too many users")
+	}
+
+	// ANSI codes for foreground colors (30-37)
+	colorCode := rand.Intn(8) + 90
+	color := fmt.Sprintf("\x1b[%dm", colorCode)
+
+	users[name] = User{
+		Conn:  conn,
+		Name:  name,
+		Color: color,
+	}
+	return nil
+}
+
+func updateConnection(name string, conn net.Conn) {
+	name = strings.TrimSpace(name)
+	users[name] = User{
+		Conn:  conn,
+		Name:  name,
+		Color: users[name].Color,
+	}
+}
+
+func sendMessage(conn net.Conn, message string, name string) {
+	name = strings.TrimSpace(name)
+	messageChannel <- Message{
+		Text:      message,
+		Name:      name,
+		TimeStamp: time.Now(),
+	}
+}
+
+func ReadMessage(conn net.Conn, name string) {
+
+	reader := bufio.NewReader(conn)
+
+	for {
+		line, err := reader.ReadString('\n')
+		line = strings.TrimSpace(line)
 		if err != nil {
-			fmt.Println("Connection terminated by user", name)
-			break
+			fmt.Println("Error reading input:", err)
+			return
 		}
-		response = strings.Trim(response, "\n")
+
+		if len(line) > Settings.MessageSize {
+			fmt.Fprintf(conn, "Maximum word limit (250 words) reached.\n")
+			return
+		}
 
 		messageChannel <- Message{
-			Text:      response,
+			Text:      line,
 			Name:      name,
 			TimeStamp: time.Now(),
 		}
+
 	}
 }

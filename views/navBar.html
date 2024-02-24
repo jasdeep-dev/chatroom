@@ -1,4 +1,5 @@
 {{define "navbar"}}
+{{ $currentUser := .CurrentUser}}
 <div class="navbar rounded-box">
 	<div class="flex-1 px-2 lg:flex-none">
 	  <a class="text-lg font-bold">Chatroom</a>
@@ -6,19 +7,16 @@
 	<div class="flex justify-end flex-1 px-2">
 	  <div class="flex items-stretch">
     <div class="dropdown dropdown-end">
-      <div tabindex="0" role="button" class="btn btn-ghost rounded-btn capitalize" id="username"></div>
-      <ul tabindex="0" class="menu dropdown-content z-[1] p-2 shadow bg-base-100 rounded-box w-52">
-        <li><div role="button" onclick="logout();">Log out</a></li> 
-      </ul>
+      <div tabindex="0" role="button" class="btn btn-ghost rounded-btn capitalize" class="username">{{$currentUser}}</div>
+      <div tabindex="0" role="button" class="btn btn-ghost rounded-btn" class="username" role="button" onclick="logout();">Log out</div>
     </div>
 		<div class="dropdown dropdown-end">
 		  <div tabindex="0" role="button" class="btn btn-ghost rounded-btn">Theme</div>
         <ul tabindex="0" class="dropdown-content z-[1] p-2 shadow-2xl bg-base-300 rounded-box w-52">
-          <li><input type="radio" name="theme-dropdown" class="theme-controller btn btn-sm btn-block btn-ghost justify-start" aria-label="Default" value="default"/></li>
-          <li><input type="radio" name="theme-dropdown" class="theme-controller btn btn-sm btn-block btn-ghost justify-start" aria-label="Retro" value="retro"/></li>
-          <li><input type="radio" name="theme-dropdown" class="theme-controller btn btn-sm btn-block btn-ghost justify-start" aria-label="Cyberpunk" value="cyberpunk"/></li>
-          <li><input type="radio" name="theme-dropdown" class="theme-controller btn btn-sm btn-block btn-ghost justify-start" aria-label="Valentine" value="valentine"/></li>
-          <li><input type="radio" name="theme-dropdown" class="theme-controller btn btn-sm btn-block btn-ghost justify-start" aria-label="Aqua" value="aqua"/></li>
+          <li><input type="radio" name="theme-dropdown" class="theme-controller btn btn-sm btn-block btn-ghost justify-start" aria-label="Retro" value="retro" onclick="setTheme('retro')"/></li>
+          <li><input type="radio" name="theme-dropdown" class="theme-controller btn btn-sm btn-block btn-ghost justify-start" aria-label="Cyberpunk" value="cyberpunk" onclick="setTheme('cyberpunk')"/></li>
+          <li><input type="radio" name="theme-dropdown" class="theme-controller btn btn-sm btn-block btn-ghost justify-start" aria-label="Valentine" value="valentine" onclick="setTheme('valentine')"/></li>
+          <li><input type="radio" name="theme-dropdown" class="theme-controller btn btn-sm btn-block btn-ghost justify-start" aria-label="Aqua" value="aqua" onclick="setTheme('aqua')"/></li>
         </ul>
 		  </div>
 	  </div>
