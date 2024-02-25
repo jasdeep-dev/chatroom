@@ -20,6 +20,7 @@ func startHTTP() {
 	http.HandleFunc("/", indexHandler)
 	http.HandleFunc("/user", userHandler)
 	http.HandleFunc("/message", messageHandler)
+	http.HandleFunc("/login", loginHandler)
 
 	fmt.Println("HTTP Server listening on", Settings.HttpServer)
 	http.ListenAndServe(Settings.HttpServer, nil) // Start the server on port 8080
@@ -28,7 +29,7 @@ func startHTTP() {
 func indexHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl, err := template.New("html").Funcs(template.FuncMap{
 		"formatTime": formatTime,
-	}).ParseGlob("./views/*.html")
+	}).ParseGlob("./views/app/*.html")
 
 	if err != nil {
 		fmt.Println("can't parse the files", err)
@@ -37,15 +38,15 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cookie, err := r.Cookie("name")
-	data := TemplateData{}
 	if err != nil {
-		fmt.Println("Error in cookies", err)
-	} else {
-		data = TemplateData{
-			Users:       users,
-			Messages:    messages,
-			CurrentUser: cookie.Value,
-		}
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+
+	data := TemplateData{
+		Users:       users,
+		Messages:    messages,
+		CurrentUser: cookie.Value,
 	}
 
 	err = tmpl.ExecuteTemplate(w, "index.html", data)
@@ -69,18 +70,13 @@ func userHandler(w http.ResponseWriter, r *http.Request) {
 
 	_, ok := users[name]
 	if ok {
-		http.SetCookie(w, &http.Cookie{
-			Name:     "error",
-			Value:    "User already exists",
-			Path:     "/",
-			SameSite: http.SameSiteLaxMode,
-		})
-		http.Redirect(w, r, "/", http.StatusSeeOther)
+		r.Header.Set("ERROR", "Name already taken")
+		loginHandler(w, r)
 		return
 	}
 
 	users[name] = User{Name: name}
-
+	BackupData(users[name], "./users.db")
 	http.SetCookie(w, &http.Cookie{
 		Name:     "name",
 		Value:    name,
@@ -96,6 +92,21 @@ func userHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
+func loginHandler(w http.ResponseWriter, r *http.Request) {
+	tmpl, err := template.ParseFiles("./views/login/new.html")
+	if err != nil {
+		fmt.Println("can't parse the files", err)
+		w.Write([]byte(err.Error()))
+		return
+	}
+
+	err = tmpl.Execute(w, r.Header.Get("ERROR"))
+	if err != nil {
+		fmt.Println("Unable to render templates.", err)
+		w.Write([]byte(err.Error()))
+	}
+}
+
 func messageHandler(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
@@ -109,11 +120,7 @@ func messageHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		fmt.Println("Error in cookies", err)
 	} else {
-		messageChannel <- Message{
-			TimeStamp: time.Now(),
-			Text:      inputMessage,
-			Name:      cookie.Value,
-		}
+		sendMessage(nil, inputMessage, cookie.Value)
 	}
 
 	http.Redirect(w, r, "/", http.StatusSeeOther)
