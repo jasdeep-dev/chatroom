@@ -5,6 +5,8 @@ import (
 	"html/template"
 	"net/http"
 	"time"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 type TemplateData struct {
@@ -67,16 +69,36 @@ func userHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	name := r.Form.Get("name")
+	password := r.Form.Get("password")
 
-	_, ok := users[name]
-	if ok {
-		r.Header.Set("ERROR", "Name already taken")
+	passwordHash, err := bcrypt.GenerateFromPassword(
+		[]byte(password),
+		bcrypt.DefaultCost,
+	)
+	if err != nil {
+		r.Header.Set("ERROR", "Unable to create user")
 		loginHandler(w, r)
 		return
 	}
 
-	users[name] = User{Name: name}
+	_, ok := users[name]
+	if ok {
+		// Authenticate user by comparing password with the hashed password
+		err := bcrypt.CompareHashAndPassword([]byte(users[name].PasswordHash), []byte(password))
+		if err != nil {
+			r.Header.Set("ERROR", "Invalid password")
+			loginHandler(w, r)
+			return
+		}
+	}
+
+	users[name] = User{
+		Name:         name,
+		PasswordHash: string(passwordHash),
+	}
+
 	BackupData(users[name], "./users.db")
+
 	http.SetCookie(w, &http.Cookie{
 		Name:     "name",
 		Value:    name,

@@ -17,8 +17,9 @@ type Users map[string]User
 var users = make(Users)
 
 type User struct {
-	Name  string
-	Color string
+	Name         string
+	Color        string
+	PasswordHash string
 }
 
 type Messages []Message

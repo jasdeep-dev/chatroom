@@ -8,6 +8,8 @@ import (
 	"net"
 	"strings"
 	"time"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 func startTerminal() {
@@ -29,24 +31,67 @@ func startTerminal() {
 }
 
 func newUser(conn net.Conn) {
-	conn.Write([]byte("What is your name?\n"))
-	name, err := bufio.NewReader(conn).ReadString('\n')
-	if err != nil {
-		fmt.Println("error reading message over TCP", err)
+	var name string
+	var err error
+	for {
+		conn.Write([]byte("Enter username:\n"))
+		name, err = bufio.NewReader(conn).ReadString('\n')
+		if err != nil {
+			fmt.Println("error reading message over TCP", err)
+		}
+		name = strings.TrimSpace(name)
+
+		if name == "" {
+			conn.Write([]byte("Error! Name can't be blank\n"))
+			continue
+		} else {
+			break
+		}
 	}
-	name = strings.TrimSpace(name)
+
+	var (
+		password     string
+		passwordHash string
+	)
+
+	for {
+		conn.Write([]byte("Enter password:\n"))
+		password, err = bufio.NewReader(conn).ReadString('\n')
+		if err != nil {
+			fmt.Println("error reading message over TCP", err)
+			conn.Write([]byte("Error! Password can't be blank\n"))
+			continue
+		}
+		password = strings.TrimSpace(password)
+
+		if password == "" {
+			conn.Write([]byte("Error! Password can't be blank\n"))
+			continue
+		} else {
+			hsh, err := bcrypt.GenerateFromPassword(
+				[]byte(password),
+				bcrypt.DefaultCost,
+			)
+			if err != nil {
+				conn.Write([]byte("Error! Unable to use this password\n"))
+				continue
+			}
+
+			passwordHash = string(hsh)
+			break
+		}
+	}
 
 	user, ok := users[name]
-	if !ok {
-		err := createNewUser(conn, name)
+	if ok {
+		// Authenticate user by comparing password with the hashed password
+		err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
 		if err != nil {
-			conn.Write([]byte("error in creating users" + err.Error()))
-			conn.Close()
+			fmt.Println("Error CompareHashAndPassword:", err)
+			conn.Write([]byte("invalid password\n"))
 			return
 		}
 
-		sendMessage(conn, Settings.JoinedMessage, name)
-	} else {
 		conn, ok := connections[user.Name]
 		if ok {
 			if conn != nil {
@@ -56,12 +101,21 @@ func newUser(conn net.Conn) {
 
 		updateConnection(name, conn)
 		sendMessage(conn, Settings.WelcomeBackMessage, name)
+	} else {
+		err := createNewUser(conn, name, passwordHash)
+		if err != nil {
+			conn.Write([]byte("error in creating users" + err.Error()))
+			conn.Close()
+			return
+		}
+
+		sendMessage(conn, Settings.JoinedMessage, name)
 	}
 
 	readMessages(conn, name)
 }
 
-func createNewUser(conn net.Conn, name string) error {
+func createNewUser(conn net.Conn, name string, passwordHash string) error {
 	name = strings.TrimSpace(name)
 
 	if name == "" {
@@ -79,8 +133,9 @@ func createNewUser(conn net.Conn, name string) error {
 	color := fmt.Sprintf("\x1b[%dm", colorCode)
 
 	users[name] = User{
-		Name:  name,
-		Color: color,
+		Name:         name,
+		Color:        color,
+		PasswordHash: passwordHash,
 	}
 	connections[name] = conn
 	BackupData(users[name], "./users.db")
