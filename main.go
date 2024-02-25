@@ -7,15 +7,23 @@ import (
 	"time"
 )
 
-var users map[string]User
+type Connections map[string]net.Conn
+
+// Declare and initialize the connections variable
+var connections = make(Connections)
+
+type Users map[string]User
+
+var users = make(Users)
 
 type User struct {
-	Conn  net.Conn
 	Name  string
 	Color string
 }
 
-var messages []Message
+type Messages []Message
+
+var messages Messages
 
 type Message struct {
 	TimeStamp time.Time
@@ -38,6 +46,9 @@ func main() {
 	if err != nil {
 		log.Fatal("Could not read the config file: ", err)
 	}
+
+	RestoreData(users, "./users.db")
+	RestoreData(messages, "./messages.db")
 	go receiver()
 
 	go startHTTP()
@@ -48,13 +59,24 @@ func receiver() {
 	for message := range messageChannel {
 		fmt.Println("Number of users: ", len(users))
 		messages = append(messages, message)
+		BackupData(message, "./messages.db")
 
-		for _, user := range users {
-			if user.Name != message.Name && user.Conn != nil {
-				user.Conn.Write(
-					[]byte(users[message.Name].Color + message.Name + "> \x1b[0m" + message.Text + "\n"),
-				)
+		for name, conn := range connections {
+			if name == message.Name {
+				continue
 			}
+
+			if conn == nil {
+				continue
+			}
+
+			conn.Write(
+				[]byte(
+					users[message.Name].Color +
+						message.Name + "> \x1b[0m" +
+						message.Text + "\n",
+				),
+			)
 		}
 	}
 }

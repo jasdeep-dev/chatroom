@@ -10,30 +10,25 @@
     <script src="public/main.js"></script>
 </head>
 <body>
-    <main class="container max-w-screen-lg mx-auto">
-        {{ $currentUser := .CurrentUser}}
-        {{if eq $currentUser ""}}
-            {{template "login"}}
-            <div class="toast hidden" id="errorMsg"></div>
-            </main>
-        {{else}}
-            {{template "navbar" .}}
-            <div class="flex flex-col w-full lg:flex-row -full max-h-96">
-                <div class="flex-grow card bg-base-300 rounded-box p-2 overflow-scroll">
-                    <p class="text-lg font-bold text-center">Users</p>
-                    <ul class="overflow-scroll">
-                        {{range .Users}}
-                            <li class="py-2 p-4 rounded-lg mb-2 bg-base-100">{{.Name}}</li>
-                        {{end}}
-                    </ul>
-                </div> 
-                <div class="divider lg:divider-horizontal"></div> 
-                <div class="grid flex-grow card bg-base-300 rounded-box p-2 overflow-scroll">
-                    <a class="text-lg font-bold text-center">Messages</a>
-                    {{template "chatroom" .}}
-                </div>
+    <main class="container max-w-screen-lg mx-auto min-h-screen flex flex-col">
+        {{template "navbar" .}}
+        <div class="flex flex-col w-full lg:flex-row flex-grow">
+            <div class="flex-grow card bg-base-300 rounded-box overflow-scroll p-3" style="height: calc(100vh - 100px)">
+                <p class="text-lg font-bold text-center pb-2">Users</p>
+                <ul class="overflow-scroll">
+                    {{range .Users}}
+                        <li class="py-2 p-4 rounded-lg mb-2 bg-base-100">{{.Name}}</li>
+                    {{end}}
+                </ul>
+            </div> 
+            <div class="divider lg:divider-horizontal"></div> 
+            <div class="grid flex-grow card bg-base-300 rounded-box p-2 overflow-scroll" style="height: calc(100vh - 100px)">
+                <a class="text-lg font-bold text-center">Messages</a>
+                {{template "chatroom" .}}
             </div>
-        {{end}}
+        </div>
+    </main>
+
     <script>
 
         var container = document.getElementById('textchat');
@@ -43,17 +38,6 @@
         let value = localStorage.getItem('theme');
         var htmlElement = document.querySelector('html');
         htmlElement.setAttribute('data-theme', value);
-
-        let error = getCookie("error");
-        if(error != ''){
-            let toast = document.getElementById('errorMsg');
-            toast.classList.remove('hidden');
-            toast.innerHTML =
-            `<div class="alert alert-danger">
-            <span>`+error+`</span>
-            </div>`
-        }
-        removeCookie('error');
 
         let nameCookie = getCookie('name');
         let messageField = document.getElementById(nameCookie)

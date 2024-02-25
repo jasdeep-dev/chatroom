@@ -14,18 +14,15 @@ func startTerminal() {
 	fmt.Println("TCP Server listening on", Settings.TcpServer)
 
 	ln, err := net.Listen("tcp", Settings.TcpServer)
-
 	if err != nil {
-		fmt.Println("error 1")
+		fmt.Println("error listening to TCP:", err)
 	}
 	defer ln.Close()
-
-	users = make(map[string]User)
 
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
-			fmt.Println("error 2")
+			fmt.Println("error accepting to TCP connection:", err)
 		}
 		go newUser(conn)
 	}
@@ -35,7 +32,7 @@ func newUser(conn net.Conn) {
 	conn.Write([]byte("What is your name?\n"))
 	name, err := bufio.NewReader(conn).ReadString('\n')
 	if err != nil {
-		fmt.Println("error 3")
+		fmt.Println("error reading message over TCP", err)
 	}
 	name = strings.TrimSpace(name)
 
@@ -50,17 +47,18 @@ func newUser(conn net.Conn) {
 
 		sendMessage(conn, Settings.JoinedMessage, name)
 	} else {
-		if user.Conn != nil {
-			user.Conn.Close()
+		conn, ok := connections[user.Name]
+		if ok {
+			if conn != nil {
+				conn.Close()
+			}
 		}
 
 		updateConnection(name, conn)
 		sendMessage(conn, Settings.WelcomeBackMessage, name)
 	}
 
-	for {
-		ReadMessage(conn, name)
-	}
+	readMessages(conn, name)
 }
 
 func createNewUser(conn net.Conn, name string) error {
@@ -81,35 +79,25 @@ func createNewUser(conn net.Conn, name string) error {
 	color := fmt.Sprintf("\x1b[%dm", colorCode)
 
 	users[name] = User{
-		Conn:  conn,
 		Name:  name,
 		Color: color,
 	}
+	connections[name] = conn
+	BackupData(users[name], "./users.db")
 	return nil
 }
 
 func updateConnection(name string, conn net.Conn) {
 	name = strings.TrimSpace(name)
 	users[name] = User{
-		Conn:  conn,
 		Name:  name,
 		Color: users[name].Color,
 	}
+	connections[name] = conn
 }
 
-func sendMessage(conn net.Conn, message string, name string) {
-	name = strings.TrimSpace(name)
-	messageChannel <- Message{
-		Text:      message,
-		Name:      name,
-		TimeStamp: time.Now(),
-	}
-}
-
-func ReadMessage(conn net.Conn, name string) {
-
+func readMessages(conn net.Conn, name string) {
 	reader := bufio.NewReader(conn)
-
 	for {
 		line, err := reader.ReadString('\n')
 		line = strings.TrimSpace(line)
