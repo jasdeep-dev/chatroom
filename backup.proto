@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+package chatroom;
+
+option go_package = "./backup";
+
+message Message {
+  google.protobuf.Timestamp timeStamp = 1;
+  string text = 2;
+  string name = 3;
+}
