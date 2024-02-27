@@ -43,6 +43,7 @@ func init() {
 	genericMessage["welcomeBack"] = "Welcome back!"
 }
 func main() {
+
 	err := readConfigFromFile("./config.json")
 	if err != nil {
 		log.Fatal("Could not read the config file: ", err)
@@ -53,6 +54,8 @@ func main() {
 	go receiver()
 
 	go startHTTP()
+
+	go startWebSocket()
 	startTerminal()
 }
 
