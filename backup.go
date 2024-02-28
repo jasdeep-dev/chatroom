@@ -15,7 +15,6 @@ func BackupData(d DataRecord, dataFile string) {
 		fmt.Println("Error marshalling JSON:", err)
 		return
 	}
-	fmt.Println("jsondata", jsonData)
 
 	// Open the file in append mode
 	file, err := os.OpenFile(dataFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)

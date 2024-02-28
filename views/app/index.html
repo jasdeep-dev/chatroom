@@ -40,7 +40,7 @@
         var htmlElement = document.querySelector('html');
         htmlElement.setAttribute('data-theme', value);
 
-        let nameCookie = getCookie('name');
+        let nameCookie = getCookie('session_id');
         let messageField = document.getElementById(nameCookie)
         if(messageField != null){
             messageField.classList.remove('chat-start')
@@ -49,13 +49,11 @@
 
         if(nameCookie != ''){
             document.getElementById('userform')?.classList.add('hidden')
-            document.getElementById('username').innerHTML = nameCookie
         }
 
         function logout(){
             document.getElementById('userform')?.classList.remove('hidden')
-            document.getElementById('username')?.parentElement?.classList.add('hidden')
-            removeCookie('name');
+            removeCookie('session_id');
             window.location.reload();
         }
 

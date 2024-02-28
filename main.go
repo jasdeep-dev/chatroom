@@ -65,22 +65,41 @@ func receiver() {
 		messages = append(messages, message)
 		BackupData(message, "./messages.db")
 
-		for name, conn := range connections {
-			if name == message.Name {
-				continue
-			}
+		deliverMessageToWebSocketConnections(message)
+		deliverMessageToTCPConnections(message)
+	}
+}
 
-			if conn == nil {
-				continue
-			}
-
-			conn.Write(
-				[]byte(
-					users[message.Name].Color +
-						message.Name + "> \x1b[0m" +
-						message.Text + "\n",
-				),
-			)
+func deliverMessageToWebSocketConnections(message Message) {
+	for _, userSession := range UserSessions {
+		if userSession.Name == message.Name {
+			continue
 		}
+
+		if userSession.SocketConnection == nil {
+			continue
+		}
+
+		userSession.SocketConnection.WriteJSON(message)
+	}
+}
+
+func deliverMessageToTCPConnections(message Message) {
+	for name, conn := range connections {
+		if name == message.Name {
+			continue
+		}
+
+		if conn == nil {
+			continue
+		}
+
+		conn.Write(
+			[]byte(
+				users[message.Name].Color +
+					message.Name + "> \x1b[0m" +
+					message.Text + "\n",
+			),
+		)
 	}
 }
