@@ -12,8 +12,10 @@
   document.getElementById('messageform').addEventListener('submit', function(event) {
     // Prevent the default form submission
     event.preventDefault();
-
     var message = document.getElementById('message_input');
+    if(message.value == ""){
+      return
+    }
     try {
       ws.send(message.value);
       message.value = "";

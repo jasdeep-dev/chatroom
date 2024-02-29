@@ -19,6 +19,14 @@ func (m Messages) Restore(row []byte) {
 }
 
 func sendMessage(message string, sessionID string) {
+	if message == "" {
+		return
+	}
+
+	if sessionID == "" {
+		return
+	}
+
 	session := UserSessions[sessionID]
 	messageChannel <- Message{
 		Text:      message,
@@ -28,7 +36,16 @@ func sendMessage(message string, sessionID string) {
 }
 
 func sendMessageTCP(conn net.Conn, message string, name string) {
+	fmt.Println("message", message)
+	if message == "" {
+		return
+	}
+
 	name = strings.TrimSpace(name)
+	if name == "" {
+		return
+	}
+
 	messageChannel <- Message{
 		Text:      message,
 		Name:      name,

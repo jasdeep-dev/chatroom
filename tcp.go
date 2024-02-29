@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net"
 	"strings"
-	"time"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -37,8 +36,8 @@ func newUser(conn net.Conn) {
 		if err != nil {
 			fmt.Println("error reading message over TCP", err)
 		}
-		name = strings.TrimSpace(name)
 
+		name = strings.TrimSpace(name)
 		if name == "" {
 			conn.Write([]byte("Error! Name can't be blank\n"))
 			continue
@@ -90,10 +89,10 @@ func newUser(conn net.Conn) {
 			return
 		}
 
-		conn, ok := connections[user.Name]
+		oldConn, ok := connections[user.Name]
 		if ok {
-			if conn != nil {
-				conn.Close()
+			if oldConn != nil {
+				oldConn.Close()
 			}
 		}
 
@@ -136,12 +135,6 @@ func readMessages(conn net.Conn, name string) {
 			fmt.Fprintf(conn, "Maximum word limit (250 words) reached.\n")
 			return
 		}
-
-		messageChannel <- Message{
-			Text:      line,
-			Name:      name,
-			TimeStamp: time.Now(),
-		}
-
+		sendMessageTCP(conn, line, name)
 	}
 }
