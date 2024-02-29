@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"math/rand"
 	"net"
 	"net/http"
@@ -96,6 +95,14 @@ func createHTTPUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sessionId, err := generateSessionID(name)
+	if err != nil {
+		fmt.Println("Error creating Session ID", err)
+	}
+
+	UserSessions[sessionId] = UserSession{
+		Name:       name,
+		LoggedInAt: time.Now(),
+	}
 
 	http.SetCookie(w, &http.Cookie{
 		Name:     "session_id",         // Name of the cookie
@@ -104,9 +111,6 @@ func createHTTPUser(w http.ResponseWriter, r *http.Request) {
 		SameSite: http.SameSiteLaxMode, // SameSite attribute
 	})
 
-	// fmt.Println("socketConnections[sessionId]=> ", socketConnections)
-
-	// sendMessageToSocket(socketConnections[sessionId], "Message")
 	messageChannel <- Message{
 		TimeStamp: time.Now(),
 		Text:      genericMessage["joined"],
@@ -115,29 +119,11 @@ func createHTTPUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func generateSessionID(name string) (string, error) {
-	b := make([]byte, 16) // 16 bytes for 128 bits of entropy
+	b := make([]byte, 128) // 16 bytes for 128 bits of entropy
 	_, err := crypt.Read(b)
 	if err != nil {
 		return "", err
 	}
 
-	sessionId := hex.EncodeToString(b)
-	UserSessions[sessionId] = UserSession{
-		Name:       name,
-		LoggedInAt: time.Now(),
-	}
-
-	return sessionId, nil
-}
-
-func readCookie(w http.ResponseWriter, r *http.Request, key string) string {
-	value, err := r.Cookie(key)
-	if err != nil {
-		log.Println(err)
-	}
-	return value.Value
-}
-
-func isLoggedIn() {
-
+	return hex.EncodeToString(b), nil
 }
