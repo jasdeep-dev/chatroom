@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -17,6 +18,12 @@ var upgrader = websocket.Upgrader{
 }
 
 func handleWebSocket(w http.ResponseWriter, r *http.Request) {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("Recovered from panic:", r)
+		}
+	}()
+
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println(err)
@@ -29,30 +36,27 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 		return
 	}
+	sessionID := sessionCookie.Value
 
-	session, ok := UserSessions[sessionCookie.Value]
+	session, ok := UserSessions[sessionID]
 	if !ok {
 		return
 	}
 
-	session.SocketConnection = conn
+	UserSessions[sessionID] = UserSession{
+		Name:             session.Name,
+		LoggedInAt:       time.Now(),
+		SocketConnection: conn,
+	}
 
 	conn.WriteJSON(session)
 
-	go writeTestMessages(session)
-	listenForMessages(sessionCookie.Value, session)
-}
-
-func writeTestMessages(session UserSession) {
-	for {
-		session.SocketConnection.WriteJSON("just a test")
-		time.Sleep(2 * time.Second)
-	}
+	listenForMessages(sessionID, session)
 }
 
 func listenForMessages(sessionID string, session UserSession) {
 	for {
-		messageType, message, err := session.SocketConnection.ReadMessage()
+		messageType, message, err := UserSessions[sessionID].SocketConnection.ReadMessage()
 		if err != nil {
 			if strings.Contains(err.Error(), "close 1001") {
 				log.Println("Session terminated by client: ", sessionID, session.Name)
