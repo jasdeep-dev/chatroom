@@ -49,32 +49,27 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 		SocketConnection: conn,
 	}
 
-	conn.WriteJSON(session)
-
-	listenForMessages(sessionID, session)
+	listenForMessages(sessionID)
 }
 
-func listenForMessages(sessionID string, session UserSession) {
+func listenForMessages(sessionID string) {
+	conn := UserSessions[sessionID].SocketConnection
 	for {
-		messageType, message, err := UserSessions[sessionID].SocketConnection.ReadMessage()
+
+		_, message, err := conn.ReadMessage()
 		if err != nil {
 			if strings.Contains(err.Error(), "close 1001") {
-				log.Println("Session terminated by client: ", sessionID, session.Name)
+				log.Println("Session terminated by client: ", sessionID)
 				// delete(UserSessions, *sessionID)
 			} else {
 				log.Println("Error reading message:", err)
 			}
-
 			break
 		}
 
-		log.Printf("%s sent: %s\n", session.SocketConnection.RemoteAddr(), message)
+		log.Printf("%s sent from browser: %s\n", conn.RemoteAddr(), message)
 
-		// Write message back to browser
-		if err := session.SocketConnection.WriteMessage(messageType, message); err != nil {
-			log.Println("Error writing message:", err)
-			break
-		}
+		sendMessage(string(message), sessionID)
 	}
 }
 
@@ -88,10 +83,4 @@ func startWebSocket() {
 		log.Fatal("ListenAndServe:", err)
 	}
 
-}
-
-func sendMessageToSocket(ws *websocket.Conn, message string) {
-	if err := ws.WriteMessage(1, []byte(message)); err != nil {
-		log.Println(err)
-	}
 }

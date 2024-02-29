@@ -18,7 +18,16 @@ func (m Messages) Restore(row []byte) {
 	messages = append(messages, msg)
 }
 
-func sendMessage(conn net.Conn, message string, name string) {
+func sendMessage(message string, sessionID string) {
+	session := UserSessions[sessionID]
+	messageChannel <- Message{
+		Text:      message,
+		Name:      session.Name,
+		TimeStamp: time.Now(),
+	}
+}
+
+func sendMessageTCP(conn net.Conn, message string, name string) {
 	name = strings.TrimSpace(name)
 	messageChannel <- Message{
 		Text:      message,

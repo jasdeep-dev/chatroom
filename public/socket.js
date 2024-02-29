@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", function() {
     };
     ws.onmessage = function(evt) {
         console.log("Message from server: ", evt.data);
+        updateChatInnerHTML(evt.data)
     };
     ws.onclose = function() {
         console.log("Disconnected from the WebSocket server.");

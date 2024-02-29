@@ -72,14 +72,14 @@ func receiver() {
 
 func deliverMessageToWebSocketConnections(message Message) {
 	for _, userSession := range UserSessions {
-		fmt.Println("user session", userSession)
-		if userSession.Name == message.Name {
-			continue
-		}
+		// if userSession.Name == message.Name {
+		// 	continue
+		// }
 
 		if userSession.SocketConnection == nil {
 			continue
 		}
+
 		userSession.SocketConnection.WriteJSON(message)
 	}
 }

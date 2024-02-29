@@ -101,7 +101,7 @@ func messageHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		fmt.Println("Error in cookies", err)
 	} else {
-		sendMessage(nil, inputMessage, cookie.Value)
+		sendMessage(inputMessage, cookie.Value)
 	}
 
 	http.Redirect(w, r, "/", http.StatusSeeOther)

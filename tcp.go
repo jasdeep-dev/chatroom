@@ -98,7 +98,7 @@ func newUser(conn net.Conn) {
 		}
 
 		updateConnection(name, conn)
-		sendMessage(conn, Settings.WelcomeBackMessage, name)
+		sendMessageTCP(conn, Settings.WelcomeBackMessage, name)
 	} else {
 		err := createTCPUser(conn, name, passwordHash)
 		if err != nil {
@@ -107,7 +107,7 @@ func newUser(conn net.Conn) {
 			return
 		}
 
-		sendMessage(conn, Settings.JoinedMessage, name)
+		sendMessageTCP(conn, Settings.JoinedMessage, name)
 	}
 
 	readMessages(conn, name)
