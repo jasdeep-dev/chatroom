@@ -8,6 +8,7 @@
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.7.2/dist/full.min.css" rel="stylesheet" type="text/css" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="public/main.js"></script>
+    <script src="public/socket.js"></script>
 </head>
 <body>
     <main class="container max-w-screen-lg mx-auto min-h-screen flex flex-col">
@@ -39,7 +40,7 @@
         var htmlElement = document.querySelector('html');
         htmlElement.setAttribute('data-theme', value);
 
-        let nameCookie = getCookie('name');
+        let nameCookie = getCookie('session_id');
         let messageField = document.getElementById(nameCookie)
         if(messageField != null){
             messageField.classList.remove('chat-start')
@@ -48,13 +49,11 @@
 
         if(nameCookie != ''){
             document.getElementById('userform')?.classList.add('hidden')
-            document.getElementById('username').innerHTML = nameCookie
         }
 
         function logout(){
             document.getElementById('userform')?.classList.remove('hidden')
-            document.getElementById('username')?.parentElement?.classList.add('hidden')
-            removeCookie('name');
+            removeCookie('session_id');
             window.location.reload();
         }
 

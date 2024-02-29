@@ -2,9 +2,7 @@ package main
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
-	"math/rand"
 	"net"
 	"strings"
 	"time"
@@ -102,7 +100,7 @@ func newUser(conn net.Conn) {
 		updateConnection(name, conn)
 		sendMessage(conn, Settings.WelcomeBackMessage, name)
 	} else {
-		err := createNewUser(conn, name, passwordHash)
+		err := createTCPUser(conn, name, passwordHash)
 		if err != nil {
 			conn.Write([]byte("error in creating users" + err.Error()))
 			conn.Close()
@@ -113,33 +111,6 @@ func newUser(conn net.Conn) {
 	}
 
 	readMessages(conn, name)
-}
-
-func createNewUser(conn net.Conn, name string, passwordHash string) error {
-	name = strings.TrimSpace(name)
-
-	if name == "" {
-		return fmt.Errorf("name is empty")
-	}
-	//limit the users
-	if len(users) >= Settings.MaxUsers {
-		conn.Write([]byte("Sorry, too many users. Please try again later!\n"))
-		conn.Close()
-		return errors.New("too many users")
-	}
-
-	// ANSI codes for foreground colors (30-37)
-	colorCode := rand.Intn(8) + 90
-	color := fmt.Sprintf("\x1b[%dm", colorCode)
-
-	users[name] = User{
-		Name:         name,
-		Color:        color,
-		PasswordHash: passwordHash,
-	}
-	connections[name] = conn
-	BackupData(users[name], "./users.db")
-	return nil
 }
 
 func updateConnection(name string, conn net.Conn) {

@@ -1,5 +1,5 @@
 {
-    "MaxUsers": 2,
+    "MaxUsers": 10,
     "MessageSize": 250,
     "DefaultTheme": "valentine",
     "TcpServer": "0.0.0.0:8000",

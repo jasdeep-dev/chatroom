@@ -5,14 +5,13 @@ import (
 	"html/template"
 	"net/http"
 	"time"
-
-	"golang.org/x/crypto/bcrypt"
 )
 
 type TemplateData struct {
 	Users       map[string]User
 	Messages    []Message
 	CurrentUser string
+	LoggedIn    time.Time
 }
 
 func startHTTP() {
@@ -39,16 +38,18 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cookie, err := r.Cookie("name")
+	cookie, err := r.Cookie("session_id")
 	if err != nil {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
 
+	session := UserSessions[cookie.Value]
 	data := TemplateData{
 		Users:       users,
 		Messages:    messages,
-		CurrentUser: cookie.Value,
+		CurrentUser: session.Name,
+		LoggedIn:    session.LoggedInAt,
 	}
 
 	err = tmpl.ExecuteTemplate(w, "index.html", data)
@@ -68,49 +69,7 @@ func userHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error parsing form", http.StatusBadRequest)
 		return
 	}
-	name := r.Form.Get("name")
-	password := r.Form.Get("password")
-
-	passwordHash, err := bcrypt.GenerateFromPassword(
-		[]byte(password),
-		bcrypt.DefaultCost,
-	)
-	if err != nil {
-		r.Header.Set("ERROR", "Unable to create user")
-		loginHandler(w, r)
-		return
-	}
-
-	_, ok := users[name]
-	if ok {
-		// Authenticate user by comparing password with the hashed password
-		err := bcrypt.CompareHashAndPassword([]byte(users[name].PasswordHash), []byte(password))
-		if err != nil {
-			r.Header.Set("ERROR", "Invalid password")
-			loginHandler(w, r)
-			return
-		}
-	}
-
-	users[name] = User{
-		Name:         name,
-		PasswordHash: string(passwordHash),
-	}
-
-	BackupData(users[name], "./users.db")
-
-	http.SetCookie(w, &http.Cookie{
-		Name:     "name",
-		Value:    name,
-		Path:     "/",
-		SameSite: http.SameSiteLaxMode,
-	})
-
-	messageChannel <- Message{
-		TimeStamp: time.Now(),
-		Text:      genericMessage["joined"],
-		Name:      name,
-	}
+	createHTTPUser(w, r)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
@@ -137,7 +96,7 @@ func messageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	inputMessage := r.Form.Get("message")
 
-	cookie, err := r.Cookie("name")
+	cookie, err := r.Cookie("session_id")
 
 	if err != nil {
 		fmt.Println("Error in cookies", err)
