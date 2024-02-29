@@ -5,19 +5,22 @@
 	  <a class="text-lg font-bold">Chatroom</a>
 	</div> 
 	<div class="flex justify-end flex-1 px-2">
-	  <div class="flex items-stretch">
-    <div class="dropdown dropdown-end">
-      <div tabindex="0" role="button" class="btn btn-ghost rounded-btn capitalize" class="username">{{$currentUser}}</div>
-      <div tabindex="0" role="button" class="btn btn-ghost rounded-btn" class="username" role="button" onclick="logout();">Log out</div>
+
+    <div class="indicator">
+      <span class="indicator-item badge badge-xs badge-success" id="active_button"></span> 
+      <div tabindex="0" role="button" class="btn rounded-btn capitalize bg-base-300 btn-sm" class="username">{{$currentUser}}</div>
     </div>
+
+    <div tabindex="0" role="button" class="btn btn-ghost rounded-btn" class="username" role="button" onclick="logout();">Log out</div>
+
 		<div class="dropdown dropdown-end">
-		  <div tabindex="0" role="button" class="btn btn-ghost rounded-btn">Theme</div>
-        <ul tabindex="0" class="dropdown-content z-[1] p-2 shadow-2xl bg-base-300 rounded-box w-52">
-          <li><input type="radio" name="theme-dropdown" class="theme-controller btn btn-sm btn-block btn-ghost justify-start" aria-label="Retro" value="retro" onclick="setTheme('retro')"/></li>
-          <li><input type="radio" name="theme-dropdown" class="theme-controller btn btn-sm btn-block btn-ghost justify-start" aria-label="Cyberpunk" value="cyberpunk" onclick="setTheme('cyberpunk')"/></li>
-          <li><input type="radio" name="theme-dropdown" class="theme-controller btn btn-sm btn-block btn-ghost justify-start" aria-label="Valentine" value="valentine" onclick="setTheme('valentine')"/></li>
-          <li><input type="radio" name="theme-dropdown" class="theme-controller btn btn-sm btn-block btn-ghost justify-start" aria-label="Aqua" value="aqua" onclick="setTheme('aqua')"/></li>
-        </ul>
+      <div tabindex="0" role="button" class="btn btn-ghost rounded-btn">Theme</div>
+      <ul tabindex="0" class="dropdown-content z-[1] p-2 shadow-2xl bg-base-300 rounded-box w-52">
+        <li><input type="radio" name="theme-dropdown" class="theme-controller btn btn-sm btn-block btn-ghost justify-start" aria-label="Retro" value="retro" onclick="setTheme('retro')"/></li>
+        <li><input type="radio" name="theme-dropdown" class="theme-controller btn btn-sm btn-block btn-ghost justify-start" aria-label="Cyberpunk" value="cyberpunk" onclick="setTheme('cyberpunk')"/></li>
+        <li><input type="radio" name="theme-dropdown" class="theme-controller btn btn-sm btn-block btn-ghost justify-start" aria-label="Valentine" value="valentine" onclick="setTheme('valentine')"/></li>
+        <li><input type="radio" name="theme-dropdown" class="theme-controller btn btn-sm btn-block btn-ghost justify-start" aria-label="Aqua" value="aqua" onclick="setTheme('aqua')"/></li>
+      </ul>
 		  </div>
 	  </div>
 	</div>

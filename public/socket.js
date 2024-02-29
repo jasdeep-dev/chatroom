@@ -4,6 +4,8 @@ document.addEventListener("DOMContentLoaded", function() {
     // var ws = new WebSocket("ws://localhost:3000/ws");
     ws.onopen = function() {
         console.log("Connected to the WebSocket server.");
+        // classList = document.getElementById("active_button").classList
+        // classList.add("badge-success")
         ws.send("Hello from the client!");
     };
     ws.onmessage = function(evt) {
@@ -11,6 +13,8 @@ document.addEventListener("DOMContentLoaded", function() {
         updateChatInnerHTML(evt.data)
     };
     ws.onclose = function() {
+        classList = document.getElementById("active_button").classList
+        classList.remove("badge-success")
         console.log("Disconnected from the WebSocket server.");
     };
     ws.onerror = function(err) {
