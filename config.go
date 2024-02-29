@@ -11,7 +11,6 @@ type Config struct {
 	MaxUsers           int    `json:"MaxUsers"`
 	MessageSize        int    `json:"MessageSize"`
 	DefaultTheme       string `json:"DefaultTheme"`
-	TcpServer          string `json:"TcpServer"`
 	HttpServer         string `json:"HttpServer"`
 	JoinedMessage      string `json:"JoinedMessage"`
 	WelcomeMessage     string `json:"WelcomeMessage"`

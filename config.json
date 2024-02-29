@@ -2,7 +2,6 @@
     "MaxUsers": 10,
     "MessageSize": 250,
     "DefaultTheme": "valentine",
-    "TcpServer": "0.0.0.0:8000",
     "HttpServer": "0.0.0.0:8080",
     "JoinedMessage": "I have joined the chat.",
 	"WelcomeMessage": "Welcome to chatroom.",

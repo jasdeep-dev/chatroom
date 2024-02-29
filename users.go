@@ -3,12 +3,8 @@ package main
 import (
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"math/rand"
-	"net"
 	"net/http"
-	"strings"
 	"time"
 
 	crypt "crypto/rand"
@@ -33,33 +29,6 @@ func (m Users) Restore(row []byte) {
 		return
 	}
 	users[usr.Name] = usr
-}
-
-func createTCPUser(conn net.Conn, name string, passwordHash string) error {
-	name = strings.TrimSpace(name)
-
-	if name == "" {
-		return fmt.Errorf("name is empty")
-	}
-	//limit the users
-	if len(users) >= Settings.MaxUsers {
-		conn.Write([]byte("Sorry, too many users. Please try again later!\n"))
-		conn.Close()
-		return errors.New("too many users")
-	}
-
-	// ANSI codes for foreground colors (30-37)
-	colorCode := rand.Intn(8) + 90
-	color := fmt.Sprintf("\x1b[%dm", colorCode)
-
-	users[name] = User{
-		Name:         name,
-		Color:        color,
-		PasswordHash: passwordHash,
-	}
-	connections[name] = conn
-	BackupData(users[name], "./users.db")
-	return nil
 }
 
 func createHTTPUser(w http.ResponseWriter, r *http.Request) {

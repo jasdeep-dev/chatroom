@@ -3,14 +3,8 @@ package main
 import (
 	"fmt"
 	"log"
-	"net"
 	"time"
 )
-
-type Connections map[string]net.Conn
-
-// Declare and initialize the connections variable
-var connections = make(Connections)
 
 type Users map[string]User
 
@@ -43,7 +37,6 @@ func init() {
 	genericMessage["welcomeBack"] = "Welcome back!"
 }
 func main() {
-
 	err := readConfigFromFile("./config.json")
 	if err != nil {
 		log.Fatal("Could not read the config file: ", err)
@@ -51,12 +44,10 @@ func main() {
 
 	RestoreData(users, "./users.db")
 	RestoreData(messages, "./messages.db")
+
 	go receiver()
-
-	go startHTTP()
-
 	go startWebSocket()
-	startTerminal()
+	startHTTP()
 }
 
 func receiver() {
@@ -66,7 +57,6 @@ func receiver() {
 		BackupData(message, "./messages.db")
 
 		deliverMessageToWebSocketConnections(message)
-		deliverMessageToTCPConnections(message)
 	}
 }
 
@@ -81,25 +71,5 @@ func deliverMessageToWebSocketConnections(message Message) {
 		}
 
 		userSession.SocketConnection.WriteJSON(message)
-	}
-}
-
-func deliverMessageToTCPConnections(message Message) {
-	for name, conn := range connections {
-		if name == message.Name {
-			continue
-		}
-
-		if conn == nil {
-			continue
-		}
-
-		conn.Write(
-			[]byte(
-				users[message.Name].Color +
-					message.Name + "> \x1b[0m" +
-					message.Text + "\n",
-			),
-		)
 	}
 }
