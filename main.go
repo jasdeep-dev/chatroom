@@ -1,9 +1,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"time"
+
+	"github.com/jackc/pgx/v5"
 )
 
 type Users map[string]User
@@ -13,7 +16,7 @@ var users = make(Users)
 type User struct {
 	Name         string
 	IsOnline     bool
-	Color        string
+	Theme        string
 	PasswordHash string
 }
 
@@ -31,6 +34,7 @@ var genericMessage map[string]string
 var messageChannel = make(chan Message, 100)
 
 var userChannel = make(chan User, 100)
+var DBConn *pgx.Conn
 
 func init() {
 	// Initialize the map inside an init function
@@ -39,12 +43,20 @@ func init() {
 	genericMessage["welcome"] = "Welcome to chatroom."
 	genericMessage["welcomeBack"] = "Welcome back!"
 }
+
 func main() {
+	// Connect to database
+	ctx := context.Background()
+	DBConn = establishConnection(ctx)
+	defer DBConn.Close(ctx)
+
+	// Read config file
 	err := readConfigFromFile("./config.json")
 	if err != nil {
 		log.Fatal("Could not read the config file: ", err)
 	}
 
+	//Restore DB
 	RestoreData(users, "./users.db")
 	RestoreData(messages, "./messages.db")
 
