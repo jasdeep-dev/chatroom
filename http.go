@@ -1,8 +1,10 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"html/template"
+	"log"
 	"net/http"
 	"time"
 )
@@ -20,11 +22,15 @@ func startHTTP() {
 
 	http.HandleFunc("/", indexHandler)
 	http.HandleFunc("/user", userHandler)
+	http.HandleFunc("/users/update", usersUpdateHandler)
 	http.HandleFunc("/message", messageHandler)
 	http.HandleFunc("/login", loginHandler)
 
 	fmt.Println("HTTP Server listening on", Settings.HttpServer)
-	http.ListenAndServe(Settings.HttpServer, nil) // Start the server on port 8080
+	err := http.ListenAndServe(Settings.HttpServer, nil) // Start the server on port 8080
+	if err != nil {
+		log.Fatal("error starting http server", err)
+	}
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
@@ -106,4 +112,27 @@ func messageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+func usersUpdateHandler(w http.ResponseWriter, r *http.Request) {
+	cookie, error := r.Cookie("session_id")
+	if error != nil {
+		fmt.Println("Error in cookies", error)
+	}
+
+	name := UserSessions[cookie.Value].Name
+	current_user := users[name]
+
+	err := json.NewDecoder(r.Body).Decode(&current_user)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+
+	users[name] = current_user
+
+	// Respond back to client
+	json.NewEncoder(w).Encode(map[string]string{"status": "success"})
+
 }

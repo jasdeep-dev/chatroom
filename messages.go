@@ -1,20 +1,8 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
 	"time"
 )
-
-func (m Messages) Restore(row []byte) {
-	var msg Message
-	err := json.Unmarshal(row, &msg)
-	if err != nil {
-		fmt.Println("Error unmarshaling JSON:", err)
-		return
-	}
-	messages = append(messages, msg)
-}
 
 func sendMessage(message string, sessionID string) {
 	if message == "" {

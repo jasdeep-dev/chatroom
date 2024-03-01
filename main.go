@@ -50,27 +50,24 @@ func main() {
 	DBConn = establishConnection(ctx)
 	defer DBConn.Close(ctx)
 
+	migrateDatabase(ctx)
 	// Read config file
 	err := readConfigFromFile("./config.json")
 	if err != nil {
 		log.Fatal("Could not read the config file: ", err)
 	}
 
-	//Restore DB
-	RestoreData(users, "./users.db")
-	RestoreData(messages, "./messages.db")
-
 	go messageReceiver()
 	go userReciver()
 	go startWebSocket()
 	startHTTP()
+	fmt.Println("END")
 }
 
 func messageReceiver() {
 	for message := range messageChannel {
 		fmt.Println("Number of users: ", len(users))
 		messages = append(messages, message)
-		BackupData(message, "./messages.db")
 
 		deliverMessageToWebSocketConnections(message)
 	}

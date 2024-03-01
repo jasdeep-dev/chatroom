@@ -1,8 +1,8 @@
 package main
 
 import (
+	"context"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -20,16 +20,6 @@ type UserSession struct {
 }
 
 var UserSessions = make(map[string]UserSession)
-
-func (m Users) Restore(row []byte) {
-	var usr User
-	err := json.Unmarshal(row, &usr)
-	if err != nil {
-		fmt.Println("Error unmarshaling JSON:", err)
-		return
-	}
-	users[usr.Name] = usr
-}
 
 func createHTTPUser(w http.ResponseWriter, r *http.Request) {
 	name := r.Form.Get("name")
@@ -59,12 +49,14 @@ func createHTTPUser(w http.ResponseWriter, r *http.Request) {
 		user.IsOnline = true
 		users[name] = user
 	} else {
+
 		users[name] = User{
 			Name:         name,
 			IsOnline:     true,
 			PasswordHash: string(passwordHash),
 		}
-		BackupData(users[name], "./users.db")
+
+		insertUser(users[name])
 	}
 
 	sessionId, err := generateSessionID(name)
@@ -99,4 +91,14 @@ func generateSessionID(name string) (string, error) {
 	}
 
 	return hex.EncodeToString(b), nil
+}
+
+func insertUser(userData User) {
+	ctx := context.Background()
+	query := `INSERT INTO users (name, is_online, theme, password_hash) VALUES ($1, $2, $3, $4)`
+	_, err := DBConn.Exec(ctx, query, userData.Name, userData.IsOnline, userData.Theme, userData.PasswordHash)
+	if err != nil {
+		fmt.Println("Error inserting data into users table:", err)
+		return
+	}
 }
