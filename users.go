@@ -45,7 +45,7 @@ func createHTTPUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, ok := users[name]
+	user, ok := users[name]
 
 	if ok {
 		// Authenticate user by comparing password with the hashed password
@@ -55,9 +55,13 @@ func createHTTPUser(w http.ResponseWriter, r *http.Request) {
 			loginHandler(w, r)
 			return
 		}
+
+		user.IsOnline = true
+		users[name] = user
 	} else {
 		users[name] = User{
 			Name:         name,
+			IsOnline:     true,
 			PasswordHash: string(passwordHash),
 		}
 		BackupData(users[name], "./users.db")

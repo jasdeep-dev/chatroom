@@ -45,6 +45,7 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	session := UserSessions[cookie.Value]
+
 	data := TemplateData{
 		Users:       users,
 		Messages:    messages,

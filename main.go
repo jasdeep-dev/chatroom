@@ -12,6 +12,7 @@ var users = make(Users)
 
 type User struct {
 	Name         string
+	IsOnline     bool
 	Color        string
 	PasswordHash string
 }
@@ -29,6 +30,8 @@ type Message struct {
 var genericMessage map[string]string
 var messageChannel = make(chan Message, 100)
 
+var userChannel = make(chan User, 100)
+
 func init() {
 	// Initialize the map inside an init function
 	genericMessage = make(map[string]string)
@@ -45,12 +48,13 @@ func main() {
 	RestoreData(users, "./users.db")
 	RestoreData(messages, "./messages.db")
 
-	go receiver()
+	go messageReceiver()
+	go userReciver()
 	go startWebSocket()
 	startHTTP()
 }
 
-func receiver() {
+func messageReceiver() {
 	for message := range messageChannel {
 		fmt.Println("Number of users: ", len(users))
 		messages = append(messages, message)
@@ -60,16 +64,37 @@ func receiver() {
 	}
 }
 
+func userReciver() {
+	for user := range userChannel {
+		deliverUsersToWebSocketConnections(user)
+	}
+}
+
 func deliverMessageToWebSocketConnections(message Message) {
 	for _, userSession := range UserSessions {
-		// if userSession.Name == message.Name {
-		// 	continue
-		// }
+		if userSession.SocketConnection == nil {
+			continue
+		}
+		msg := struct {
+			Message Message
+		}{
+			Message: message,
+		}
+		userSession.SocketConnection.WriteJSON(msg)
+	}
+}
 
+func deliverUsersToWebSocketConnections(user User) {
+	for _, userSession := range UserSessions {
 		if userSession.SocketConnection == nil {
 			continue
 		}
 
-		userSession.SocketConnection.WriteJSON(message)
+		usr := struct {
+			User User
+		}{
+			User: user,
+		}
+		userSession.SocketConnection.WriteJSON(usr)
 	}
 }

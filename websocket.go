@@ -49,6 +49,13 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 		SocketConnection: conn,
 	}
 
+	if user, exists := users[session.Name]; exists {
+		user.IsOnline = true
+		users[session.Name] = user
+	}
+
+	userChannel <- users[session.Name]
+
 	listenForMessages(sessionID)
 }
 
@@ -60,7 +67,12 @@ func listenForMessages(sessionID string) {
 		if err != nil {
 			if strings.Contains(err.Error(), "close 1001") {
 				log.Println("Session terminated by client: ", sessionID)
-				// delete(UserSessions, *sessionID)
+
+				user := users[UserSessions[sessionID].Name]
+				user.IsOnline = false
+				users[UserSessions[sessionID].Name] = user
+				userChannel <- user
+
 			} else {
 				log.Println("Error reading message:", err)
 			}
