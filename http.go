@@ -25,6 +25,7 @@ func startHTTP() {
 	http.HandleFunc("/users/update", usersUpdateHandler)
 	http.HandleFunc("/message", messageHandler)
 	http.HandleFunc("/login", loginHandler)
+	http.HandleFunc("/oauth2", callbackHandler)
 
 	fmt.Println("HTTP Server listening on", Settings.HttpServer)
 	err := http.ListenAndServe(Settings.HttpServer, nil) // Start the server on port 8080
@@ -46,10 +47,16 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 
 	cookie, err := r.Cookie("session_id")
 	if err != nil {
-		http.Redirect(w, r, "/login", http.StatusSeeOther)
-		return
+		fmt.Println("error in cookie", err)
 	}
 
+	if cookie != nil {
+		fmt.Println("Cookie is present")
+	} else {
+		authurl := createNewProvider()
+		http.Redirect(w, r, authurl, http.StatusSeeOther)
+		return
+	}
 	session := UserSessions[cookie.Value]
 
 	data := TemplateData{
@@ -134,5 +141,4 @@ func usersUpdateHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Respond back to client
 	json.NewEncoder(w).Encode(map[string]string{"status": "success"})
-
 }
