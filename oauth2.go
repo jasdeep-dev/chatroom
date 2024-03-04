@@ -1,172 +1,167 @@
 package main
 
 import (
-	"context"
-	"fmt"
-	"log"
+	"crypto/rand"
+	"encoding/base64"
+	"io"
 	"net/http"
 	"time"
 
-	"github.com/hashicorp/cap/oidc"
+	"github.com/coreos/go-oidc/v3/oidc"
+	"golang.org/x/net/context"
+	"golang.org/x/oauth2"
 )
 
-var oidcRequest *oidc.Req
+type IDTokenClaims struct {
+	Exp               int64  `json:"exp"`
+	Iat               int64  `json:"iat"`
+	AuthTime          int64  `json:"auth_time"`
+	Jti               string `json:"jti"`
+	Iss               string `json:"iss"`
+	Aud               string `json:"aud"`
+	Sub               string `json:"sub"`
+	Typ               string `json:"typ"`
+	Azp               string `json:"azp"`
+	Nonce             string `json:"nonce"`
+	SessionState      string `json:"session_state"`
+	AtHash            string `json:"at_hash"`
+	Acr               string `json:"acr"`
+	Sid               string `json:"sid"`
+	EmailVerified     bool   `json:"email_verified"`
+	Name              string `json:"name"`
+	PreferredUsername string `json:"preferred_username"`
+	GivenName         string `json:"given_name"`
+	FamilyName        string `json:"family_name"`
+	Email             string `json:"email"`
+}
 
-func createNewProvider() string {
-	// Create a new provider config
-	pc, err := oidc.NewConfig(
-		"http://localhost:9000/realms/chatroom",
-		"chatroom",
-		"WU3E47c1C2263VqdB4q9QOZIzXFTg9DC",
-		[]oidc.Alg{oidc.RS256},
-		[]string{"http://localhost:8080/oauth2"},
-	)
+func createNewProvider(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Background()
+
+	provider, err := oidc.NewProvider(ctx, "http://localhost:9000/realms/chatroom")
 	if err != nil {
-		log.Fatal("error creating config", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
-	// Create a provider
-	p, err := oidc.NewProvider(pc)
+	state, err := randString(16)
 	if err != nil {
-		log.Fatal("error creating provider", err)
-	}
-	defer p.Done()
-
-	// Create a Request for a user's authentication attempt that will use the
-	// authorization code flow.  (See NewRequest(...) using the WithPKCE and
-	// WithImplicit options for creating a Request that uses those flows.)
-	oidcRequest, err = oidc.NewRequest(2*time.Minute, "http://localhost:8080/oauth2")
-	if err != nil {
-		log.Fatal("error requesting oidc", err)
+		http.Error(w, "Internal error", http.StatusInternalServerError)
+		return
 	}
 
-	// Create an auth URL
-	authURL, err := p.AuthURL(context.Background(), oidcRequest)
+	nonce, err := randString(16)
 	if err != nil {
-		log.Fatal("error auth-url", err)
+		http.Error(w, "Internal error", http.StatusInternalServerError)
+		return
 	}
-	fmt.Println("open url to kick-off authentication: ", authURL)
-	return authURL
+
+	setCallbackCookie(w, r, "state", state)
+	setCallbackCookie(w, r, "nonce", nonce)
+
+	config := oauth2.Config{
+		ClientID:     "chatroom",
+		ClientSecret: "oG3CyRoHYOKYRUo4y8kTOanb2M0xeVpS",
+		Endpoint:     provider.Endpoint(),
+		RedirectURL:  "http://localhost:8080/oauth2",
+		Scopes:       []string{oidc.ScopeOpenID, "profile", "email"},
+	}
+
+	http.Redirect(w, r, config.AuthCodeURL(state, oidc.Nonce(nonce)), http.StatusFound)
 }
 
 func callbackHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 
-	pc, err := oidc.NewConfig(
-		"http://localhost:9000/realms/chatroom",
-		"chatroom",
-		"WU3E47c1C2263VqdB4q9QOZIzXFTg9DC",
-		[]oidc.Alg{oidc.RS256},
-		[]string{"http://localhost:8080/oauth2"},
-	)
-
+	state, err := r.Cookie("state")
 	if err != nil {
-		log.Fatal("error creating config", err)
+		http.Error(w, "state not found", http.StatusBadRequest)
+		return
+	}
+	if r.URL.Query().Get("state") != state.Value {
+		http.Error(w, "state did not match", http.StatusBadRequest)
+		return
 	}
 
-	p, err := oidc.NewProvider(pc)
+	provider, err := oidc.NewProvider(ctx, "http://localhost:9000/realms/chatroom")
 	if err != nil {
-		log.Fatal("error creating provider", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
-	defer p.Done()
+	oidcConfig := &oidc.Config{
+		ClientID: "chatroom",
+	}
 
-	// Exchange a successful authentication's authorization code and
-	// authorization state (received in a callback) for a verified Token.
-	t, err := p.Exchange(ctx, oidcRequest, r.FormValue("state"), r.FormValue("code"))
+	verifier := provider.Verifier(oidcConfig)
+
+	config := oauth2.Config{
+		ClientID:     "chatroom",
+		ClientSecret: "oG3CyRoHYOKYRUo4y8kTOanb2M0xeVpS",
+		Endpoint:     provider.Endpoint(),
+		RedirectURL:  "http://localhost:8080/oauth2",
+		Scopes:       []string{oidc.ScopeOpenID, "profile", "email"},
+	}
+
+	oauth2Token, err := config.Exchange(ctx, r.URL.Query().Get("code"))
 	if err != nil {
-		log.Fatal("1 error creating provider", err)
-	}
-	var claims map[string]interface{}
-	if err := t.IDToken().Claims(&claims); err != nil {
-		log.Fatal("4 error creating provider", err)
+		http.Error(w, "Failed to exchange token: "+err.Error(), http.StatusInternalServerError)
+		return
 	}
 
-	// Get the user's claims via the provider's UserInfo endpoint
-	var infoClaims map[string]interface{}
-	err = p.UserInfo(ctx, t.StaticTokenSource(), claims["sub"].(string), &infoClaims)
+	rawIDToken, ok := oauth2Token.Extra("id_token").(string)
+	if !ok {
+		http.Error(w, "No id_token field in oauth2 token.", http.StatusInternalServerError)
+		return
+	}
+
+	idToken, err := verifier.Verify(ctx, rawIDToken)
 	if err != nil {
-		log.Fatal("2 error creating provider", err)
+		http.Error(w, "Failed to verify ID Token: "+err.Error(), http.StatusInternalServerError)
+		return
 	}
 
-	resp := struct {
-		IDTokenClaims  map[string]interface{}
-		UserInfoClaims map[string]interface{}
-	}{claims, infoClaims}
+	nonce, err := r.Cookie("nonce")
+	if err != nil {
+		http.Error(w, "nonce not found", http.StatusBadRequest)
+		return
+	}
 
-	// enc := json.NewEncoder(w)
-	// if err := enc.Encode(resp); err != nil {
-	// 	log.Fatal("3 error creating provider", err)
-	// }
+	if idToken.Nonce != nonce.Value {
+		http.Error(w, "nonce did not match", http.StatusBadRequest)
+		return
+	}
 
-	sid := resp.IDTokenClaims["sid"]
+	idTokenClaims := IDTokenClaims{}
+
+	if err := idToken.Claims(&idTokenClaims); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	http.SetCookie(w, &http.Cookie{
 		Name:  "session_id",
-		Value: sid.(string),
+		Value: idTokenClaims.Sid,
 		Path:  "/",
 	})
 
-	http.Redirect(w, r, "/", http.StatusSeeOther)
-	// Login:
-	// {
-	// 	"IDTokenClaims": {
-	// 		"acr": "1",
-	// 		"at_hash": "qi9S4V8Mnih-hCNsKYTqeg",
-	// 		"aud": "chatroom",
-	// 		"auth_time": 1709323331,
-	// 		"azp": "chatroom",
-	// 		"email_verified": true,
-	// 		"exp": 1709323631,
-	// 		"iat": 1709323331,
-	// 		"iss": "http://localhost:9000/realms/chatroom",
-	// 		"jti": "28307d3f-2839-4219-a3c5-705533973f9d",
-	// 		"nonce": "n_fscahv1t8uzIOA919CJQ",
-	// 		"preferred_username": "jasdeep",
-	// 		"session_state": "ee71d785-ee31-46cb-9d63-b80f35b76635",
-	// 		"sid": "ee71d785-ee31-46cb-9d63-b80f35b76635",
-	// 		"sub": "9573ec5f-73e1-4ed4-93d1-baf08fc5c414",
-	// 		"typ": "ID"
-	// 	},
-	// 	"UserInfoClaims": {
-	// 		"email_verified": true,
-	// 		"preferred_username": "jasdeep",
-	// 		"sub": "9573ec5f-73e1-4ed4-93d1-baf08fc5c414"
-	// 	}
-	// }
+	http.Redirect(w, r, "/", http.StatusFound)
+}
 
-	// Cookie("session_id")
+func randString(nByte int) (string, error) {
+	b := make([]byte, nByte)
+	if _, err := io.ReadFull(rand.Reader, b); err != nil {
+		return "", err
+	}
+	return base64.RawURLEncoding.EncodeToString(b), nil
+}
 
-	//Register
-	// {
-	// 	"IDTokenClaims": {
-	// 		"acr": "1",
-	// 		"at_hash": "AT9HHXlPfj-mFVmH6U-cqw",
-	// 		"aud": "chatroom", Audience - list containing URL of the issuing realm
-	// 		"auth_time": 1709332530,
-	// 		"azp": "chatroom", Client name
-	// 		"email": "jasdeep@yopmail.com",
-	// 		"email_verified": false,
-	// 		"exp": 1709332830,
-	// 		"family_name": "Kaur",
-	// 		"given_name": "Smile",
-	// 		"iat": 1709332530, Times of token validity
-	// 		"iss": "http://localhost:9000/realms/chatroom",
-	// 		"jti": "62b85654-af6a-4eb9-98e9-08aaa599372e",
-	// 		"name": "Smile Kaur",
-	// 		"nonce": "n_Od8bsyCV2Z6zA48Tfkg7",Random nonce to guarantee uniqueness of use if the operation can only be executed once (optional)
-	// 		"preferred_username": "jasdeep@yopmail.com",
-	// 		"session_state": "68b2a086-482f-4e6f-92b5-83460fa1d2d8",
-	// 		"sid": "68b2a086-482f-4e6f-92b5-83460fa1d2d8",
-	// 		"sub": "620a4ae4-65c1-402e-8be7-defab24954a1",  ID of the user
-	// 		"typ": "ID"
-	// 	},
-	// 	"UserInfoClaims": {
-	// 		"email": "jasdeep@yopmail.com",
-	// 		"email_verified": false,
-	// 		"family_name": "Kaur",
-	// 		"given_name": "Smile",
-	// 		"name": "Smile Kaur",
-	// 		"preferred_username": "jasdeep@yopmail.com",
-	// 		"sub": "620a4ae4-65c1-402e-8be7-defab24954a1"
-	// 	}
-	// }
+func setCallbackCookie(w http.ResponseWriter, r *http.Request, name, value string) {
+	c := &http.Cookie{
+		Name:     name,
+		Value:    value,
+		MaxAge:   int(time.Hour.Seconds()),
+		Secure:   r.TLS != nil,
+		HttpOnly: true,
+	}
+	http.SetCookie(w, c)
 }

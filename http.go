@@ -54,8 +54,7 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 	if cookie != nil {
 		fmt.Println("Cookie is present")
 	} else {
-		authurl := createNewProvider()
-		http.Redirect(w, r, authurl, http.StatusSeeOther)
+		createNewProvider(w, r)
 		return
 	}
 	session := UserSessions[cookie.Value]
