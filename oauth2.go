@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -53,7 +52,6 @@ func createNewProvider() string {
 func callbackHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 
-	http.Redirect(w, r, "/user", http.StatusSeeOther)
 	pc, err := oidc.NewConfig(
 		"http://localhost:9000/realms/chatroom",
 		"chatroom",
@@ -95,11 +93,19 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 		UserInfoClaims map[string]interface{}
 	}{claims, infoClaims}
 
-	enc := json.NewEncoder(w)
-	if err := enc.Encode(resp); err != nil {
-		log.Fatal("3 error creating provider", err)
-	}
+	// enc := json.NewEncoder(w)
+	// if err := enc.Encode(resp); err != nil {
+	// 	log.Fatal("3 error creating provider", err)
+	// }
 
+	sid := resp.IDTokenClaims["sid"]
+	http.SetCookie(w, &http.Cookie{
+		Name:  "session_id",
+		Value: sid.(string),
+		Path:  "/",
+	})
+
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 	// Login:
 	// {
 	// 	"IDTokenClaims": {
@@ -134,23 +140,23 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 	// 	"IDTokenClaims": {
 	// 		"acr": "1",
 	// 		"at_hash": "AT9HHXlPfj-mFVmH6U-cqw",
-	// 		"aud": "chatroom",
+	// 		"aud": "chatroom", Audience - list containing URL of the issuing realm
 	// 		"auth_time": 1709332530,
-	// 		"azp": "chatroom",
+	// 		"azp": "chatroom", Client name
 	// 		"email": "jasdeep@yopmail.com",
 	// 		"email_verified": false,
 	// 		"exp": 1709332830,
 	// 		"family_name": "Kaur",
 	// 		"given_name": "Smile",
-	// 		"iat": 1709332530,
+	// 		"iat": 1709332530, Times of token validity
 	// 		"iss": "http://localhost:9000/realms/chatroom",
 	// 		"jti": "62b85654-af6a-4eb9-98e9-08aaa599372e",
 	// 		"name": "Smile Kaur",
-	// 		"nonce": "n_Od8bsyCV2Z6zA48Tfkg7",
+	// 		"nonce": "n_Od8bsyCV2Z6zA48Tfkg7",Random nonce to guarantee uniqueness of use if the operation can only be executed once (optional)
 	// 		"preferred_username": "jasdeep@yopmail.com",
 	// 		"session_state": "68b2a086-482f-4e6f-92b5-83460fa1d2d8",
 	// 		"sid": "68b2a086-482f-4e6f-92b5-83460fa1d2d8",
-	// 		"sub": "620a4ae4-65c1-402e-8be7-defab24954a1",
+	// 		"sub": "620a4ae4-65c1-402e-8be7-defab24954a1",  ID of the user
 	// 		"typ": "ID"
 	// 	},
 	// 	"UserInfoClaims": {
@@ -163,5 +169,4 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 	// 		"sub": "620a4ae4-65c1-402e-8be7-defab24954a1"
 	// 	}
 	// }
-
 }

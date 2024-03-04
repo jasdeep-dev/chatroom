@@ -26,6 +26,7 @@ func startHTTP() {
 	http.HandleFunc("/message", messageHandler)
 	http.HandleFunc("/login", loginHandler)
 	http.HandleFunc("/oauth2", callbackHandler)
+	http.HandleFunc("/logout", logoutHandler)
 
 	fmt.Println("HTTP Server listening on", Settings.HttpServer)
 	err := http.ListenAndServe(Settings.HttpServer, nil) // Start the server on port 8080
@@ -141,4 +142,22 @@ func usersUpdateHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Respond back to client
 	json.NewEncoder(w).Encode(map[string]string{"status": "success"})
+}
+
+func logoutHandler(w http.ResponseWriter, r *http.Request) {
+	// <scheme>://<host>:<port>/auth/realms/<realmName>/protocol/openid-connect/logout
+
+	// {
+	// 	"client_id" : "<client_id>",
+	// 	"client_secret" : "<client_secret>",
+	// 	"refresh_token" : "<refresh_token>"
+	// }
+
+	// {
+	// 	"Authorization" : "Bearer <access_token>",
+	// 	"Content-Type" : "application/x-www-form-urlencoded"
+	// }
+
+	// request POST
+	fmt.Println()
 }

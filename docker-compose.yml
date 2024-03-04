@@ -26,6 +26,14 @@ services:
     environment:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_DB: postgres
+      KC_DB_USERNAME: chat
+      KC_DB_URL_DATABASE: chatroom
+      KC_DB_PASSWORD: Chat123#
+      KC_DB_URL_HOST: db
+      KC_DB_URL_PORT: 5432
     ports:
       - 9000:8080
     command: "start-dev"
+    depends_on:
+      - db
