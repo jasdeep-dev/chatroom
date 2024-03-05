@@ -1,4 +1,3 @@
-# Use postgres/example user/password credentials
 version: '3.9'
 
 services:
@@ -14,6 +13,8 @@ services:
       POSTGRES_PASSWORD: Chat123#
       POSTGRES_USER: chat
       POSTGRES_DB: chatroom
+    volumes:
+      - chatroom-db:/var/lib/postgresql/data
 
   adminer:
     image: adminer
@@ -37,3 +38,6 @@ services:
     command: "start-dev"
     depends_on:
       - db
+
+volumes:
+  chatroom-db:

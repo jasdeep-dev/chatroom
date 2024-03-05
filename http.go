@@ -1,15 +1,11 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"html/template"
-	"io"
 	"log"
 	"net/http"
-	"net/url"
-	"os"
 	"time"
 )
 
@@ -149,60 +145,13 @@ func usersUpdateHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func logoutHandler(w http.ResponseWriter, r *http.Request) {
-	// Define the URL for logout endpoint
-	logoutURL := fmt.Sprintf("%s/realms/%s/protocol/openid-connect/logout",
-		os.Getenv("KEYCLOAK_URL"),
-		os.Getenv("REALM_NAME"),
-	)
 
-	refreshToken, error := r.Cookie("refresh_token")
-	if error != nil {
-		fmt.Println("Error in cookies", error)
-	}
-
-	accessToken, error := r.Cookie("access_token")
-	if error != nil {
-		fmt.Println("Error in cookies", error)
-	}
-
-	// Create a map to hold the form data
-	formData := url.Values{}
-	formData.Set("client_id", os.Getenv("CLIENT_ID"))
-	formData.Set("client_secret", os.Getenv("CLIENT_SECRET"))
-	formData.Set("refresh_token", refreshToken.Value)
-
-	// Create a new HTTP POST request with the form data
-	req, err := http.NewRequest("POST", logoutURL, bytes.NewBufferString(formData.Encode()))
-	if err != nil {
-		fmt.Println("Error creating request:", err)
-		os.Exit(1)
-	}
-
-	// Set the Content-Type header to application/x-www-form-urlencoded
-	req.Header.Set("Authorization", "Bearer "+accessToken.Value)
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-
-	// Make the request
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		fmt.Println("Error making request:", err)
-		os.Exit(1)
-	}
-	defer resp.Body.Close()
-
-	// Check the response status
-	if resp.StatusCode != http.StatusNoContent {
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("Failed to read response body: %v", err), http.StatusInternalServerError)
-			return
-		}
-		fmt.Println("err", resp.Status, body)
-	} else {
-		DeleteCookie("session_id", w)
-		http.Redirect(w, r, "/", http.StatusFound)
-	}
+	DeleteCookie("session_id", w)
+	DeleteCookie("access_token", w)
+	DeleteCookie("refresh_token", w)
+	DeleteCookie("state", w)
+	DeleteCookie("nonce", w)
+	http.Redirect(w, r, "/", http.StatusFound)
 }
 
 func DeleteCookie(name string, w http.ResponseWriter) {

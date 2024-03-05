@@ -11,10 +11,14 @@
       <div tabindex="0" role="button" class="btn rounded-btn capitalize bg-base-300 btn-sm" class="username">{{$currentUser}}</div>
     </div>
 
-    <form action="/logout" method="post">
+    <!-- <form action="/logout" method="post">
+      <input type="submit" class="btn btn-ghost rounded-btn" class="username" value="Logout">
+    </form> -->
+    <form action="http://localhost:9000/realms/chatroom/protocol/openid-connect/logout" method="post">
+      <input type="hidden" value="chatroom" name="client_id"/>
+      <input name="post_logout_redirect_uri" value="http://localhost:8080/logout" type="hidden"/>
       <input type="submit" class="btn btn-ghost rounded-btn" class="username" value="Logout">
     </form>
-
 		<div class="dropdown dropdown-end">
       <div tabindex="0" role="button" class="btn btn-ghost rounded-btn">Theme</div>
       <ul tabindex="0" class="dropdown-content z-[1] p-2 shadow-2xl bg-base-300 rounded-box w-52">
