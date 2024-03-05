@@ -11,7 +11,9 @@
       <div tabindex="0" role="button" class="btn rounded-btn capitalize bg-base-300 btn-sm" class="username">{{$currentUser}}</div>
     </div>
 
-    <div tabindex="0" role="button" class="btn btn-ghost rounded-btn" class="username" role="button" onclick="logout();">Log out</div>
+    <form action="/logout" method="post">
+      <input type="submit" class="btn btn-ghost rounded-btn" class="username" value="Logout">
+    </form>
 
 		<div class="dropdown dropdown-end">
       <div tabindex="0" role="button" class="btn btn-ghost rounded-btn">Theme</div>

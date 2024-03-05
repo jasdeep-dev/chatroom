@@ -1,11 +1,15 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"io"
 	"log"
 	"net/http"
+	"net/url"
+	"os"
 	"time"
 )
 
@@ -100,6 +104,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Unable to render templates.", err)
 		w.Write([]byte(err.Error()))
 	}
+	// createNewProvider(w, r)
 }
 
 func messageHandler(w http.ResponseWriter, r *http.Request) {
@@ -144,19 +149,66 @@ func usersUpdateHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func logoutHandler(w http.ResponseWriter, r *http.Request) {
-	// <scheme>://<host>:<port>/auth/realms/<realmName>/protocol/openid-connect/logout
+	// Define the URL for logout endpoint
+	logoutURL := fmt.Sprintf("%s/realms/%s/protocol/openid-connect/logout",
+		os.Getenv("KEYCLOAK_URL"),
+		os.Getenv("REALM_NAME"),
+	)
 
-	// {
-	// 	"client_id" : "<client_id>",
-	// 	"client_secret" : "<client_secret>",
-	// 	"refresh_token" : "<refresh_token>"
-	// }
+	refreshToken, error := r.Cookie("refresh_token")
+	if error != nil {
+		fmt.Println("Error in cookies", error)
+	}
 
-	// {
-	// 	"Authorization" : "Bearer <access_token>",
-	// 	"Content-Type" : "application/x-www-form-urlencoded"
-	// }
+	accessToken, error := r.Cookie("access_token")
+	if error != nil {
+		fmt.Println("Error in cookies", error)
+	}
 
-	// request POST
-	fmt.Println()
+	// Create a map to hold the form data
+	formData := url.Values{}
+	formData.Set("client_id", os.Getenv("CLIENT_ID"))
+	formData.Set("client_secret", os.Getenv("CLIENT_SECRET"))
+	formData.Set("refresh_token", refreshToken.Value)
+
+	// Create a new HTTP POST request with the form data
+	req, err := http.NewRequest("POST", logoutURL, bytes.NewBufferString(formData.Encode()))
+	if err != nil {
+		fmt.Println("Error creating request:", err)
+		os.Exit(1)
+	}
+
+	// Set the Content-Type header to application/x-www-form-urlencoded
+	req.Header.Set("Authorization", "Bearer "+accessToken.Value)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	// Make the request
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("Error making request:", err)
+		os.Exit(1)
+	}
+	defer resp.Body.Close()
+
+	// Check the response status
+	if resp.StatusCode != http.StatusNoContent {
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Failed to read response body: %v", err), http.StatusInternalServerError)
+			return
+		}
+		fmt.Println("err", resp.Status, body)
+	} else {
+		DeleteCookie("session_id", w)
+		http.Redirect(w, r, "/", http.StatusFound)
+	}
+}
+
+func DeleteCookie(name string, w http.ResponseWriter) {
+	http.SetCookie(w, &http.Cookie{
+		Name:   name,
+		MaxAge: -1,
+		Path:   "/",
+	})
 }

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/joho/godotenv"
 )
 
 type Users map[string]User
@@ -46,13 +47,18 @@ func init() {
 
 func main() {
 	// Connect to database
+	err := godotenv.Load()
+	if err != nil {
+		fmt.Println("Error loading .env file", err)
+	}
+
 	ctx := context.Background()
 	DBConn = establishConnection(ctx)
 	defer DBConn.Close(ctx)
 
 	migrateDatabase(ctx)
 	// Read config file
-	err := readConfigFromFile("./config.json")
+	err = readConfigFromFile("./config.json")
 	if err != nil {
 		log.Fatal("Could not read the config file: ", err)
 	}

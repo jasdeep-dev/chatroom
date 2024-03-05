@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/jackc/pgx/v5"
@@ -13,15 +14,23 @@ import (
 
 func establishConnection(ctx context.Context) *pgx.Conn {
 	// Define the connection parameters
+
 	config, err := pgx.ParseConfig("")
 	if err != nil {
 		log.Fatalf("Failed to parse config: %v\n", err)
 	}
-	config.User = "chat"
-	config.Password = "Chat123#"
-	config.Host = "localhost"
-	config.Port = 5432
-	config.Database = "chatroom"
+
+	portStr := os.Getenv("POSTGRES_PORT")
+	port, err := strconv.ParseUint(portStr, 10, 16)
+	if err != nil {
+		log.Fatal("Error parsing port:", err)
+	}
+
+	config.User = os.Getenv("POSTGRES_USER")
+	config.Password = os.Getenv("POSTGRES_PASSWORD")
+	config.Host = os.Getenv("POSTGRES_HOST")
+	config.Port = uint16(port)
+	config.Database = os.Getenv("POSTGRES_DB")
 
 	// Use config to establish the connection
 	conn, err := pgx.ConnectConfig(ctx, config)
@@ -71,10 +80,6 @@ func migrateDatabase(ctx context.Context) {
 	}
 
 	fmt.Println("All migrations executed successfully.")
-}
-
-func databaseUp(ctx context.Context) {
-
 }
 
 // Function to read SQL queries from file

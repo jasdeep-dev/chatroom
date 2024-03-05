@@ -3,8 +3,10 @@ package main
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/coreos/go-oidc/v3/oidc"
@@ -35,13 +37,35 @@ type IDTokenClaims struct {
 	Email             string `json:"email"`
 }
 
+func Oauth2Config(ctx context.Context) (oauth2.Config, *oidc.IDTokenVerifier, error) {
+	provider, err := oidc.NewProvider(ctx,
+		fmt.Sprintf("%s/realms/%s", os.Getenv("KEYCLOAK_URL"), os.Getenv("REALM_NAME")))
+
+	if err != nil {
+		return oauth2.Config{}, nil, err
+	}
+
+	config := oauth2.Config{
+		ClientID:     os.Getenv("CLIENT_ID"),
+		ClientSecret: os.Getenv("CLIENT_SECRET"),
+		Endpoint:     provider.Endpoint(),
+		RedirectURL:  os.Getenv("APP_URL") + "/oauth2",
+		Scopes:       []string{oidc.ScopeOpenID, "profile", "email"},
+	}
+
+	oidcConfig := &oidc.Config{
+		ClientID: config.ClientID,
+	}
+
+	verifier := provider.Verifier(oidcConfig)
+	return config, verifier, nil
+}
+
 func createNewProvider(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
-
-	provider, err := oidc.NewProvider(ctx, "http://localhost:9000/realms/chatroom")
+	config, _, err := Oauth2Config(ctx)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
 	}
 
 	state, err := randString(16)
@@ -59,19 +83,15 @@ func createNewProvider(w http.ResponseWriter, r *http.Request) {
 	setCallbackCookie(w, r, "state", state)
 	setCallbackCookie(w, r, "nonce", nonce)
 
-	config := oauth2.Config{
-		ClientID:     "chatroom",
-		ClientSecret: "oG3CyRoHYOKYRUo4y8kTOanb2M0xeVpS",
-		Endpoint:     provider.Endpoint(),
-		RedirectURL:  "http://localhost:8080/oauth2",
-		Scopes:       []string{oidc.ScopeOpenID, "profile", "email"},
-	}
-
 	http.Redirect(w, r, config.AuthCodeURL(state, oidc.Nonce(nonce)), http.StatusFound)
 }
 
 func callbackHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
+	config, verifier, err := Oauth2Config(ctx)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 
 	state, err := r.Cookie("state")
 	if err != nil {
@@ -81,25 +101,6 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Query().Get("state") != state.Value {
 		http.Error(w, "state did not match", http.StatusBadRequest)
 		return
-	}
-
-	provider, err := oidc.NewProvider(ctx, "http://localhost:9000/realms/chatroom")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	oidcConfig := &oidc.Config{
-		ClientID: "chatroom",
-	}
-
-	verifier := provider.Verifier(oidcConfig)
-
-	config := oauth2.Config{
-		ClientID:     "chatroom",
-		ClientSecret: "oG3CyRoHYOKYRUo4y8kTOanb2M0xeVpS",
-		Endpoint:     provider.Endpoint(),
-		RedirectURL:  "http://localhost:8080/oauth2",
-		Scopes:       []string{oidc.ScopeOpenID, "profile", "email"},
 	}
 
 	oauth2Token, err := config.Exchange(ctx, r.URL.Query().Get("code"))
@@ -139,10 +140,28 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.SetCookie(w, &http.Cookie{
-		Name:  "session_id",
-		Value: idTokenClaims.Sid,
-		Path:  "/",
+		Name:     "session_id",
+		Value:    idTokenClaims.Sid,
+		Path:     "/",
+		HttpOnly: true,
 	})
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "access_token",
+		Value:    oauth2Token.AccessToken,
+		Path:     "/",
+		HttpOnly: true,
+	})
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    oauth2Token.RefreshToken,
+		Path:     "/",
+		HttpOnly: true,
+	})
+
+	DeleteCookie("state", w)
+	DeleteCookie("nonce", w)
 
 	http.Redirect(w, r, "/", http.StatusFound)
 }
