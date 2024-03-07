@@ -5,11 +5,14 @@ CREATE TABLE IF NOT EXISTS users (
     name TEXT UNIQUE,
     is_online BOOLEAN,
     theme TEXT,
-    password_hash TEXT
+    preferred_username TEXT,
+    given_name TEXT,
+    family_name TEXT,
+    email TEXT UNIQUE
 );
 
 -- Seed data for users table
-INSERT INTO users (name, is_online, theme, password_hash) VALUES
-    ('Alice', true, 'default', '$2a$10$RlT/sPiel/dFy8jHlDxfT.XLRdTS3yM2tL4eugh7cJvS5B468tqlu'),
-    ('Bob', false, 'dark', '$2a$10$RlT/sPiel/dFy8jHlDxfT.XLRdTS3yM2tL4eugh7cJvS5B468tqlu'),
-    ('Charlie', true, 'light', '$2a$10$RlT/sPiel/dFy8jHlDxfT.XLRdTS3yM2tL4eugh7cJvS5B468tqlu');
+INSERT INTO users (name, is_online, theme, preferred_username, given_name, family_name, email)
+VALUES 
+    ('John Doe', true, 'light', 'john_doe', 'John', 'Doe', 'john@example.com'),
+    ('Jane Smith', false, 'dark', 'jane_smith', 'Jane', 'Smith', 'jane@example.com');

@@ -10,18 +10,24 @@ import (
 	"github.com/joho/godotenv"
 )
 
-type Users map[string]User
-
-var users = make(Users)
-
 type User struct {
-	Name         string
-	IsOnline     bool
-	Theme        string
-	PasswordHash string
+	ID                int
+	Name              string
+	IsOnline          bool
+	Theme             string
+	PreferredUsername string
+	GivenName         string
+	FamilyName        string
+	Email             string
 }
 
+type user map[int]User
+
+var Users = make(user)
+
 type Messages []Message
+
+var MessagesArray Messages
 
 var messages Messages
 
@@ -29,13 +35,15 @@ type Message struct {
 	TimeStamp time.Time
 	Text      string
 	Name      string
+	Email     string
 }
 
 var genericMessage map[string]string
 var messageChannel = make(chan Message, 100)
 
-var userChannel = make(chan User, 100)
 var DBConn *pgx.Conn
+
+var userNewChannel = make(chan User, 100)
 
 func init() {
 	// Initialize the map inside an init function
@@ -57,22 +65,27 @@ func main() {
 	defer DBConn.Close(ctx)
 
 	migrateDatabase(ctx)
+	getUsers(ctx)
+	getMessages(ctx)
+
+	fmt.Println("message", MessagesArray)
 	// Read config file
 	err = readConfigFromFile("./config.json")
 	if err != nil {
 		log.Fatal("Could not read the config file: ", err)
 	}
-
 	go messageReceiver()
 	go userReciver()
 	go startWebSocket()
 	startHTTP()
-	fmt.Println("END")
 }
 
 func messageReceiver() {
 	for message := range messageChannel {
-		fmt.Println("Number of users: ", len(users))
+		fmt.Println("Number of users: ", len(Users))
+		InsertMessage(message)
+		MessagesArray = append(MessagesArray, message)
+
 		messages = append(messages, message)
 
 		deliverMessageToWebSocketConnections(message)
@@ -80,8 +93,10 @@ func messageReceiver() {
 }
 
 func userReciver() {
-	for user := range userChannel {
-		deliverUsersToWebSocketConnections(user)
+	for user := range userNewChannel {
+		if user.Name != "" {
+			deliverUsersToWebSocketConnections(user)
+		}
 	}
 }
 

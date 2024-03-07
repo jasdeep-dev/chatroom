@@ -1,12 +1,12 @@
 {{define "chatroom"}}
 	{{ $currentUser := .CurrentUser}}
 	<script>
-		const currentUser = "{{$currentUser}}";
+		const currentUser = "{{$currentUser.Name}}";
 	</script>
 	<div class="overflow-scroll" id="textchat">
 	{{range .Messages}}
 
-		{{if eq $currentUser .Name}}
+		{{if eq $currentUser.Name .Name}}
 			<div class="chat chat-end" id="{{ .Name }}">
 				<div class="chat-header">
 					<span class="capitalize">{{.Name}}</span>
@@ -28,7 +28,7 @@
 	{{end}}
 	</div>
 	<div>
-	{{if eq $currentUser ""}}
+	{{if eq $currentUser.Name ""}}
 	{{else}}
 		{{template "messageform"}}
 	{{end}}

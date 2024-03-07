@@ -10,9 +10,9 @@ import (
 )
 
 type TemplateData struct {
-	Users       map[string]User
+	Users       map[int]User
 	Messages    []Message
-	CurrentUser string
+	CurrentUser KeyCloakUserInfo
 	LoggedIn    time.Time
 }
 
@@ -51,18 +51,18 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("error in cookie", err)
 	}
 
-	if cookie != nil {
-		fmt.Println("Cookie is present")
-	} else {
+	if cookie == nil {
 		createNewProvider(w, r)
 		return
 	}
+
 	session := UserSessions[cookie.Value]
 
+	fmt.Println("userArray", Users)
 	data := TemplateData{
-		Users:       users,
-		Messages:    messages,
-		CurrentUser: session.Name,
+		Users:       Users,
+		Messages:    MessagesArray,
+		CurrentUser: session.KeyCloakUser,
 		LoggedIn:    session.LoggedInAt,
 	}
 
@@ -83,7 +83,6 @@ func userHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error parsing form", http.StatusBadRequest)
 		return
 	}
-	createHTTPUser(w, r)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
@@ -100,7 +99,6 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Unable to render templates.", err)
 		w.Write([]byte(err.Error()))
 	}
-	// createNewProvider(w, r)
 }
 
 func messageHandler(w http.ResponseWriter, r *http.Request) {
@@ -128,8 +126,8 @@ func usersUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Error in cookies", error)
 	}
 
-	name := UserSessions[cookie.Value].Name
-	current_user := users[name]
+	id := UserSessions[cookie.Value].ID
+	current_user := Users[id]
 
 	err := json.NewDecoder(r.Body).Decode(&current_user)
 	if err != nil {
@@ -138,7 +136,7 @@ func usersUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	users[name] = current_user
+	Users[id] = current_user
 
 	// Respond back to client
 	json.NewEncoder(w).Encode(map[string]string{"status": "success"})
@@ -147,8 +145,6 @@ func usersUpdateHandler(w http.ResponseWriter, r *http.Request) {
 func logoutHandler(w http.ResponseWriter, r *http.Request) {
 
 	DeleteCookie("session_id", w)
-	DeleteCookie("access_token", w)
-	DeleteCookie("refresh_token", w)
 	DeleteCookie("state", w)
 	DeleteCookie("nonce", w)
 	http.Redirect(w, r, "/", http.StatusFound)

@@ -21,7 +21,10 @@ function updateMessages(jsondata) {
 }
 
 function updateUsers(jsondata){
-    var user = document.getElementById("user_"+jsondata.Name);
+    if(jsondata.Name == ""){
+        return
+    }
+    var user = document.getElementById("user_"+jsondata.ID);
     if(user == null){
 
         // Assuming you have the user's name in a variable

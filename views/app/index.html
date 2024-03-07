@@ -19,13 +19,8 @@
                 <p class="text-lg font-bold text-center pb-2">Users</p>
                 <ul class="overflow-scroll" id="users_list">
                     {{range .Users}}
-                        <li class="py-2 p-4 rounded-lg mb-2 bg-base-100 capitalize" id="user_{{.Name}}">
-                            {{if .IsOnline}}
-                                <span class="indicator-item badge badge-xs badge-success" id="status_{{.Name}}"></span>
-                            {{else}}
-                                <span class="indicator-item badge badge-xs" id="status_{{.Name}}"></span>
-                            {{end}}
-
+                        <li class="py-2 p-4 rounded-lg mb-2 bg-base-100 capitalize" id="user_{{.ID}}">
+                            <span class="indicator-item badge badge-xs{{if .IsOnline}} badge-success{{end}}" id="status_{{.Name}}"></span>
                             {{.Name}}
                         </li>
                     {{end}}

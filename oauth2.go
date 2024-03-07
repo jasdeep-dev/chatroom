@@ -3,8 +3,10 @@ package main
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"time"
@@ -36,6 +38,18 @@ type IDTokenClaims struct {
 	FamilyName        string `json:"family_name"`
 	Email             string `json:"email"`
 }
+
+type KeyCloakUserInfo struct {
+	Sub               string `json:"sub"`
+	EmailVerified     bool   `json:"email_verified"`
+	Name              string `json:"name"`
+	PreferredUsername string `json:"preferred_username"`
+	GivenName         string `json:"given_name"`
+	FamilyName        string `json:"family_name"`
+	Email             string `json:"email"`
+}
+
+var KeyCloakUser KeyCloakUserInfo
 
 func Oauth2Config(ctx context.Context) (oauth2.Config, *oidc.IDTokenVerifier, error) {
 	provider, err := oidc.NewProvider(ctx,
@@ -146,20 +160,30 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 	})
 
-	http.SetCookie(w, &http.Cookie{
-		Name:     "access_token",
-		Value:    oauth2Token.AccessToken,
-		Path:     "/",
-		HttpOnly: true,
-	})
+	user := getKeyCloakUserInfo(oauth2Token.AccessToken)
 
-	http.SetCookie(w, &http.Cookie{
-		Name:     "refresh_token",
-		Value:    oauth2Token.RefreshToken,
-		Path:     "/",
-		HttpOnly: true,
-	})
+	newUser := User{
+		Name:              idTokenClaims.Name,
+		IsOnline:          true,
+		Theme:             Settings.DefaultTheme,
+		PreferredUsername: idTokenClaims.PreferredUsername,
+		GivenName:         idTokenClaims.GivenName,
+		FamilyName:        idTokenClaims.FamilyName,
+		Email:             idTokenClaims.Email,
+	}
+	var currentUser *User
+	currentUser, err = FindUserByEmail(newUser.Email)
+	if err != nil {
+		currentUser = insertUser(newUser)
+	}
 
+	UserSessions[idTokenClaims.Sid] = UserSession{
+		ID:           currentUser.ID,
+		Name:         idTokenClaims.Name,
+		AccessToken:  oauth2Token.AccessToken,
+		KeyCloakUser: user,
+		LoggedInAt:   time.Now(),
+	}
 	DeleteCookie("state", w)
 	DeleteCookie("nonce", w)
 
@@ -183,4 +207,35 @@ func setCallbackCookie(w http.ResponseWriter, r *http.Request, name, value strin
 		HttpOnly: true,
 	}
 	http.SetCookie(w, c)
+}
+
+func getKeyCloakUserInfo(access_token string) KeyCloakUserInfo {
+
+	url := fmt.Sprintf("%s/realms/%s/protocol/openid-connect/userinfo",
+		os.Getenv("KEYCLOAK_URL"),
+		os.Getenv("REALM_NAME"),
+	)
+
+	client := &http.Client{}
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		log.Fatal("Error creating request: ", err)
+	}
+
+	req.Header.Set("Authorization", "Bearer "+access_token)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatal("Error sending request: ", err)
+	}
+	defer resp.Body.Close()
+
+	var keyCloakUser KeyCloakUserInfo
+
+	err = json.NewDecoder(resp.Body).Decode(&keyCloakUser)
+	if err != nil {
+		fmt.Println("Error decoding JSON: ", err)
+	}
+	return keyCloakUser
 }

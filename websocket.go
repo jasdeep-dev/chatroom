@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -43,18 +42,15 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	UserSessions[sessionID] = UserSession{
-		Name:             session.Name,
-		LoggedInAt:       time.Now(),
-		SocketConnection: conn,
-	}
+	session.SocketConnection = conn
+	UserSessions[sessionID] = session
 
-	if user, exists := users[session.Name]; exists {
+	if user, exists := Users[session.ID]; exists {
 		user.IsOnline = true
-		users[session.Name] = user
+		Users[session.ID] = user
 	}
 
-	userChannel <- users[session.Name]
+	userNewChannel <- Users[session.ID]
 
 	listenForMessages(sessionID)
 }
@@ -68,10 +64,10 @@ func listenForMessages(sessionID string) {
 			if strings.Contains(err.Error(), "close 1001") {
 				log.Println("Session terminated by client: ", sessionID)
 
-				user := users[UserSessions[sessionID].Name]
+				user := Users[UserSessions[sessionID].ID]
 				user.IsOnline = false
-				users[UserSessions[sessionID].Name] = user
-				userChannel <- user
+				Users[UserSessions[sessionID].ID] = user
+				userNewChannel <- Users[UserSessions[sessionID].ID]
 
 			} else {
 				log.Println("Error reading message:", err)
