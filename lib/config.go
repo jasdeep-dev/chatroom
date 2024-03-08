@@ -1,4 +1,4 @@
-package main
+package lib
 
 import (
 	"encoding/json"
@@ -17,7 +17,7 @@ type Config struct {
 	WelcomeBackMessage string `json:"WelcomeBackMessage"`
 }
 
-func readConfigFromFile(filename string) error {
+func ReadConfigFromFile(filename string) error {
 	data, err := os.ReadFile(filename)
 	if err != nil {
 		return err

@@ -1,7 +1,6 @@
-package main
+package lib
 
 import (
-	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -15,7 +14,7 @@ type TemplateData struct {
 	LoggedIn    time.Time
 }
 
-func startHTTP() {
+func StartHTTP() {
 	fs := http.FileServer(http.Dir("./public"))
 	http.Handle("/public/", http.StripPrefix("/public/", fs))
 
@@ -26,7 +25,7 @@ func startHTTP() {
 	http.HandleFunc("/oauth2", callbackHandler)
 	http.HandleFunc("/logout", logoutHandler)
 
-	fmt.Println("HTTP Server listening on", Settings.HttpServer)
+	log.Println("HTTP Server listening on", Settings.HttpServer)
 	err := http.ListenAndServe(Settings.HttpServer, nil) // Start the server on port 8080
 	if err != nil {
 		log.Fatal("error starting http server", err)
@@ -39,14 +38,14 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 	}).ParseGlob("./views/app/*.html")
 
 	if err != nil {
-		fmt.Println("can't parse the files", err)
+		log.Println("can't parse the files", err)
 		w.Write([]byte(err.Error()))
 		return
 	}
 
 	cookie, err := r.Cookie("session_id")
 	if err != nil {
-		fmt.Println("error in cookie", err)
+		log.Println("error in cookies", err)
 	}
 
 	if cookie == nil {
@@ -65,7 +64,7 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = tmpl.ExecuteTemplate(w, "index.html", data)
 	if err != nil {
-		fmt.Println("Unable to render templates.", err)
+		log.Println("Unable to render templates.", err)
 		w.Write([]byte(err.Error()))
 	}
 }
@@ -86,14 +85,14 @@ func userHandler(w http.ResponseWriter, r *http.Request) {
 func loginHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl, err := template.ParseFiles("./views/login/new.html")
 	if err != nil {
-		fmt.Println("can't parse the files", err)
+		log.Println("can't parse the files", err)
 		w.Write([]byte(err.Error()))
 		return
 	}
 
 	err = tmpl.Execute(w, r.Header.Get("ERROR"))
 	if err != nil {
-		fmt.Println("Unable to render templates.", err)
+		log.Println("Unable to render templates.", err)
 		w.Write([]byte(err.Error()))
 	}
 }
@@ -109,7 +108,7 @@ func messageHandler(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("session_id")
 
 	if err != nil {
-		fmt.Println("Error in cookies", err)
+		log.Println("Error in cookies", err)
 	} else {
 		sendMessage(inputMessage, cookie.Value)
 	}

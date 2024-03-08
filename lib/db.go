@@ -1,4 +1,4 @@
-package main
+package lib
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func establishConnection(ctx context.Context) *pgxpool.Pool {
+func EstablishConnection(ctx context.Context) *pgxpool.Pool {
 	// Define the connection parameters
 
 	config, err := pgxpool.ParseConfig("")
@@ -45,7 +45,7 @@ func migrateDatabase(ctx context.Context) {
 	migrationsDir := "db/migrations"
 	files, err := os.ReadDir(migrationsDir)
 	if err != nil {
-		fmt.Println("Error reading migrations directory:", err)
+		log.Println("Error reading migrations directory:", err)
 		return
 	}
 
@@ -72,7 +72,7 @@ func migrateDatabase(ctx context.Context) {
 		}
 	}
 
-	fmt.Println("All migrations executed successfully.")
+	log.Println("All migrations executed successfully.")
 }
 
 // Function to read SQL queries from file

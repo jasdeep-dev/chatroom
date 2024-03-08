@@ -1,7 +1,6 @@
-package main
+package lib
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -19,7 +18,7 @@ var upgrader = websocket.Upgrader{
 func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		if r := recover(); r != nil {
-			fmt.Println("Recovered from panic:", r)
+			log.Println("Recovered from panic:", r)
 		}
 	}()
 
@@ -58,15 +57,21 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 		Users[session.ID] = user
 	}
 
-	userChannel <- Users[session.ID]
+	UserChannel <- Users[session.ID]
 
-	listenForMessages(sessionID)
+	listenForMessages(r)
 }
 
-func listenForMessages(sessionID string) {
+func listenForMessages(r *http.Request) {
+	sessionCookie, err := r.Cookie("session_id")
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	sessionID := sessionCookie.Value
+
 	conn := UserSessions[sessionID].SocketConnection
 	for {
-
 		_, message, err := conn.ReadMessage()
 		if err != nil {
 			if strings.Contains(err.Error(), "close 1001") {
@@ -75,7 +80,7 @@ func listenForMessages(sessionID string) {
 				user := Users[UserSessions[sessionID].ID]
 				user.IsOnline = false
 				Users[UserSessions[sessionID].ID] = user
-				userChannel <- Users[UserSessions[sessionID].ID]
+				UserChannel <- Users[UserSessions[sessionID].ID]
 
 				UpdateUser(user)
 
@@ -91,7 +96,7 @@ func listenForMessages(sessionID string) {
 	}
 }
 
-func startWebSocket() {
+func StartWebSocket() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ws", handleWebSocket) // Register the WebSocket handler with the ServeMux
 

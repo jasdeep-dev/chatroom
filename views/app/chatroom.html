@@ -2,27 +2,18 @@
 	{{ $currentUser := .CurrentUser}}
 	<script>
 		const currentUser = "{{$currentUser.Name}}";
+		console.log(currentUser)
 	</script>
-	<div class="overflow-scroll" id="textchat">
+	<div id="textchat">
 	{{range .Messages}}
 
 		{{if eq $currentUser.Name .Name}}
-			<div class="chat chat-end" id="{{ .Name }}">
-				<div class="chat-header">
-					<span class="capitalize">{{.Name}}</span>
-					<!-- <time class="text-xs opacity-50">{{formatTime .TimeStamp}}</time> -->
-				</div>
-				<div class="chat-bubble">{{.Text}}</div>
-				<!-- <div class="chat-footer opacity-50">Seen</div> -->
+			<div id="{{.Name}}">
+				<div>Me: {{.Text}}</div>
 			</div>
 		{{else}}
-			<div class="chat chat-start" id="{{ .Name }}">
-				<div class="chat-header">
-					<span class="capitalize">{{.Name}}</span>
-					<!-- <time class="text-xs opacity-50">{{formatTime .TimeStamp}}</time> -->
-				</div>
-				<div class="chat-bubble">{{.Text}}</div>
-				<!-- <div class="chat-footer opacity-50">Seen</div> -->
+			<div id="{{.Name}}">
+				<div>{{.Name}}: {{.Text}}</div>
 			</div>
 		{{end}}
 	{{end}}

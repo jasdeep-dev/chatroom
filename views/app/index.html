@@ -4,31 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
-    <link rel="stylesheet" href="public/style.css">
-    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.7.2/dist/full.min.css" rel="stylesheet" type="text/css" />
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- <link rel="stylesheet" href="public/style.css"> -->
+    <!-- <link href="https://cdn.jsdelivr.net/npm/daisyui@4.7.2/dist/full.min.css" rel="stylesheet" type="text/css" /> -->
+    <!-- <script src="https://cdn.tailwindcss.com"></script> -->
     <script src="public/main.js"></script>
     <script src="public/socket.js"></script>
     <script src="public/messages.js"></script>
 </head>
 <body>
-    <main class="container max-w-screen-lg mx-auto min-h-screen flex flex-col">
+    <main>
         {{template "navbar" .}}
-        <div class="flex flex-col w-full lg:flex-row flex-grow">
-            <div class="flex-grow card bg-base-300 rounded-box overflow-scroll p-3 min-w-80" style="height: calc(100vh - 100px)">
-                <p class="text-lg font-bold text-center pb-2">Users</p>
-                <ul class="overflow-scroll" id="users_list">
-                    {{range .Users}}
-                        <li class="py-2 p-4 rounded-lg mb-2 bg-base-100 capitalize" id="user_{{.ID}}">
-                            <span class="indicator-item badge badge-xs{{if .IsOnline}} badge-success{{end}}" id="status_{{.Name}}"></span>
-                            {{.Name}}
-                        </li>
-                    {{end}}
-                </ul>
-            </div> 
-            <div class="divider lg:divider-horizontal"></div> 
-            <div class="grid flex-grow card bg-base-300 rounded-box p-2 overflow-scroll" style="height: calc(100vh - 100px)">
-                <a class="text-lg font-bold text-center">Messages</a>
+        <div>
+            <p>Users</p>
+            <ul id="users_list">
+                {{range .Users}}
+                    <li id="user_{{.ID}}">
+                        <span class="{{if .IsOnline}}online{{end}}" id="status_{{.Name}}"></span>
+                        {{.Name}}
+                    </li>
+                {{end}}
+            </ul>
+            <hr/>
+            <div>
+                <p>Messages</p>
                 {{template "chatroom" .}}
             </div>
         </div>
@@ -61,6 +59,7 @@
         }
 
         function setTheme(value){
+            console.log(value);
             localStorage.setItem('theme', value);
         }
 

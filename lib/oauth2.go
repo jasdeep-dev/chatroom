@@ -1,4 +1,4 @@
-package main
+package lib
 
 import (
 	"crypto/rand"
@@ -109,47 +109,55 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 
 	state, err := r.Cookie("state")
 	if err != nil {
-		http.Error(w, "state not found", http.StatusBadRequest)
+		log.Println("state not found", err)
+		http.Redirect(w, r, "/", http.StatusFound)
 		return
 	}
 	if r.URL.Query().Get("state") != state.Value {
-		http.Error(w, "state did not match", http.StatusBadRequest)
+		log.Println("state did not match")
+		http.Redirect(w, r, "/", http.StatusFound)
 		return
 	}
 
 	oauth2Token, err := config.Exchange(ctx, r.URL.Query().Get("code"))
 	if err != nil {
-		http.Error(w, "Failed to exchange token: "+err.Error(), http.StatusInternalServerError)
+		log.Println("Failed to exchange token:", err)
+		http.Redirect(w, r, "/", http.StatusFound)
 		return
 	}
 
 	rawIDToken, ok := oauth2Token.Extra("id_token").(string)
 	if !ok {
-		http.Error(w, "No id_token field in oauth2 token.", http.StatusInternalServerError)
+		log.Println("No id_token field in oauth2 token.")
+		http.Redirect(w, r, "/", http.StatusFound)
 		return
 	}
 
 	idToken, err := verifier.Verify(ctx, rawIDToken)
 	if err != nil {
-		http.Error(w, "Failed to verify ID Token: "+err.Error(), http.StatusInternalServerError)
+		log.Println("Failed to verify ID Token:", err)
+		http.Redirect(w, r, "/", http.StatusFound)
 		return
 	}
 
 	nonce, err := r.Cookie("nonce")
 	if err != nil {
-		http.Error(w, "nonce not found", http.StatusBadRequest)
+		log.Println("nonce not found", err)
+		http.Redirect(w, r, "/", http.StatusFound)
 		return
 	}
 
 	if idToken.Nonce != nonce.Value {
-		http.Error(w, "nonce did not match", http.StatusBadRequest)
+		log.Println("nonce did not match")
+		http.Redirect(w, r, "/", http.StatusFound)
 		return
 	}
 
 	idTokenClaims := IDTokenClaims{}
 
 	if err := idToken.Claims(&idTokenClaims); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Println("Error in idtoken claims", err)
+		http.Redirect(w, r, "/", http.StatusFound)
 		return
 	}
 
@@ -186,6 +194,7 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 		KeyCloakUser: user,
 		LoggedInAt:   time.Now(),
 	}
+
 	DeleteCookie("state", w)
 	DeleteCookie("nonce", w)
 
@@ -237,7 +246,7 @@ func getKeyCloakUserInfo(access_token string) KeyCloakUserInfo {
 
 	err = json.NewDecoder(resp.Body).Decode(&keyCloakUser)
 	if err != nil {
-		fmt.Println("Error decoding JSON: ", err)
+		log.Println("Error decoding JSON: ", err)
 	}
 	return keyCloakUser
 }

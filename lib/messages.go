@@ -1,11 +1,58 @@
-package main
+package lib
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"time"
 )
+
+func MessageReceiver() {
+	for message := range MessageChannel {
+		InsertMessage(message)
+		MessagesArray = append(MessagesArray, message)
+
+		Messages = append(Messages, message)
+
+		deliverMessageToWebSocketConnections(message)
+	}
+}
+
+func UserReciver() {
+	for user := range UserChannel {
+		if user.Name != "" {
+			deliverUsersToWebSocketConnections(user)
+		}
+	}
+}
+
+func deliverMessageToWebSocketConnections(message Message) {
+	for _, userSession := range UserSessions {
+		if userSession.SocketConnection == nil {
+			continue
+		}
+		msg := struct {
+			Message Message
+		}{
+			Message: message,
+		}
+		userSession.SocketConnection.WriteJSON(msg)
+	}
+}
+
+func deliverUsersToWebSocketConnections(user User) {
+	for _, userSession := range UserSessions {
+		if userSession.SocketConnection == nil {
+			continue
+		}
+
+		usr := struct {
+			User User
+		}{
+			User: user,
+		}
+		userSession.SocketConnection.WriteJSON(usr)
+	}
+}
 
 func sendMessage(message string, sessionID string) {
 	if message == "" {
@@ -17,14 +64,14 @@ func sendMessage(message string, sessionID string) {
 	}
 
 	session := UserSessions[sessionID]
-	messageChannel <- Message{
+	MessageChannel <- Message{
 		Text:      message,
 		Name:      session.Name,
 		Email:     session.KeyCloakUser.Email,
 		TimeStamp: time.Now(),
 	}
 }
-func getMessages(ctx context.Context) {
+func GetMessages(ctx context.Context) {
 	query := `
 		SELECT m.timestamp, m.text, u.name, u.email
 		FROM messages m
@@ -47,10 +94,6 @@ func getMessages(ctx context.Context) {
 
 	if err := rows.Err(); err != nil {
 		log.Fatal(err)
-	}
-
-	for _, message := range MessagesArray {
-		fmt.Printf("Timestamp: %s, Text: %s, Name: %s, Email: %s\n", message.TimeStamp.Format(time.RFC3339), message.Text, message.Name, message.Email)
 	}
 }
 

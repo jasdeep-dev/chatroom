@@ -1,16 +1,14 @@
 {{define "messageform"}}
-<form method="post" action="/message" id="messageform" class="mt-2">
-    <label class="form-control">
-      <input type="text" placeholder="Messages" class="input input-bordered" id="message_input" name="message"/>
-    </label>
+<form method="post" action="/message" id="messageform">
+  <input type="text" placeholder="Messages" class="input input-bordered" id="message_input" name="message"/>
 </form>
+
 <script>
   window.onload = function() {
       document.getElementById('message_input').focus();
   };
 
   document.getElementById('messageform').addEventListener('submit', function(event) {
-    // Prevent the default form submission
     event.preventDefault();
     var message = document.getElementById('message_input');
     if(message.value == ""){
