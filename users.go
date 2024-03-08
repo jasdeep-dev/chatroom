@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"log"
 	"time"
@@ -93,23 +92,7 @@ var UserSessions = make(map[string]UserSession)
 // 	return hex.EncodeToString(b), nil
 // }
 
-func insertUser(user User) *User {
-	ctx := context.Background()
-	var id int
-	query := `INSERT INTO users (name, is_online, theme, preferred_username, given_name, family_name, email) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id;`
-
-	err := DBConn.QueryRow(ctx, query, user.Name, user.IsOnline, user.Theme, user.PreferredUsername, user.GivenName, user.FamilyName, user.Email).Scan(&id)
-	if err != nil {
-		log.Fatal("Error executing INSERT statement:", err)
-	}
-
-	user.ID = id
-	Users[id] = user
-	return &user
-}
-
 func getUsers(ctx context.Context) {
-
 	query := "SELECT id, name, is_online, theme, preferred_username, given_name, family_name, email FROM users LIMIT 10"
 
 	rows, err := DBConn.Query(ctx, query)
@@ -134,19 +117,18 @@ func getUsers(ctx context.Context) {
 		Users[user.ID] = user
 	}
 
+	fmt.Println("users", Users)
 	if err := rows.Err(); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func FindUserByEmail(email string) (*User, error) {
+func FindUserByEmail(email string) (User, error) {
 	var user User
+	ctx := context.Background()
 
-	// Prepare SQL query
 	query := "SELECT id, name, is_online, theme, preferred_username, given_name, family_name, email FROM users WHERE email = $1"
-
-	// Execute query and scan result into user struct
-	err := DBConn.QueryRow(context.Background(), query, email).Scan(
+	err := DBConn.QueryRow(ctx, query, email).Scan(
 		&user.ID,
 		&user.Name,
 		&user.IsOnline,
@@ -154,25 +136,20 @@ func FindUserByEmail(email string) (*User, error) {
 		&user.PreferredUsername,
 		&user.GivenName,
 		&user.FamilyName,
-		&user.Email)
+		&user.Email,
+	)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("user with email %s not found", email)
-		}
-		return nil, err
+		return user, fmt.Errorf("error scanning row: %w", err)
 	}
-
-	return &user, nil
+	return user, nil
 }
 
-func FindUserByID(id int) (*User, error) {
+func FindUserByID(id int) (User, error) {
 	var user User
+	ctx := context.Background()
 
-	// Prepare SQL query
 	query := "SELECT id, name, is_online, theme, preferred_username, given_name, family_name, email FROM users WHERE id = $1"
-
-	// Execute query and scan result into user struct
-	err := DBConn.QueryRow(context.Background(), query, id).Scan(
+	err := DBConn.QueryRow(ctx, query, id).Scan(
 		&user.ID,
 		&user.Name,
 		&user.IsOnline,
@@ -180,13 +157,45 @@ func FindUserByID(id int) (*User, error) {
 		&user.PreferredUsername,
 		&user.GivenName,
 		&user.FamilyName,
-		&user.Email)
+		&user.Email,
+	)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("user with id %d not found", id)
-		}
-		return nil, err
+		return user, fmt.Errorf("error scanning row: %w", err)
+	}
+	return user, nil
+}
+
+func insertUser(user User) User {
+	ctx := context.Background()
+	var id int
+	query := `INSERT INTO users (name, is_online, theme, preferred_username, given_name, family_name, email) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id;`
+
+	fmt.Println("inser user =>", user)
+	err := DBConn.QueryRow(ctx, query, user.Name, user.IsOnline, user.Theme, user.PreferredUsername, user.GivenName, user.FamilyName, user.Email).Scan(&id)
+	if err != nil {
+		log.Fatal("Error executing INSERT statement:", err)
 	}
 
-	return &user, nil
+	user.ID = id
+	Users[id] = user
+	fmt.Println("inserted User=>", user)
+	return user
+}
+
+func UpdateUser(user User) {
+	ctx := context.Background()
+	// Update statement
+	query := `UPDATE users 
+              SET name = $1, 
+                  is_online = $2, 
+                  theme = $3, 
+                  preferred_username = $4, 
+                  given_name = $5, 
+                  family_name = $6, 
+                  email = $7 
+              WHERE id = $8;`
+
+	// Execute the update statement
+	_ = DBConn.QueryRow(ctx, query, user.Name, user.IsOnline, user.Theme, user.PreferredUsername, user.GivenName, user.FamilyName, user.Email, user.ID)
+	log.Println("Field updated successfully", user.ID)
 }

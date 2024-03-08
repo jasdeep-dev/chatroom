@@ -15,6 +15,7 @@ services:
       POSTGRES_DB: chatroom
     volumes:
       - chatroom-db:/var/lib/postgresql/data
+      - ./postgresql.conf:/var/lib/postgresql/data/postgresql.conf
 
   keycloak-db:
     image: postgres

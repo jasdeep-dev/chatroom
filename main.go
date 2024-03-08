@@ -6,19 +6,19 @@ import (
 	"log"
 	"time"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 )
 
 type User struct {
-	ID                int
-	Name              string
-	IsOnline          bool
-	Theme             string
-	PreferredUsername string
-	GivenName         string
-	FamilyName        string
-	Email             string
+	ID                int    `sql:"id"`
+	Name              string `sql:"name"`
+	IsOnline          bool   `sql:"is_online"`
+	Theme             string `sql:"theme"`
+	PreferredUsername string `sql:"preferred_username"`
+	GivenName         string `sql:"given_name"`
+	FamilyName        string `sql:"family_name"`
+	Email             string `sql:"email"`
 }
 
 type user map[int]User
@@ -41,7 +41,7 @@ type Message struct {
 var genericMessage map[string]string
 var messageChannel = make(chan Message, 100)
 
-var DBConn *pgx.Conn
+var DBConn *pgxpool.Pool
 
 var userChannel = make(chan User, 100)
 
@@ -54,7 +54,6 @@ func init() {
 }
 
 func main() {
-
 	// Read config file
 	err := readConfigFromFile("./config.json")
 	if err != nil {
@@ -69,7 +68,7 @@ func main() {
 
 	ctx := context.Background()
 	DBConn = establishConnection(ctx)
-	defer DBConn.Close(ctx)
+	defer DBConn.Close()
 
 	// migrateDatabase(ctx)
 	getUsers(ctx)
@@ -83,7 +82,6 @@ func main() {
 
 func messageReceiver() {
 	for message := range messageChannel {
-		fmt.Println("Number of users: ", len(Users))
 		InsertMessage(message)
 		MessagesArray = append(MessagesArray, message)
 

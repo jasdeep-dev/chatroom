@@ -48,13 +48,14 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	if user, exists := Users[session.ID]; exists {
 		user.IsOnline = true
 		Users[session.ID] = user
+		UpdateUser(user)
 	} else {
 		user, err := FindUserByID(session.ID)
 		if err != nil {
 			log.Fatal("User does not exist", err)
 		}
 
-		Users[session.ID] = *user
+		Users[session.ID] = user
 	}
 
 	userChannel <- Users[session.ID]
@@ -75,6 +76,8 @@ func listenForMessages(sessionID string) {
 				user.IsOnline = false
 				Users[UserSessions[sessionID].ID] = user
 				userChannel <- Users[UserSessions[sessionID].ID]
+
+				UpdateUser(user)
 
 			} else {
 				log.Println("Error reading message:", err)

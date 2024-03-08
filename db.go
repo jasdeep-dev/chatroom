@@ -9,13 +9,13 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func establishConnection(ctx context.Context) *pgx.Conn {
+func establishConnection(ctx context.Context) *pgxpool.Pool {
 	// Define the connection parameters
 
-	config, err := pgx.ParseConfig("")
+	config, err := pgxpool.ParseConfig("")
 	if err != nil {
 		log.Fatalf("Failed to parse config: %v\n", err)
 	}
@@ -26,26 +26,19 @@ func establishConnection(ctx context.Context) *pgx.Conn {
 		log.Fatal("Error parsing port:", err)
 	}
 
-	config.User = os.Getenv("POSTGRES_USER")
-	config.Password = os.Getenv("POSTGRES_PASSWORD")
-	config.Host = os.Getenv("POSTGRES_HOST")
-	config.Port = uint16(port)
-	config.Database = os.Getenv("POSTGRES_DB")
+	config.ConnConfig.User = os.Getenv("POSTGRES_USER")
+	config.ConnConfig.Password = os.Getenv("POSTGRES_PASSWORD")
+	config.ConnConfig.Host = os.Getenv("POSTGRES_HOST")
+	config.ConnConfig.Port = uint16(port)
+	config.ConnConfig.Database = os.Getenv("POSTGRES_DB")
 
 	// Use config to establish the connection
-	conn, err := pgx.ConnectConfig(ctx, config)
+	DBConn, err := pgxpool.NewWithConfig(ctx, config)
 	if err != nil {
 		log.Fatalf("Unable to connect to the database: %v\n", err)
 	}
 
-	err = conn.Ping(ctx)
-	if err == nil {
-		fmt.Println("Connected to Database")
-	} else {
-		log.Fatalf("Unable to ping the database: %v\n", err)
-	}
-
-	return conn
+	return DBConn
 }
 
 func migrateDatabase(ctx context.Context) {

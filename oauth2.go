@@ -172,7 +172,8 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 		Email:             idTokenClaims.Email,
 	}
 
-	var currentUser *User
+	var currentUser User
+
 	currentUser, err = FindUserByEmail(newUser.Email)
 	if err != nil {
 		currentUser = insertUser(newUser)
