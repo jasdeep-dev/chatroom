@@ -43,7 +43,7 @@ var messageChannel = make(chan Message, 100)
 
 var DBConn *pgx.Conn
 
-var userNewChannel = make(chan User, 100)
+var userChannel = make(chan User, 100)
 
 func init() {
 	// Initialize the map inside an init function
@@ -54,8 +54,15 @@ func init() {
 }
 
 func main() {
+
+	// Read config file
+	err := readConfigFromFile("./config.json")
+	if err != nil {
+		log.Fatal("Could not read the config file: ", err)
+	}
+
 	// Connect to database
-	err := godotenv.Load()
+	err = godotenv.Load()
 	if err != nil {
 		fmt.Println("Error loading .env file", err)
 	}
@@ -64,16 +71,10 @@ func main() {
 	DBConn = establishConnection(ctx)
 	defer DBConn.Close(ctx)
 
-	migrateDatabase(ctx)
+	// migrateDatabase(ctx)
 	getUsers(ctx)
 	getMessages(ctx)
 
-	fmt.Println("message", MessagesArray)
-	// Read config file
-	err = readConfigFromFile("./config.json")
-	if err != nil {
-		log.Fatal("Could not read the config file: ", err)
-	}
 	go messageReceiver()
 	go userReciver()
 	go startWebSocket()
@@ -93,7 +94,7 @@ func messageReceiver() {
 }
 
 func userReciver() {
-	for user := range userNewChannel {
+	for user := range userChannel {
 		if user.Name != "" {
 			deliverUsersToWebSocketConnections(user)
 		}

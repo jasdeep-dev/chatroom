@@ -171,6 +171,7 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 		FamilyName:        idTokenClaims.FamilyName,
 		Email:             idTokenClaims.Email,
 	}
+
 	var currentUser *User
 	currentUser, err = FindUserByEmail(newUser.Email)
 	if err != nil {

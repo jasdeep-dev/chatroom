@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"html/template"
 	"log"
@@ -22,7 +21,6 @@ func startHTTP() {
 
 	http.HandleFunc("/", indexHandler)
 	http.HandleFunc("/user", userHandler)
-	http.HandleFunc("/users/update", usersUpdateHandler)
 	http.HandleFunc("/message", messageHandler)
 	http.HandleFunc("/login", loginHandler)
 	http.HandleFunc("/oauth2", callbackHandler)
@@ -58,7 +56,6 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 
 	session := UserSessions[cookie.Value]
 
-	fmt.Println("userArray", Users)
 	data := TemplateData{
 		Users:       Users,
 		Messages:    MessagesArray,
@@ -120,28 +117,6 @@ func messageHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
-func usersUpdateHandler(w http.ResponseWriter, r *http.Request) {
-	cookie, error := r.Cookie("session_id")
-	if error != nil {
-		fmt.Println("Error in cookies", error)
-	}
-
-	id := UserSessions[cookie.Value].ID
-	current_user := Users[id]
-
-	err := json.NewDecoder(r.Body).Decode(&current_user)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	defer r.Body.Close()
-
-	Users[id] = current_user
-
-	// Respond back to client
-	json.NewEncoder(w).Encode(map[string]string{"status": "success"})
-}
-
 func logoutHandler(w http.ResponseWriter, r *http.Request) {
 
 	DeleteCookie("session_id", w)
@@ -153,6 +128,7 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 func DeleteCookie(name string, w http.ResponseWriter) {
 	http.SetCookie(w, &http.Cookie{
 		Name:   name,
+		Value:  "",
 		MaxAge: -1,
 		Path:   "/",
 	})

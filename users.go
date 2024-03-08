@@ -164,3 +164,29 @@ func FindUserByEmail(email string) (*User, error) {
 
 	return &user, nil
 }
+
+func FindUserByID(id int) (*User, error) {
+	var user User
+
+	// Prepare SQL query
+	query := "SELECT id, name, is_online, theme, preferred_username, given_name, family_name, email FROM users WHERE id = $1"
+
+	// Execute query and scan result into user struct
+	err := DBConn.QueryRow(context.Background(), query, id).Scan(
+		&user.ID,
+		&user.Name,
+		&user.IsOnline,
+		&user.Theme,
+		&user.PreferredUsername,
+		&user.GivenName,
+		&user.FamilyName,
+		&user.Email)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("user with id %d not found", id)
+		}
+		return nil, err
+	}
+
+	return &user, nil
+}
