@@ -2,7 +2,6 @@ package lib
 
 import (
 	"chatroom/views"
-	"context"
 	"html/template"
 	"log"
 	"net/http"
@@ -46,13 +45,12 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := context.Background()
-	users, err := GetUsers(ctx)
+	users, err := GetUsers(r.Context())
 	if err != nil {
 		log.Fatal("Error GetUsers", err)
 	}
 
-	messages, err := GetMessages(ctx)
+	messages, err := GetMessages(r.Context())
 	if err != nil {
 		log.Fatal("Error GetMessages", err)
 	}
@@ -105,7 +103,6 @@ func messageHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func logoutHandler(w http.ResponseWriter, r *http.Request) {
-
 	DeleteCookie("session_id", w)
 	DeleteCookie("state", w)
 	DeleteCookie("nonce", w)

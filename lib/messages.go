@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/jackc/pgx/v5"
 )
 
 func MessageReceiver() {
@@ -108,18 +109,12 @@ func GetMessages(ctx context.Context) ([]app.Message, error) {
 	var messages []app.Message
 	rows, err := app.DBConn.Query(ctx, query)
 	if err != nil {
+		log.Println("Error GetMessages", err)
 		return messages, err
 	}
-	defer rows.Close()
 
-	for rows.Next() {
-		var message app.Message
-		if err := rows.Scan(&message.TimeStamp, &message.Text, &message.Name, &message.Email); err != nil {
-			log.Fatal(err)
-		}
-		messages = append(messages, message)
-	}
-	err = rows.Err()
+	messages, err = pgx.CollectRows(rows, pgx.RowToStructByName[app.Message])
+	defer rows.Close()
 
 	return messages, err
 }

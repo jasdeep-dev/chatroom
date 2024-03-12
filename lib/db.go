@@ -33,6 +33,7 @@ func EstablishConnection(ctx context.Context) *pgxpool.Pool {
 	config.ConnConfig.Host = os.Getenv("POSTGRES_HOST")
 	config.ConnConfig.Port = uint16(port)
 	config.ConnConfig.Database = os.Getenv("POSTGRES_DB")
+	config.MaxConns = 10
 
 	// Use config to establish the connection
 	DBConn, err := pgxpool.NewWithConfig(ctx, config)

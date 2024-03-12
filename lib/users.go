@@ -5,6 +5,8 @@ import (
 	"context"
 	"fmt"
 	"log"
+
+	"github.com/jackc/pgx/v5"
 )
 
 func GetUsers(ctx context.Context) ([]app.User, error) {
@@ -13,27 +15,12 @@ func GetUsers(ctx context.Context) ([]app.User, error) {
 
 	rows, err := app.DBConn.Query(ctx, query)
 	if err != nil {
-		log.Println(err)
+		log.Println("Error GetUsers", err)
 		return users, err
 	}
-	defer rows.Close()
 
-	for rows.Next() {
-		var user app.User
-		if err := rows.Scan(
-			&user.ID,
-			&user.Name,
-			&user.IsOnline,
-			&user.Theme,
-			&user.PreferredUsername,
-			&user.GivenName,
-			&user.FamilyName,
-			&user.Email); err != nil {
-			log.Println(err)
-		}
-		users = append(users, user)
-	}
-	err = rows.Err()
+	users, err = pgx.CollectRows(rows, pgx.RowToStructByName[app.User])
+	defer rows.Close()
 
 	return users, err
 }

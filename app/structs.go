@@ -28,14 +28,14 @@ type UserSession struct {
 var SocketConnections []*websocket.Conn
 
 type User struct {
-	ID                int    `sql:"id"`
-	Name              string `sql:"name"`
-	IsOnline          bool   `sql:"is_online"`
-	Theme             string `sql:"theme"`
-	PreferredUsername string `sql:"preferred_username"`
-	GivenName         string `sql:"given_name"`
-	FamilyName        string `sql:"family_name"`
-	Email             string `sql:"email"`
+	ID                int    `db:"id"`
+	Name              string `db:"name"`
+	IsOnline          bool   `db:"is_online"`
+	Theme             string `db:"theme"`
+	PreferredUsername string `db:"preferred_username"`
+	GivenName         string `db:"given_name"`
+	FamilyName        string `db:"family_name"`
+	Email             string `db:"email"`
 }
 
 type Message struct {
