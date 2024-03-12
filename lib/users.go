@@ -22,7 +22,6 @@ func GetUsers(ctx context.Context) ([]app.User, error) {
 
 	users, err = pgx.CollectRows(rows, pgx.RowToStructByName[app.User])
 	defer rows.Close()
-
 	return users, err
 }
 
@@ -95,6 +94,6 @@ func UpdateUser(ctx context.Context, user app.User) {
               WHERE id = $8;`
 
 	// Execute the update statement
-	app.DBConn.QueryRow(ctx, query, user.Name, user.IsOnline, user.Theme, user.PreferredUsername, user.GivenName, user.FamilyName, user.Email, user.ID)
+	app.DBConn.Exec(ctx, query, user.Name, user.IsOnline, user.Theme, user.PreferredUsername, user.GivenName, user.FamilyName, user.Email, user.ID)
 	log.Println("Field updated successfully", user.ID)
 }
