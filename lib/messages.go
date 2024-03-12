@@ -3,32 +3,28 @@ package lib
 import (
 	"chatroom/app"
 	"context"
-	"fmt"
 	"log"
 	"time"
+
+	"github.com/gorilla/websocket"
 )
 
 func MessageReceiver() {
-	for messageReceieved := range app.MessageChannel {
-		err := InsertMessage(messageReceieved.Message)
+	for msg := range app.MessageChannel {
+		err := InsertMessage(msg.Message)
 		if err != nil {
-			err = deliverErrorToSocket(messageReceieved.SessionID, err)
+			err = deliverErrorToSocket(msg.SockConn, err)
 			if err != nil {
 				log.Println("Error from deliverErrorToSocket:", err)
 			}
 			continue
 		}
 
-		deliverMessageToWebSocketConnections(messageReceieved.Message)
+		deliverMessageToWebSocketConnections(msg.Message)
 	}
 }
 
-func deliverErrorToSocket(sessionID string, err error) error {
-	conn, ok := app.SocketConnections[sessionID]
-	if !ok {
-		return fmt.Errorf("session not found in deliverErrorToSocket")
-	}
-
+func deliverErrorToSocket(conn *websocket.Conn, err error) error {
 	msg := struct {
 		Error string
 	}{
@@ -74,7 +70,7 @@ func deliverUsersToWebSocketConnections(user app.User) {
 	}
 }
 
-func sendMessage(message string, sessionID string) {
+func sendMessage(message string, sessionID string, sockConn *websocket.Conn) {
 	if message == "" {
 		log.Println("sendMessage: Message is blank")
 		return
@@ -92,6 +88,7 @@ func sendMessage(message string, sessionID string) {
 
 	app.MessageChannel <- app.MessageReceived{
 		SessionID: sessionID,
+		SockConn:  sockConn,
 		Message: app.Message{
 			Text:      message,
 			Name:      session.UserInfo.Name,

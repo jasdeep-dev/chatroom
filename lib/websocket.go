@@ -43,8 +43,9 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: this is a bug coz with the same session id a user can have any number of socket connections
-	app.SocketConnections[sessionID] = conn
+	app.SocketConnections = append(app.SocketConnections, conn)
+	// TODO: Remove the socket connection from app.SocketConnections when connection terminated
+	log.Println("New Socket Connection:", conn.RemoteAddr())
 
 	user, err := FindUserByID(session.UserID)
 	if err != nil {
@@ -56,19 +57,12 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 	app.UserChannel <- user
 
-	listenForMessages(r)
+	listenForMessages(sessionID, conn)
 }
 
-func listenForMessages(r *http.Request) {
-	sessionCookie, err := r.Cookie("session_id")
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	sessionID := sessionCookie.Value
+func listenForMessages(sessionID string, conn *websocket.Conn) {
 	log.Println("User connected and listening for messages over Socket:", sessionID)
 
-	conn := app.SocketConnections[sessionID]
 	for {
 		_, message, err := conn.ReadMessage()
 		if err != nil {
@@ -99,7 +93,7 @@ func listenForMessages(r *http.Request) {
 
 		log.Printf("%s sent from browser: %s\n", conn.RemoteAddr(), message)
 
-		sendMessage(string(message), sessionID)
+		sendMessage(string(message), sessionID, conn)
 	}
 }
 

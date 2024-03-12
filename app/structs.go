@@ -25,7 +25,7 @@ type UserSession struct {
 	UserInfo    UserInfo  `json:"user_info"`
 }
 
-var SocketConnections = make(map[string]*websocket.Conn)
+var SocketConnections []*websocket.Conn
 
 type User struct {
 	ID                int    `sql:"id"`
@@ -47,6 +47,7 @@ type Message struct {
 
 type MessageReceived struct {
 	SessionID string
+	SockConn  *websocket.Conn
 	Message   Message
 }
 
