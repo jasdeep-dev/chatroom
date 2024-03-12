@@ -41,7 +41,7 @@ func Oauth2Config(ctx context.Context) (oauth2.Config, *oidc.IDTokenVerifier, er
 	return config, verifier, nil
 }
 
-func createNewProvider(w http.ResponseWriter, r *http.Request) {
+func createNewProvider(w http.ResponseWriter, r *http.Request) string {
 	ctx := context.Background()
 	config, _, err := Oauth2Config(ctx)
 	if err != nil {
@@ -51,19 +51,17 @@ func createNewProvider(w http.ResponseWriter, r *http.Request) {
 	state, err := randString(16)
 	if err != nil {
 		http.Error(w, "Internal error", http.StatusInternalServerError)
-		return
 	}
 
 	nonce, err := randString(16)
 	if err != nil {
 		http.Error(w, "Internal error", http.StatusInternalServerError)
-		return
 	}
 
 	setCallbackCookie(w, r, "state", state)
 	setCallbackCookie(w, r, "nonce", nonce)
 
-	http.Redirect(w, r, config.AuthCodeURL(state, oidc.Nonce(nonce)), http.StatusFound)
+	return config.AuthCodeURL(state, oidc.Nonce(nonce))
 }
 
 func callbackHandler(w http.ResponseWriter, r *http.Request) {

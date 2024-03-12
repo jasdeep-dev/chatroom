@@ -29,32 +29,34 @@ func StartHTTP() {
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("session_id")
-	if err != nil {
-		createNewProvider(w, r)
-		return
+
+	handleError := func() {
+		url := createNewProvider(w, r)
+
+		http.Redirect(w, r, url, http.StatusFound)
 	}
 
-	if cookie == nil {
-		createNewProvider(w, r)
+	if err != nil {
+		handleError()
 		return
 	}
 
 	session, err := GetSession(cookie.Value)
 	if err != nil {
-		createNewProvider(w, r)
+		handleError()
 		return
 	}
 
 	users, err := GetUsers(r.Context())
 	if err != nil {
+		log.Println("Error GetUsers in homeHandler", err)
 		return
-		// log.Fatal("Error GetUsers in homeHandler ", err)
 	}
 
 	messages, err := GetMessages(r.Context())
 	if err != nil {
+		log.Println("Error GetMessages in homeHandler", err)
 		return
-		// log.Fatal("Error GetMessages in homeHandler", err)
 	}
 
 	views.Home(users, messages, session).Render(r.Context(), w)
