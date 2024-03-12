@@ -24,7 +24,7 @@ func MessageReceiver() {
 }
 
 func deliverErrorToSocket(sessionID string, err error) error {
-	userSession, ok := app.UserSessions[sessionID]
+	conn, ok := app.SocketConnections[sessionID]
 	if !ok {
 		return fmt.Errorf("session not found in deliverErrorToSocket")
 	}
@@ -34,7 +34,7 @@ func deliverErrorToSocket(sessionID string, err error) error {
 	}{
 		Error: err.Error(),
 	}
-	return userSession.SocketConnection.WriteJSON(msg)
+	return conn.WriteJSON(msg)
 }
 
 func UserReciver() {
@@ -46,8 +46,8 @@ func UserReciver() {
 }
 
 func deliverMessageToWebSocketConnections(message app.Message) {
-	for _, userSession := range app.UserSessions {
-		if userSession.SocketConnection == nil {
+	for _, conn := range app.SocketConnections {
+		if conn == nil {
 			continue
 		}
 		msg := struct {
@@ -55,13 +55,13 @@ func deliverMessageToWebSocketConnections(message app.Message) {
 		}{
 			Message: message,
 		}
-		userSession.SocketConnection.WriteJSON(msg)
+		conn.WriteJSON(msg)
 	}
 }
 
 func deliverUsersToWebSocketConnections(user app.User) {
-	for _, userSession := range app.UserSessions {
-		if userSession.SocketConnection == nil {
+	for _, conn := range app.SocketConnections {
+		if conn == nil {
 			continue
 		}
 
@@ -70,26 +70,32 @@ func deliverUsersToWebSocketConnections(user app.User) {
 		}{
 			User: user,
 		}
-		userSession.SocketConnection.WriteJSON(usr)
+		conn.WriteJSON(usr)
 	}
 }
 
 func sendMessage(message string, sessionID string) {
 	if message == "" {
+		log.Println("sendMessage: Message is blank")
 		return
 	}
 
 	if sessionID == "" {
+		log.Println("sendMessage: Session id is blank")
 		return
 	}
 
-	session := app.UserSessions[sessionID]
+	session, err := GetSession(sessionID)
+	if err != nil {
+		log.Println("sendMessage: Session not found", sessionID)
+	}
+
 	app.MessageChannel <- app.MessageReceived{
 		SessionID: sessionID,
 		Message: app.Message{
 			Text:      message,
-			Name:      session.Name,
-			Email:     session.KeyCloakUser.Email,
+			Name:      session.UserInfo.Name,
+			Email:     session.UserInfo.Email,
 			TimeStamp: time.Now(),
 		},
 	}

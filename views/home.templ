@@ -16,7 +16,7 @@ templ Home(users []app.User, messages []app.Message, session app.UserSession) {
                 <!-- Messages Component -->
                 @Messages(messages, session)
                 <!-- Message Form -->
-                if (session.KeyCloakUser.Name != "") {
+                if (session.UserInfo.Name != "") {
                     @MessageForm()
                 }
             </div>

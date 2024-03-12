@@ -1,7 +1,6 @@
 package lib
 
 import (
-	"chatroom/app"
 	"chatroom/views"
 	"context"
 	"html/template"
@@ -20,27 +19,19 @@ func StartHTTP() {
 	http.HandleFunc("/oauth2", callbackHandler)
 	http.HandleFunc("/logout", logoutHandler)
 
-	log.Println("HTTP Server listening on", Settings.HttpServer)
-	err := http.ListenAndServe(Settings.HttpServer, nil) // Start the server on port 8080
+	log.Println("Starting HTTP Server on", Settings.HttpServer)
+
+	// Start the server on port 8080
+	err := http.ListenAndServe(Settings.HttpServer, nil)
 	if err != nil {
 		log.Fatal("error starting http server", err)
 	}
 }
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
-	// tmpl, err := template.New("html").Funcs(template.FuncMap{
-	// 	"formatTime": formatTime,
-	// }).ParseGlob("./views/app/*.html")
-
-	// if err != nil {
-	// 	log.Println("can't parse the files", err)
-	// 	w.Write([]byte(err.Error()))
-	// 	return
-	// }
-
 	cookie, err := r.Cookie("session_id")
 	if err != nil {
-		log.Println("error in cookies", err)
+		log.Fatal("error in cookies", err)
 	}
 
 	if cookie == nil {
@@ -48,37 +39,25 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session := app.UserSessions[cookie.Value]
+	session, err := GetSession(cookie.Value)
+	if err != nil {
+		createNewProvider(w, r)
+		return
+	}
 
 	ctx := context.Background()
 	users, err := GetUsers(ctx)
 	if err != nil {
-		log.Println("Error GetUsers", err)
+		log.Fatal("Error GetUsers", err)
 	}
 
 	messages, err := GetMessages(ctx)
 	if err != nil {
-		log.Println("Error GetMessages", err)
+		log.Fatal("Error GetMessages", err)
 	}
-	// data := app.TemplateData{
-	// 	Users:       users,
-	// 	Messages:    app.MessagesArray,
-	// 	CurrentUser: session.KeyCloakUser,
-	// 	LoggedIn:    session.LoggedInAt,
-	// }
-
-	// err = tmpl.ExecuteTemplate(w, "index.html", data)
-	// if err != nil {
-	// 	log.Println("Unable to render templates.", err)
-	// 	w.Write([]byte(err.Error()))
-	// }
 
 	views.Home(users, messages, session).Render(r.Context(), w)
 }
-
-// func formatTime(t time.Time) string {
-// 	return t.Format(time.RFC3339)
-// }
 
 func userHandler(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()

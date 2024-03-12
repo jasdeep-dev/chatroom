@@ -14,6 +14,7 @@ require (
 )
 
 require (
+	github.com/bradfitz/gomemcache v0.0.0-20230905024940-24af94b03874 // indirect
 	github.com/go-jose/go-jose/v3 v3.0.1 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/jackc/puddle/v2 v2.2.1 // indirect

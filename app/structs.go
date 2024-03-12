@@ -7,16 +7,25 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type UserSession struct {
-	ID               int
-	Name             string
-	AccessToken      string
-	LoggedInAt       time.Time
-	KeyCloakUser     KeyCloakUserInfo
-	SocketConnection *websocket.Conn
+type UserInfo struct {
+	Sub               string `json:"sub"`
+	EmailVerified     bool   `json:"email_verified"`
+	Name              string `json:"name"`
+	PreferredUsername string `json:"preferred_username"`
+	GivenName         string `json:"given_name"`
+	FamilyName        string `json:"family_name"`
+	Email             string `json:"email"`
 }
 
-var UserSessions = make(map[string]UserSession)
+type UserSession struct {
+	ID          string    `json:"id"`
+	UserID      int       `json:"user_id"`
+	AccessToken string    `json:"access_token"`
+	LoggedInAt  time.Time `json:"logged_in_at"`
+	UserInfo    UserInfo  `json:"user_info"`
+}
+
+var SocketConnections = make(map[string]*websocket.Conn)
 
 type User struct {
 	ID                int    `sql:"id"`
@@ -28,16 +37,6 @@ type User struct {
 	FamilyName        string `sql:"family_name"`
 	Email             string `sql:"email"`
 }
-
-// type user map[int]User
-
-// var Users = make(user)
-
-// type messages []Message
-
-// var MessagesArray messages
-
-// var Messages messages
 
 type Message struct {
 	TimeStamp time.Time
@@ -51,19 +50,11 @@ type MessageReceived struct {
 	Message   Message
 }
 
-// var genericMessage map[string]string
 var MessageChannel = make(chan MessageReceived, 100)
 
 var DBConn *pgxpool.Pool
 
 var UserChannel = make(chan User, 100)
-
-// type TemplateData struct {
-// 	Users       map[int]User
-// 	Messages    []Message
-// 	CurrentUser KeyCloakUserInfo
-// 	LoggedIn    time.Time
-// }
 
 type IDTokenClaims struct {
 	Exp               int64  `json:"exp"`
@@ -87,15 +78,3 @@ type IDTokenClaims struct {
 	FamilyName        string `json:"family_name"`
 	Email             string `json:"email"`
 }
-
-type KeyCloakUserInfo struct {
-	Sub               string `json:"sub"`
-	EmailVerified     bool   `json:"email_verified"`
-	Name              string `json:"name"`
-	PreferredUsername string `json:"preferred_username"`
-	GivenName         string `json:"given_name"`
-	FamilyName        string `json:"family_name"`
-	Email             string `json:"email"`
-}
-
-// var KeyCloakUser KeyCloakUserInfo

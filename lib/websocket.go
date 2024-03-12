@@ -17,8 +17,6 @@ var upgrader = websocket.Upgrader{
 }
 
 func handleWebSocket(w http.ResponseWriter, r *http.Request) {
-	log.Println("New connection over socket")
-
 	defer func() {
 		if r := recover(); r != nil {
 			log.Println("Recovered from panic:", r)
@@ -39,16 +37,16 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	}
 	sessionID := sessionCookie.Value
 
-	session, ok := app.UserSessions[sessionID]
-	if !ok {
+	session, err := GetSession(sessionID)
+	if err != nil {
 		log.Println("User session not found for Socket connection:", sessionID)
 		return
 	}
 
-	session.SocketConnection = conn
-	app.UserSessions[sessionID] = session
+	// TODO: this is a bug coz with the same session id a user can have any number of socket connections
+	app.SocketConnections[sessionID] = conn
 
-	user, err := FindUserByID(session.ID)
+	user, err := FindUserByID(session.UserID)
 	if err != nil {
 		log.Fatal("User does not exist", err)
 	}
@@ -70,14 +68,20 @@ func listenForMessages(r *http.Request) {
 	sessionID := sessionCookie.Value
 	log.Println("User connected and listening for messages over Socket:", sessionID)
 
-	conn := app.UserSessions[sessionID].SocketConnection
+	conn := app.SocketConnections[sessionID]
 	for {
 		_, message, err := conn.ReadMessage()
 		if err != nil {
 			if strings.Contains(err.Error(), "close 1001") {
 				log.Println("Session terminated by client: ", sessionID)
 
-				user, err := FindUserByID(app.UserSessions[sessionID].ID)
+				session, err := GetSession(sessionID)
+				if err != nil {
+					log.Println("Session does not exist", err)
+					return
+				}
+
+				user, err := FindUserByID(session.UserID)
 				if err != nil {
 					log.Println("User does not exist", err)
 					return

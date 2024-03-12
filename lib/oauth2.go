@@ -127,7 +127,7 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := getKeyCloakUserInfo(oauth2Token.AccessToken)
+	user := getUserInfo(oauth2Token.AccessToken)
 
 	newUser := app.User{
 		Name:              idTokenClaims.Name,
@@ -151,20 +151,23 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	sessionID := idTokenClaims.Sid
+
 	http.SetCookie(w, &http.Cookie{
 		Name:     "session_id",
-		Value:    idTokenClaims.Sid,
+		Value:    sessionID,
 		Path:     "/",
 		HttpOnly: true,
 	})
 
-	app.UserSessions[idTokenClaims.Sid] = app.UserSession{
-		ID:           currentUser.ID,
-		Name:         idTokenClaims.Name,
-		AccessToken:  oauth2Token.AccessToken,
-		KeyCloakUser: user,
-		LoggedInAt:   time.Now(),
+	session := app.UserSession{
+		ID:          sessionID,
+		UserID:      currentUser.ID,
+		AccessToken: oauth2Token.AccessToken,
+		UserInfo:    user,
+		LoggedInAt:  time.Now(),
 	}
+	SetSession(session)
 
 	DeleteCookie("state", w)
 	DeleteCookie("nonce", w)
@@ -191,7 +194,7 @@ func setCallbackCookie(w http.ResponseWriter, r *http.Request, name, value strin
 	http.SetCookie(w, c)
 }
 
-func getKeyCloakUserInfo(access_token string) app.KeyCloakUserInfo {
+func getUserInfo(access_token string) app.UserInfo {
 
 	url := fmt.Sprintf("%s/realms/%s/protocol/openid-connect/userinfo",
 		os.Getenv("KEYCLOAK_URL"),
@@ -213,7 +216,7 @@ func getKeyCloakUserInfo(access_token string) app.KeyCloakUserInfo {
 	}
 	defer resp.Body.Close()
 
-	var keyCloakUser app.KeyCloakUserInfo
+	var keyCloakUser app.UserInfo
 
 	err = json.NewDecoder(resp.Body).Decode(&keyCloakUser)
 	if err != nil {

@@ -27,6 +27,12 @@ func main() {
 	app.DBConn = lib.EstablishConnection(ctx)
 	defer app.DBConn.Close()
 
+	// Connect to memcahed
+	err = lib.InitCache()
+	if err != nil {
+		log.Fatal("Unable to connect to Memcached", err)
+	}
+
 	go lib.MessageReceiver()
 	go lib.UserReciver()
 	go lib.StartWebSocket()
