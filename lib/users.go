@@ -67,10 +67,10 @@ func FindUserByID(ctx context.Context, id int) (app.User, error) {
 
 func insertUser(ctx context.Context, user app.User) (app.User, error) {
 	var id int
+
 	query := `INSERT INTO users (name, is_online, theme, preferred_username, given_name, family_name, email) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id;`
 
-	log.Println("inser user =>", user)
-	err := app.DBConn.QueryRow(ctx, query, user.Name, user.IsOnline, user.Theme, user.PreferredUsername, user.GivenName, user.FamilyName, user.Email).Scan(&id)
+	err := app.DBConn.QueryRow(ctx, query, Titleize(user.Name), user.IsOnline, user.Theme, user.PreferredUsername, user.GivenName, user.FamilyName, user.Email).Scan(&id)
 	if err != nil {
 		log.Fatal("Error executing INSERT statement:", err)
 		return user, err
@@ -94,6 +94,6 @@ func UpdateUser(ctx context.Context, user app.User) {
               WHERE id = $8;`
 
 	// Execute the update statement
-	app.DBConn.Exec(ctx, query, user.Name, user.IsOnline, user.Theme, user.PreferredUsername, user.GivenName, user.FamilyName, user.Email, user.ID)
+	app.DBConn.Exec(ctx, query, Titleize(user.Name), user.IsOnline, user.Theme, user.PreferredUsername, user.GivenName, user.FamilyName, user.Email, user.ID)
 	log.Println("Field updated successfully", user.ID)
 }

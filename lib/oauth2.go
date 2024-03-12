@@ -220,5 +220,7 @@ func getUserInfo(access_token string) app.UserInfo {
 	if err != nil {
 		log.Println("Error decoding JSON: ", err)
 	}
+
+	keyCloakUser.Name = Titleize(keyCloakUser.Name)
 	return keyCloakUser
 }

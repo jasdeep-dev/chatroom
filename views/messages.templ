@@ -2,18 +2,35 @@ package views
 
 import "chatroom/app"
 
+
 templ Messages(messages []app.Message, session app.UserSession){
-    <div id="textchat" class="overflow-auto h-dvh">
+    <div id="textchat" class="overflow-auto h-dvh bg-base-100 rounded-xl p-4">
         for _, message := range messages{
-            if session.UserInfo.Name == message.Name{
-                <div id={message.Name} class="bg-base-200 rounded p-2 my-2">
-                    <div>Me: {message.Text}</div>
+            if session.UserInfo.Name == message.Name {
+                <div id={message.Name} class="chat chat-end">
+                    @messageCard(message)
                 </div>
-            }else{
-                <div id={message.Name} class="bg-base-100 rounded p-2 my-2">
-                    <div>{message.Name}: {message.Text}</div>
+            } else {
+                <div id={message.Name} class="chat chat-start">
+                    @messageCard(message)
                 </div>
             }
         }
     </div>
+}
+
+
+templ messageCard(message app.Message){
+    <div class="chat-header">
+        {message.Name}
+        <time class="text-xs opacity-50">{message.TimeStamp.Format("15:04")}</time>
+    </div>
+
+    <div class="chat-image avatar placeholder">
+        <div class="bg-neutral text-neutral-content rounded-full w-10">
+            <span class="text-center">{templ.JoinStringErrs(string(message.Name[0]))}</span>
+        </div>
+    </div>
+
+    <div class="chat-bubble">{message.Text}</div>
 }

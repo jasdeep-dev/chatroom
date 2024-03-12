@@ -27,6 +27,9 @@ func main() {
 	app.DBConn = lib.EstablishConnection(ctx)
 	defer app.DBConn.Close()
 
+	//migrate database
+	// lib.MigrateDatabase((ctx))
+
 	// Connect to memcahed
 	err = lib.InitCache()
 	if err != nil {

@@ -11,7 +11,7 @@ templ Layout(users []app.User, messages []app.Message, session app.UserSession) 
             <meta name="current_user" content={session.UserInfo.Name} />
 
             <title>Chatroom</title>
-            <link rel="stylesheet" type="text/css" href="/public/styles.css"/>
+            <link rel="stylesheet" type="text/css" href="/public/styles.css?version="/>
 
             <script src="/public/main.js"></script>
             <script src="/public/socket.js"></script>

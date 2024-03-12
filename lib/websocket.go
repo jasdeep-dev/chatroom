@@ -44,7 +44,7 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 	user, err := FindUserByID(r.Context(), session.UserID)
 	if err != nil {
-		log.Fatal("User does not exist", err)
+		log.Println("User does not exist", err)
 	}
 
 	user.IsOnline = true

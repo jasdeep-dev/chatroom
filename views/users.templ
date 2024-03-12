@@ -3,7 +3,7 @@ package views
 import "chatroom/app"
 import "fmt"
 templ Users(users []app.User){
-    <div class="p-2">
+    <div class="p-2 bg-base-300 h-dvh overflow-auto p-4 rounded-xl">
         <ul id="users_list">
             for _, user := range users{
                 <li id={fmt.Sprintf("user_%v", user.ID)} class="bg-base-100 rounded p-2 my-2">

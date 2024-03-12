@@ -44,7 +44,7 @@ func EstablishConnection(ctx context.Context) *pgxpool.Pool {
 	return DBConn
 }
 
-func migrateDatabase(ctx context.Context) {
+func MigrateDatabase(ctx context.Context) {
 	migrationsDir := "db/migrations"
 	files, err := os.ReadDir(migrationsDir)
 	if err != nil {

@@ -1,25 +1,48 @@
 package views
 
 templ Navbar(currentUser string){
+    <script type="text/javascript">
+        window.onload = function() {
+            setLocalStorageTheme()
+        }
+
+        function addTheThemeToLocalStorage(value){
+            localStorage.setItem('theme', value);
+            setLocalStorageTheme()
+        }
+
+        function setLocalStorageTheme(){
+            let value = localStorage.getItem('theme');
+            var htmlElement = document.querySelector('html');
+            htmlElement.setAttribute('data-theme', value);
+        }
+    </script>
     <div class="container mx-auto flex justify-between items-center">
         <h1 class="text-2xl font-bold">Chatroom</h1>
         <ul class="flex space-x-4">
+            <!-- Link to Keycloak User Page -->
             <li>
                 <a href="http://localhost:9000/realms/chatroom/account"
-                    class="btn btn-link" target="_blank">
+                    class="btn" target="_blank">
                     {currentUser}
                 </a>
             </li>
+
+            <!-- Logout -->
             <li>
                 <form action="http://localhost:9000/realms/chatroom/protocol/openid-connect/logout" method="post">
                     <input type="hidden" value="chatroom" name="client_id" />
                     <input name="post_logout_redirect_uri" value="http://localhost:8080/logout" type="hidden" />
-                    <input type="submit" value="Logout" class="btn btn-link"></input>
+                    <input type="submit" value="Logout" class="btn"></input>
                 </form>
             </li>
+
+            <!-- Set the theme -->
             <li>
-                <select  onchange="setTheme(this.value)" class="select select-ghost w-full max-w-xs">
+                <select name="selectThemeOption" onchange="setTheme(this.value)" class="select w-full max-w-xs bg-primary-100">
                     <option disabled selected>Pick a Theme</option>
+                    <option>dark</option>
+                    <option>light</option>
                     <option>retro</option>
                     <option>cyberpunk</option>
                     <option>valentine</option>

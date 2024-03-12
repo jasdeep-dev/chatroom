@@ -33,34 +33,18 @@ function getCookie(cookieName) {
     return "";
 }
 
-function setTheme(value){
-    console.log(value);
-    localStorage.setItem('theme', value);
-}
-
 window.onload = function() {
+    //scroll to the bottom of the chat
     var container = document.getElementById('textchat');
     if (container){
         container.scrollTop = container.scrollHeight;
     }
+    document.getElementById('message_input')?.focus();
 
+    //theme selection
     let value = localStorage.getItem('theme');
     var htmlElement = document.querySelector('html');
     htmlElement.setAttribute('data-theme', value);
-
-    let nameCookie = getCookie('session_id');
-    if (nameCookie != ''){
-        let messageField = document.getElementById(nameCookie)
-
-        if(messageField != null){
-            messageField.classList.remove('chat-start')
-            messageField.classList.add('chat-end')
-        }
-
-        document.getElementById('userform')?.classList.add('hidden');
-    }
-
-    document.getElementById('message_input')?.focus();
 
     document.getElementById('messageform').addEventListener('submit', function(event) {
         event.preventDefault();
