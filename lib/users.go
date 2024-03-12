@@ -10,9 +10,10 @@ import (
 )
 
 func GetUsers(ctx context.Context) ([]app.User, error) {
-	query := "SELECT id, name, is_online, theme, preferred_username, given_name, family_name, email FROM users ORDER BY name ASC"
+	var err error
 	var users []app.User
 
+	query := "SELECT id, name, is_online, theme, preferred_username, given_name, family_name, email FROM users ORDER BY name ASC"
 	rows, err := app.DBConn.Query(ctx, query)
 	if err != nil {
 		log.Println("Error GetUsers", err)

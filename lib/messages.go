@@ -101,13 +101,14 @@ func sendMessage(ctx context.Context, message string, sessionID string, sockConn
 }
 
 func GetMessages(ctx context.Context) ([]app.Message, error) {
+	var err error
+	var messages []app.Message
+
 	query := `
 		SELECT m.timestamp, m.text, u.name, u.email
 		FROM messages m
 		INNER JOIN users u ON m.user_id = u.id
 	`
-
-	var messages []app.Message
 	rows, err := app.DBConn.Query(ctx, query)
 	if err != nil {
 		log.Println("Error GetMessages", err)

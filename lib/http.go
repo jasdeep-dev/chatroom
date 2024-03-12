@@ -47,12 +47,14 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 
 	users, err := GetUsers(r.Context())
 	if err != nil {
-		log.Fatal("Error GetUsers in homeHandler ", err)
+		return
+		// log.Fatal("Error GetUsers in homeHandler ", err)
 	}
 
 	messages, err := GetMessages(r.Context())
 	if err != nil {
-		log.Fatal("Error GetMessages in homeHandler", err)
+		return
+		// log.Fatal("Error GetMessages in homeHandler", err)
 	}
 
 	views.Home(users, messages, session).Render(r.Context(), w)
