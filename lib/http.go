@@ -47,12 +47,12 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 
 	users, err := GetUsers(r.Context())
 	if err != nil {
-		log.Fatal("Error GetUsers", err)
+		log.Fatal("Error GetUsers in homeHandler ", err)
 	}
 
 	messages, err := GetMessages(r.Context())
 	if err != nil {
-		log.Fatal("Error GetMessages", err)
+		log.Fatal("Error GetMessages in homeHandler", err)
 	}
 
 	views.Home(users, messages, session).Render(r.Context(), w)
@@ -96,7 +96,7 @@ func messageHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println("Error in cookies", err)
 	} else {
 		log.Println("Message received in messageHandler:", cookie.Value, inputMessage)
-		sendMessage(inputMessage, cookie.Value, nil)
+		sendMessage(r.Context(), inputMessage, cookie.Value, nil)
 	}
 
 	http.Redirect(w, r, "/", http.StatusSeeOther)

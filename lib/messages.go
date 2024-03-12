@@ -12,7 +12,7 @@ import (
 
 func MessageReceiver() {
 	for msg := range app.MessageChannel {
-		err := InsertMessage(msg.Message)
+		err := InsertMessage(msg.Context, msg.Message)
 		if err != nil {
 			err = deliverErrorToSocket(msg.SockConn, err)
 			if err != nil {
@@ -71,7 +71,7 @@ func deliverUsersToWebSocketConnections(user app.User) {
 	}
 }
 
-func sendMessage(message string, sessionID string, sockConn *websocket.Conn) {
+func sendMessage(ctx context.Context, message string, sessionID string, sockConn *websocket.Conn) {
 	if message == "" {
 		log.Println("sendMessage: Message is blank")
 		return
@@ -90,6 +90,7 @@ func sendMessage(message string, sessionID string, sockConn *websocket.Conn) {
 	app.MessageChannel <- app.MessageReceived{
 		SessionID: sessionID,
 		SockConn:  sockConn,
+		Context:   ctx,
 		Message: app.Message{
 			Text:      message,
 			Name:      session.UserInfo.Name,
@@ -119,10 +120,10 @@ func GetMessages(ctx context.Context) ([]app.Message, error) {
 	return messages, err
 }
 
-func InsertMessage(message app.Message) error {
+func InsertMessage(ctx context.Context, message app.Message) error {
 	query := "INSERT INTO messages (timestamp, text, user_id) VALUES ($1, $2, $3)"
 
-	newUser, err := FindUserByEmail(message.Email)
+	newUser, err := FindUserByEmail(ctx, message.Email)
 	if err != nil {
 		log.Println("user with email does not exist in our database")
 		return err

@@ -25,9 +25,8 @@ func GetUsers(ctx context.Context) ([]app.User, error) {
 	return users, err
 }
 
-func FindUserByEmail(email string) (app.User, error) {
+func FindUserByEmail(ctx context.Context, email string) (app.User, error) {
 	var user app.User
-	ctx := context.Background()
 
 	query := "SELECT id, name, is_online, theme, preferred_username, given_name, family_name, email FROM users WHERE email = $1"
 	err := app.DBConn.QueryRow(ctx, query, email).Scan(
@@ -46,9 +45,8 @@ func FindUserByEmail(email string) (app.User, error) {
 	return user, nil
 }
 
-func FindUserByID(id int) (app.User, error) {
+func FindUserByID(ctx context.Context, id int) (app.User, error) {
 	var user app.User
-	ctx := context.Background()
 
 	query := "SELECT id, name, is_online, theme, preferred_username, given_name, family_name, email FROM users WHERE id = $1"
 	err := app.DBConn.QueryRow(ctx, query, id).Scan(
@@ -67,8 +65,7 @@ func FindUserByID(id int) (app.User, error) {
 	return user, nil
 }
 
-func insertUser(user app.User) (app.User, error) {
-	ctx := context.Background()
+func insertUser(ctx context.Context, user app.User) (app.User, error) {
 	var id int
 	query := `INSERT INTO users (name, is_online, theme, preferred_username, given_name, family_name, email) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id;`
 
@@ -84,8 +81,7 @@ func insertUser(user app.User) (app.User, error) {
 	return user, nil
 }
 
-func UpdateUser(user app.User) {
-	ctx := context.Background()
+func UpdateUser(ctx context.Context, user app.User) {
 	// Update statement
 	query := `UPDATE users 
               SET name = $1, 

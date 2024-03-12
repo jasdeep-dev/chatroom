@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -48,6 +49,7 @@ type Message struct {
 type MessageReceived struct {
 	SessionID string
 	SockConn  *websocket.Conn
+	Context   context.Context
 	Message   Message
 }
 

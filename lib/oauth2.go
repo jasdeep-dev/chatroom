@@ -67,7 +67,7 @@ func createNewProvider(w http.ResponseWriter, r *http.Request) {
 }
 
 func callbackHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
+	ctx := r.Context()
 	config, verifier, err := Oauth2Config(ctx)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -141,9 +141,9 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 
 	var currentUser app.User
 
-	currentUser, err = FindUserByEmail(newUser.Email)
+	currentUser, err = FindUserByEmail(ctx, newUser.Email)
 	if err != nil {
-		currentUser, err = insertUser(newUser)
+		currentUser, err = insertUser(ctx, newUser)
 		if err != nil {
 			log.Println("Error in InsertUser", err)
 			http.Redirect(w, r, "/", http.StatusFound)

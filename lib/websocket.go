@@ -2,6 +2,7 @@ package lib
 
 import (
 	"chatroom/app"
+	"context"
 	"log"
 	"net/http"
 	"strings"
@@ -41,20 +42,20 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	// TODO: Remove the socket connection from app.SocketConnections when connection terminated
 	log.Println("New Socket Connection:", conn.RemoteAddr())
 
-	user, err := FindUserByID(session.UserID)
+	user, err := FindUserByID(r.Context(), session.UserID)
 	if err != nil {
 		log.Fatal("User does not exist", err)
 	}
 
 	user.IsOnline = true
-	UpdateUser(user)
+	UpdateUser(r.Context(), user)
 
 	app.UserChannel <- user
 
-	listenForMessages(sessionID, conn)
+	listenForMessages(r.Context(), sessionID, conn)
 }
 
-func listenForMessages(sessionID string, conn *websocket.Conn) {
+func listenForMessages(ctx context.Context, sessionID string, conn *websocket.Conn) {
 	log.Println("User connected and listening for messages over Socket:", sessionID)
 
 	for {
@@ -69,14 +70,14 @@ func listenForMessages(sessionID string, conn *websocket.Conn) {
 					return
 				}
 
-				user, err := FindUserByID(session.UserID)
+				user, err := FindUserByID(ctx, session.UserID)
 				if err != nil {
 					log.Println("User does not exist", err)
 					return
 				}
 
 				user.IsOnline = false
-				UpdateUser(user)
+				UpdateUser(ctx, user)
 
 				app.UserChannel <- user
 			} else {
@@ -87,7 +88,7 @@ func listenForMessages(sessionID string, conn *websocket.Conn) {
 
 		log.Printf("%s sent from browser: %s\n", conn.RemoteAddr(), message)
 
-		sendMessage(string(message), sessionID, conn)
+		sendMessage(ctx, string(message), sessionID, conn)
 	}
 }
 
