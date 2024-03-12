@@ -31,7 +31,8 @@ func StartHTTP() {
 func homeHandler(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("session_id")
 	if err != nil {
-		log.Fatal("error in cookies", err)
+		createNewProvider(w, r)
+		return
 	}
 
 	if cookie == nil {
