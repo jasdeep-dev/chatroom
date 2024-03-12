@@ -1,2 +1,9 @@
 bin/protoc
 .DS_Store
+*_templ.txt
+.envrc
+.env
+bin
+*_templ.go*
+tmp
+node_modules

@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"chatroom/app"
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
@@ -15,41 +16,6 @@ import (
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
 )
-
-type IDTokenClaims struct {
-	Exp               int64  `json:"exp"`
-	Iat               int64  `json:"iat"`
-	AuthTime          int64  `json:"auth_time"`
-	Jti               string `json:"jti"`
-	Iss               string `json:"iss"`
-	Aud               string `json:"aud"`
-	Sub               string `json:"sub"`
-	Typ               string `json:"typ"`
-	Azp               string `json:"azp"`
-	Nonce             string `json:"nonce"`
-	SessionState      string `json:"session_state"`
-	AtHash            string `json:"at_hash"`
-	Acr               string `json:"acr"`
-	Sid               string `json:"sid"`
-	EmailVerified     bool   `json:"email_verified"`
-	Name              string `json:"name"`
-	PreferredUsername string `json:"preferred_username"`
-	GivenName         string `json:"given_name"`
-	FamilyName        string `json:"family_name"`
-	Email             string `json:"email"`
-}
-
-type KeyCloakUserInfo struct {
-	Sub               string `json:"sub"`
-	EmailVerified     bool   `json:"email_verified"`
-	Name              string `json:"name"`
-	PreferredUsername string `json:"preferred_username"`
-	GivenName         string `json:"given_name"`
-	FamilyName        string `json:"family_name"`
-	Email             string `json:"email"`
-}
-
-var KeyCloakUser KeyCloakUserInfo
 
 func Oauth2Config(ctx context.Context) (oauth2.Config, *oidc.IDTokenVerifier, error) {
 	provider, err := oidc.NewProvider(ctx,
@@ -153,7 +119,7 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	idTokenClaims := IDTokenClaims{}
+	idTokenClaims := app.IDTokenClaims{}
 
 	if err := idToken.Claims(&idTokenClaims); err != nil {
 		log.Println("Error in idtoken claims", err)
@@ -161,16 +127,9 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.SetCookie(w, &http.Cookie{
-		Name:     "session_id",
-		Value:    idTokenClaims.Sid,
-		Path:     "/",
-		HttpOnly: true,
-	})
-
 	user := getKeyCloakUserInfo(oauth2Token.AccessToken)
 
-	newUser := User{
+	newUser := app.User{
 		Name:              idTokenClaims.Name,
 		IsOnline:          true,
 		Theme:             Settings.DefaultTheme,
@@ -180,14 +139,26 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 		Email:             idTokenClaims.Email,
 	}
 
-	var currentUser User
+	var currentUser app.User
 
 	currentUser, err = FindUserByEmail(newUser.Email)
 	if err != nil {
-		currentUser = insertUser(newUser)
+		currentUser, err = insertUser(newUser)
+		if err != nil {
+			log.Println("Error in InsertUser", err)
+			http.Redirect(w, r, "/", http.StatusFound)
+			return
+		}
 	}
 
-	UserSessions[idTokenClaims.Sid] = UserSession{
+	http.SetCookie(w, &http.Cookie{
+		Name:     "session_id",
+		Value:    idTokenClaims.Sid,
+		Path:     "/",
+		HttpOnly: true,
+	})
+
+	app.UserSessions[idTokenClaims.Sid] = app.UserSession{
 		ID:           currentUser.ID,
 		Name:         idTokenClaims.Name,
 		AccessToken:  oauth2Token.AccessToken,
@@ -220,7 +191,7 @@ func setCallbackCookie(w http.ResponseWriter, r *http.Request, name, value strin
 	http.SetCookie(w, c)
 }
 
-func getKeyCloakUserInfo(access_token string) KeyCloakUserInfo {
+func getKeyCloakUserInfo(access_token string) app.KeyCloakUserInfo {
 
 	url := fmt.Sprintf("%s/realms/%s/protocol/openid-connect/userinfo",
 		os.Getenv("KEYCLOAK_URL"),
@@ -242,7 +213,7 @@ func getKeyCloakUserInfo(access_token string) KeyCloakUserInfo {
 	}
 	defer resp.Body.Close()
 
-	var keyCloakUser KeyCloakUserInfo
+	var keyCloakUser app.KeyCloakUserInfo
 
 	err = json.NewDecoder(resp.Body).Decode(&keyCloakUser)
 	if err != nil {

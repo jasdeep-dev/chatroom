@@ -1,0 +1,31 @@
+package views
+
+templ Navbar(currentUser string){
+    <div class="container mx-auto flex justify-between items-center">
+        <h1 class="text-2xl font-bold">Chatroom</h1>
+        <ul class="flex space-x-4">
+            <li>
+                <a href="http://localhost:9000/realms/chatroom/account"
+                    class="btn btn-link" target="_blank">
+                    {currentUser}
+                </a>
+            </li>
+            <li>
+                <form action="http://localhost:9000/realms/chatroom/protocol/openid-connect/logout" method="post">
+                    <input type="hidden" value="chatroom" name="client_id" />
+                    <input name="post_logout_redirect_uri" value="http://localhost:8080/logout" type="hidden" />
+                    <input type="submit" value="Logout" class="btn btn-link"></input>
+                </form>
+            </li>
+            <li>
+                <select  onchange="setTheme(this.value)" class="select select-ghost w-full max-w-xs">
+                    <option disabled selected>Pick a Theme</option>
+                    <option>retro</option>
+                    <option>cyberpunk</option>
+                    <option>valentine</option>
+                    <option>aqua</option>
+                </select>
+            </li>
+        </ul>
+    </div>
+}

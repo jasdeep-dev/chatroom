@@ -1,3 +1,16 @@
+// Function to get current_user from the meta tag
+function getCurrentUser() {
+    var metaTags = document.getElementsByTagName('meta');
+
+    for (var i = 0; i < metaTags.length; i++) {
+        if (metaTags[i].getAttribute('name') === "current_user") {
+            return metaTags[i].getAttribute('content');
+        }
+    }
+
+    return null; // Return null if meta tag with specified name not found
+}
+
 function getCookie(cookieName) {
     const name = cookieName + "=";
     const decodedCookie = decodeURIComponent(document.cookie);
@@ -20,7 +33,48 @@ function getCookie(cookieName) {
     return "";
 }
 
-
-function removeCookie(cookieName) {
-    document.cookie = cookieName + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+function setTheme(value){
+    console.log(value);
+    localStorage.setItem('theme', value);
 }
+
+window.onload = function() {
+    var container = document.getElementById('textchat');
+    if (container){
+        container.scrollTop = container.scrollHeight;
+    }
+
+    let value = localStorage.getItem('theme');
+    var htmlElement = document.querySelector('html');
+    htmlElement.setAttribute('data-theme', value);
+
+    let nameCookie = getCookie('session_id');
+    if (nameCookie != ''){
+        let messageField = document.getElementById(nameCookie)
+
+        if(messageField != null){
+            messageField.classList.remove('chat-start')
+            messageField.classList.add('chat-end')
+        }
+
+        document.getElementById('userform')?.classList.add('hidden');
+    }
+
+    document.getElementById('message_input')?.focus();
+
+    document.getElementById('messageform').addEventListener('submit', function(event) {
+        event.preventDefault();
+      
+        var message = document.getElementById('message_input');
+        if(message.value == ""){
+          return
+        }
+      
+        try {
+          ws.send(message.value);
+          message.value = "";
+        } catch (error) {
+          console.error('Error while sending WebSocket message:', error);
+        }
+      });
+};

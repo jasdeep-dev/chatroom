@@ -14,8 +14,9 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     };
     ws.onclose = function() {
-        classList = document.getElementById("active_button").classList
-        classList.remove("badge-success")
+        // classList = document.getElementById("active_button").classList
+        
+        // classList.remove("badge-success")
         // removeCookie("session_id")
         console.log("Disconnected from the WebSocket server.");
     };

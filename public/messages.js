@@ -2,17 +2,19 @@ function updateMessages(jsondata) {
 
     const container = document.getElementById('textchat');
 
+    var currentUser = getCurrentUser();
     var chatContent = "";
+
     if(currentUser == jsondata.Name){
         chatContent = `
-        <div id="${jsondata.Name}">
+        <div id="${jsondata.Name}" class="bg-base-200 rounded p-2 my-2">
             <div>
                 Me: ${jsondata.Text}
             </div>
         </div>`
     }else{
         chatContent = `
-        <div id="${jsondata.Name}">
+        <div id="${jsondata.Name}" class="bg-base-100 rounded p-2 my-2">
             <div>
                 ${jsondata.Name}: ${jsondata.Text}
             </div>
@@ -59,10 +61,8 @@ function updateUsers(jsondata){
 
     var status = document.getElementById("status_"+jsondata.Name);
     if(jsondata.IsOnline){
-
-        status.classList.add("badge-success");
+        status?.classList.add("badge-success");
     }else{
-        status.classList.remove("badge-success");
+        status?.classList.remove("badge-success");
     }
-
 }

@@ -1,8 +1,11 @@
 module chatroom
 
-go 1.20
+go 1.21
+
+toolchain go1.21.5
 
 require (
+	github.com/a-h/templ v0.2.598
 	github.com/coreos/go-oidc/v3 v3.9.0
 	github.com/gorilla/websocket v1.5.1
 	github.com/jackc/pgx/v5 v5.5.3
@@ -23,6 +26,6 @@ require (
 require (
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
-	golang.org/x/net v0.17.0
+	golang.org/x/net v0.19.0
 	golang.org/x/text v0.14.0 // indirect
 )

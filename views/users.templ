@@ -1,0 +1,16 @@
+package views
+
+import "chatroom/app"
+import "fmt"
+templ Users(users []app.User){
+    <div class="p-2">
+        <ul id="users_list">
+            for _, user := range users{
+                <li id={fmt.Sprintf("user_%v", user.ID)} class="bg-base-100 rounded p-2 my-2">
+                    <span class="{if user.IsOnline}online{end}" id="status_{user.Name}"></span>
+                    {user.Name}
+                </li>
+            }
+        </ul>
+    </div>
+}

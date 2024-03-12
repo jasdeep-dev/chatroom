@@ -1,24 +1,19 @@
 package lib
 
 import (
+	"chatroom/app"
+	"chatroom/views"
+	"context"
 	"html/template"
 	"log"
 	"net/http"
-	"time"
 )
-
-type TemplateData struct {
-	Users       map[int]User
-	Messages    []Message
-	CurrentUser KeyCloakUserInfo
-	LoggedIn    time.Time
-}
 
 func StartHTTP() {
 	fs := http.FileServer(http.Dir("./public"))
 	http.Handle("/public/", http.StripPrefix("/public/", fs))
 
-	http.HandleFunc("/", indexHandler)
+	http.HandleFunc("/", homeHandler)
 	http.HandleFunc("/user", userHandler)
 	http.HandleFunc("/message", messageHandler)
 	http.HandleFunc("/login", loginHandler)
@@ -32,16 +27,16 @@ func StartHTTP() {
 	}
 }
 
-func indexHandler(w http.ResponseWriter, r *http.Request) {
-	tmpl, err := template.New("html").Funcs(template.FuncMap{
-		"formatTime": formatTime,
-	}).ParseGlob("./views/app/*.html")
+func homeHandler(w http.ResponseWriter, r *http.Request) {
+	// tmpl, err := template.New("html").Funcs(template.FuncMap{
+	// 	"formatTime": formatTime,
+	// }).ParseGlob("./views/app/*.html")
 
-	if err != nil {
-		log.Println("can't parse the files", err)
-		w.Write([]byte(err.Error()))
-		return
-	}
+	// if err != nil {
+	// 	log.Println("can't parse the files", err)
+	// 	w.Write([]byte(err.Error()))
+	// 	return
+	// }
 
 	cookie, err := r.Cookie("session_id")
 	if err != nil {
@@ -53,25 +48,37 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session := UserSessions[cookie.Value]
+	session := app.UserSessions[cookie.Value]
 
-	data := TemplateData{
-		Users:       Users,
-		Messages:    MessagesArray,
-		CurrentUser: session.KeyCloakUser,
-		LoggedIn:    session.LoggedInAt,
-	}
-
-	err = tmpl.ExecuteTemplate(w, "index.html", data)
+	ctx := context.Background()
+	users, err := GetUsers(ctx)
 	if err != nil {
-		log.Println("Unable to render templates.", err)
-		w.Write([]byte(err.Error()))
+		log.Println("Error GetUsers", err)
 	}
+
+	messages, err := GetMessages(ctx)
+	if err != nil {
+		log.Println("Error GetMessages", err)
+	}
+	// data := app.TemplateData{
+	// 	Users:       users,
+	// 	Messages:    app.MessagesArray,
+	// 	CurrentUser: session.KeyCloakUser,
+	// 	LoggedIn:    session.LoggedInAt,
+	// }
+
+	// err = tmpl.ExecuteTemplate(w, "index.html", data)
+	// if err != nil {
+	// 	log.Println("Unable to render templates.", err)
+	// 	w.Write([]byte(err.Error()))
+	// }
+
+	views.Home(users, messages, session).Render(r.Context(), w)
 }
 
-func formatTime(t time.Time) string {
-	return t.Format(time.RFC3339)
-}
+// func formatTime(t time.Time) string {
+// 	return t.Format(time.RFC3339)
+// }
 
 func userHandler(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
@@ -110,6 +117,7 @@ func messageHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println("Error in cookies", err)
 	} else {
+		log.Println("Message received in messageHandler:", cookie.Value, inputMessage)
 		sendMessage(inputMessage, cookie.Value)
 	}
 

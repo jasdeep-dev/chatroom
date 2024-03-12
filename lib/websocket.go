@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"chatroom/app"
 	"log"
 	"net/http"
 	"strings"
@@ -16,6 +17,8 @@ var upgrader = websocket.Upgrader{
 }
 
 func handleWebSocket(w http.ResponseWriter, r *http.Request) {
+	log.Println("New connection over socket")
+
 	defer func() {
 		if r := recover(); r != nil {
 			log.Println("Recovered from panic:", r)
@@ -36,28 +39,24 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	}
 	sessionID := sessionCookie.Value
 
-	session, ok := UserSessions[sessionID]
+	session, ok := app.UserSessions[sessionID]
 	if !ok {
+		log.Println("User session not found for Socket connection:", sessionID)
 		return
 	}
 
 	session.SocketConnection = conn
-	UserSessions[sessionID] = session
+	app.UserSessions[sessionID] = session
 
-	if user, exists := Users[session.ID]; exists {
-		user.IsOnline = true
-		Users[session.ID] = user
-		UpdateUser(user)
-	} else {
-		user, err := FindUserByID(session.ID)
-		if err != nil {
-			log.Fatal("User does not exist", err)
-		}
-
-		Users[session.ID] = user
+	user, err := FindUserByID(session.ID)
+	if err != nil {
+		log.Fatal("User does not exist", err)
 	}
 
-	UserChannel <- Users[session.ID]
+	user.IsOnline = true
+	UpdateUser(user)
+
+	app.UserChannel <- user
 
 	listenForMessages(r)
 }
@@ -69,21 +68,25 @@ func listenForMessages(r *http.Request) {
 		return
 	}
 	sessionID := sessionCookie.Value
+	log.Println("User connected and listening for messages over Socket:", sessionID)
 
-	conn := UserSessions[sessionID].SocketConnection
+	conn := app.UserSessions[sessionID].SocketConnection
 	for {
 		_, message, err := conn.ReadMessage()
 		if err != nil {
 			if strings.Contains(err.Error(), "close 1001") {
 				log.Println("Session terminated by client: ", sessionID)
 
-				user := Users[UserSessions[sessionID].ID]
-				user.IsOnline = false
-				Users[UserSessions[sessionID].ID] = user
-				UserChannel <- Users[UserSessions[sessionID].ID]
+				user, err := FindUserByID(app.UserSessions[sessionID].ID)
+				if err != nil {
+					log.Println("User does not exist", err)
+					return
+				}
 
+				user.IsOnline = false
 				UpdateUser(user)
 
+				app.UserChannel <- user
 			} else {
 				log.Println("Error reading message:", err)
 			}

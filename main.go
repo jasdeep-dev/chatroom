@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 
+	"chatroom/app"
 	"chatroom/lib"
 
 	"github.com/joho/godotenv"
@@ -23,12 +24,8 @@ func main() {
 	}
 
 	ctx := context.Background()
-	lib.DBConn = lib.EstablishConnection(ctx)
-	defer lib.DBConn.Close()
-
-	// migrateDatabase(ctx)
-	lib.GetUsers(ctx)
-	lib.GetMessages(ctx)
+	app.DBConn = lib.EstablishConnection(ctx)
+	defer app.DBConn.Close()
 
 	go lib.MessageReceiver()
 	go lib.UserReciver()

@@ -1,0 +1,25 @@
+package views
+
+import "chatroom/app"
+
+templ Home(users []app.User, messages []app.Message, session app.UserSession) {
+    @Layout(users, messages, session){
+        <div class="flex justify-between">
+            <!-- Left Column (Users) -->
+            <div class="w-1/3">
+                <!-- Users Component -->
+                @Users(users)
+            </div>
+
+            <!-- Right Column (Messages) -->
+            <div class="w-2/3 ml-4">
+                <!-- Messages Component -->
+                @Messages(messages, session)
+                <!-- Message Form -->
+                if (session.KeyCloakUser.Name != "") {
+                    @MessageForm()
+                }
+            </div>
+        </div>
+    }
+}

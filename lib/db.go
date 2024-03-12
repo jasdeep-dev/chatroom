@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"strings"
 
+	"chatroom/app"
+
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -61,7 +63,7 @@ func migrateDatabase(ctx context.Context) {
 
 			// Execute each query
 			for _, query := range queries {
-				_, err := DBConn.Exec(ctx, query)
+				_, err := app.DBConn.Exec(ctx, query)
 				if err != nil {
 					fmt.Printf("Error executing query from %s: %v\n", file.Name(), err)
 					continue

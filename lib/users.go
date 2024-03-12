@@ -1,22 +1,25 @@
 package lib
 
 import (
+	"chatroom/app"
 	"context"
 	"fmt"
 	"log"
 )
 
-func GetUsers(ctx context.Context) {
-	query := "SELECT id, name, is_online, theme, preferred_username, given_name, family_name, email FROM users LIMIT 10"
+func GetUsers(ctx context.Context) ([]app.User, error) {
+	query := "SELECT id, name, is_online, theme, preferred_username, given_name, family_name, email FROM users ORDER BY name ASC"
+	var users []app.User
 
-	rows, err := DBConn.Query(ctx, query)
+	rows, err := app.DBConn.Query(ctx, query)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return users, err
 	}
 	defer rows.Close()
 
 	for rows.Next() {
-		var user User
+		var user app.User
 		if err := rows.Scan(
 			&user.ID,
 			&user.Name,
@@ -26,23 +29,21 @@ func GetUsers(ctx context.Context) {
 			&user.GivenName,
 			&user.FamilyName,
 			&user.Email); err != nil {
-			log.Fatal(err)
+			log.Println(err)
 		}
-		Users[user.ID] = user
+		users = append(users, user)
 	}
+	err = rows.Err()
 
-	log.Println("users", Users)
-	if err := rows.Err(); err != nil {
-		log.Fatal(err)
-	}
+	return users, err
 }
 
-func FindUserByEmail(email string) (User, error) {
-	var user User
+func FindUserByEmail(email string) (app.User, error) {
+	var user app.User
 	ctx := context.Background()
 
 	query := "SELECT id, name, is_online, theme, preferred_username, given_name, family_name, email FROM users WHERE email = $1"
-	err := DBConn.QueryRow(ctx, query, email).Scan(
+	err := app.DBConn.QueryRow(ctx, query, email).Scan(
 		&user.ID,
 		&user.Name,
 		&user.IsOnline,
@@ -58,12 +59,12 @@ func FindUserByEmail(email string) (User, error) {
 	return user, nil
 }
 
-func FindUserByID(id int) (User, error) {
-	var user User
+func FindUserByID(id int) (app.User, error) {
+	var user app.User
 	ctx := context.Background()
 
 	query := "SELECT id, name, is_online, theme, preferred_username, given_name, family_name, email FROM users WHERE id = $1"
-	err := DBConn.QueryRow(ctx, query, id).Scan(
+	err := app.DBConn.QueryRow(ctx, query, id).Scan(
 		&user.ID,
 		&user.Name,
 		&user.IsOnline,
@@ -79,24 +80,24 @@ func FindUserByID(id int) (User, error) {
 	return user, nil
 }
 
-func insertUser(user User) User {
+func insertUser(user app.User) (app.User, error) {
 	ctx := context.Background()
 	var id int
 	query := `INSERT INTO users (name, is_online, theme, preferred_username, given_name, family_name, email) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id;`
 
 	log.Println("inser user =>", user)
-	err := DBConn.QueryRow(ctx, query, user.Name, user.IsOnline, user.Theme, user.PreferredUsername, user.GivenName, user.FamilyName, user.Email).Scan(&id)
+	err := app.DBConn.QueryRow(ctx, query, user.Name, user.IsOnline, user.Theme, user.PreferredUsername, user.GivenName, user.FamilyName, user.Email).Scan(&id)
 	if err != nil {
 		log.Fatal("Error executing INSERT statement:", err)
+		return user, err
+
 	}
 
 	user.ID = id
-	Users[id] = user
-	log.Println("inserted User=>", user)
-	return user
+	return user, nil
 }
 
-func UpdateUser(user User) {
+func UpdateUser(user app.User) {
 	ctx := context.Background()
 	// Update statement
 	query := `UPDATE users 
@@ -110,6 +111,6 @@ func UpdateUser(user User) {
               WHERE id = $8;`
 
 	// Execute the update statement
-	_ = DBConn.QueryRow(ctx, query, user.Name, user.IsOnline, user.Theme, user.PreferredUsername, user.GivenName, user.FamilyName, user.Email, user.ID)
+	app.DBConn.QueryRow(ctx, query, user.Name, user.IsOnline, user.Theme, user.PreferredUsername, user.GivenName, user.FamilyName, user.Email, user.ID)
 	log.Println("Field updated successfully", user.ID)
 }
