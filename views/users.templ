@@ -7,7 +7,11 @@ templ Users(users []app.User){
         <ul id="users_list">
             for _, user := range users{
                 <li id={fmt.Sprintf("user_%v", user.ID)} class="bg-base-100 rounded p-2 my-2">
-                    <span class="{if user.IsOnline}online{end}" id="status_{user.Name}"></span>
+                    if user.IsOnline {
+                        <span class="online" id={"status_" + user.Name}></span>
+                    } else {
+                        <span id={"status_" + user.Name}></span>
+                    }
                     {user.Name}
                 </li>
             }

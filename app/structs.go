@@ -40,10 +40,12 @@ type User struct {
 }
 
 type Message struct {
-	TimeStamp time.Time
-	Text      string
-	Name      string
-	Email     string
+	ID        int       `db:"id"`
+	TimeStamp time.Time `db:"timestamp"`
+	Text      string    `db:"text"`
+	UserID    int       `db:"user_id"`
+	Name      string    `db:"name"`
+	Email     string    `db:"email"`
 }
 
 type MessageReceived struct {

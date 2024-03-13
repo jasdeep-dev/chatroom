@@ -1,36 +1,28 @@
 package views
 
 import "chatroom/app"
-
+import "fmt"
 
 templ Messages(messages []app.Message, session app.UserSession){
     <div id="textchat" class="overflow-auto h-dvh bg-base-100 rounded-xl p-4">
         for _, message := range messages{
-            if session.UserInfo.Name == message.Name {
-                <div id={message.Name} class="chat chat-end">
-                    @messageCard(message)
+            <div 
+                id={fmt.Sprintf("msg_%v", message.ID)} 
+                class={fmt.Sprintf("user_message_%v", session.UserID == message.UserID)}
+            >
+                <div class="chat-header">
+                    {message.Name}
+                    <time class="text-xs opacity-50">{message.TimeStamp.Format("15:04")}</time>
                 </div>
-            } else {
-                <div id={message.Name} class="chat chat-start">
-                    @messageCard(message)
+
+                <div class="chat-image avatar placeholder">
+                    <div class="bg-neutral text-neutral-content rounded-full w-10">
+                        <span class="text-center">{templ.JoinStringErrs(string(message.Name[0]))}</span>
+                    </div>
                 </div>
-            }
+
+                <div class="chat-bubble">{message.Text}</div>
+            </div>
         }
     </div>
-}
-
-
-templ messageCard(message app.Message){
-    <div class="chat-header">
-        {message.Name}
-        <time class="text-xs opacity-50">{message.TimeStamp.Format("15:04")}</time>
-    </div>
-
-    <div class="chat-image avatar placeholder">
-        <div class="bg-neutral text-neutral-content rounded-full w-10">
-            <span class="text-center">{templ.JoinStringErrs(string(message.Name[0]))}</span>
-        </div>
-    </div>
-
-    <div class="chat-bubble">{message.Text}</div>
 }

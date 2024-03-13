@@ -1,3 +1,11 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.user_message_true {
+    @apply chat chat-end;
+}
+
+.user_message_false {
+    @apply chat chat-start;
+}

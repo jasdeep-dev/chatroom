@@ -6,15 +6,15 @@ templ Navbar(currentUser string){
             setLocalStorageTheme()
         }
 
-        function addTheThemeToLocalStorage(value){
-            localStorage.setItem('theme', value);
-            setLocalStorageTheme()
-        }
-
         function setLocalStorageTheme(){
             let value = localStorage.getItem('theme');
             var htmlElement = document.querySelector('html');
             htmlElement.setAttribute('data-theme', value);
+        }
+
+        function addTheThemeToLocalStorage(value){
+            localStorage.setItem('theme', value);
+            setLocalStorageTheme()
         }
     </script>
     <div class="container mx-auto flex justify-between items-center">
@@ -39,7 +39,7 @@ templ Navbar(currentUser string){
 
             <!-- Set the theme -->
             <li>
-                <select name="selectThemeOption" onchange="setTheme(this.value)" class="select w-full max-w-xs bg-primary-100">
+                <select name="selectThemeOption" onchange="addTheThemeToLocalStorage(this.value)" class="select w-full max-w-xs bg-primary-100">
                     <option disabled selected>Pick a Theme</option>
                     <option>dark</option>
                     <option>light</option>

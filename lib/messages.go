@@ -93,6 +93,7 @@ func sendMessage(ctx context.Context, message string, sessionID string, sockConn
 		Context:   ctx,
 		Message: app.Message{
 			Text:      message,
+			UserID:    session.UserID,
 			Name:      session.UserInfo.Name,
 			Email:     session.UserInfo.Email,
 			TimeStamp: time.Now(),
@@ -105,9 +106,9 @@ func GetMessages(ctx context.Context) ([]app.Message, error) {
 	var messages []app.Message
 
 	query := `
-		SELECT m.timestamp, m.text, u.name, u.email
+		SELECT m.id, m.timestamp, m.text, u.id AS user_id, u.name AS name, u.email AS email
 		FROM messages m
-		INNER JOIN users u ON m.user_id = u.id
+		LEFT JOIN users u ON m.user_id = u.id
 	`
 	rows, err := app.DBConn.Query(ctx, query)
 	if err != nil {
