@@ -3,6 +3,7 @@ package lib
 import (
 	"chatroom/app"
 	"context"
+	"errors"
 	"log"
 	"time"
 
@@ -13,7 +14,7 @@ import (
 func MessageReceiver() {
 	for msg := range app.MessageChannel {
 		err := InsertMessage(msg.Context, msg.Message)
-		if err != nil {
+		if err != nil && msg.SockConn != nil {
 			err = deliverErrorToSocket(msg.SockConn, err)
 			if err != nil {
 				log.Println("Error from deliverErrorToSocket:", err)
@@ -31,7 +32,12 @@ func deliverErrorToSocket(conn *websocket.Conn, err error) error {
 	}{
 		Error: err.Error(),
 	}
-	return conn.WriteJSON(msg)
+
+	if conn != nil {
+		return conn.WriteJSON(msg)
+	} else {
+		return errors.New("websocket connection is nil")
+	}
 }
 
 func UserReciver() {
@@ -127,11 +133,12 @@ func InsertMessage(ctx context.Context, message app.Message) error {
 
 	newUser, err := FindUserByEmail(ctx, message.Email)
 	if err != nil {
-		log.Println("user with email does not exist in our database")
+		log.Println("user with email does not exist in our database", err)
 		return err
 	}
+
 	// Execute the SQL statement
-	_, err = app.DBConn.Exec(context.Background(), query, message.TimeStamp, message.Text, newUser.ID)
+	_, err = app.DBConn.Exec(ctx, query, message.TimeStamp, message.Text, newUser.ID)
 	if err != nil {
 		return err
 	}

@@ -29,18 +29,17 @@ func FindUserByEmail(ctx context.Context, email string) (app.User, error) {
 	var user app.User
 
 	query := "SELECT id, name, is_online, theme, preferred_username, given_name, family_name, email FROM users WHERE email = $1"
-	err := app.DBConn.QueryRow(ctx, query, email).Scan(
-		&user.ID,
-		&user.Name,
-		&user.IsOnline,
-		&user.Theme,
-		&user.PreferredUsername,
-		&user.GivenName,
-		&user.FamilyName,
-		&user.Email,
-	)
+
+	rows, err := app.DBConn.Query(ctx, query, email)
 	if err != nil {
-		return user, fmt.Errorf("error scanning row: %w", err)
+		log.Println("Error in FindUserByEmail", email, err)
+		return user, err
+	}
+
+	user, err = pgx.CollectOneRow(rows, pgx.RowToStructByName[app.User])
+	defer rows.Close()
+	if err != nil {
+		return user, fmt.Errorf("error scanning row: %w - email %v", err, email)
 	}
 	return user, nil
 }
