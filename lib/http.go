@@ -2,6 +2,7 @@ package lib
 
 import (
 	"chatroom/views"
+	"context"
 	"html/template"
 	"log"
 	"net/http"
@@ -100,7 +101,7 @@ func messageHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println("Error in cookies", err)
 	} else {
 		log.Println("Message received in messageHandler:", cookie.Value, inputMessage)
-		sendMessage(r.Context(), inputMessage, cookie.Value, nil)
+		sendMessage(context.Background(), inputMessage, cookie.Value, nil)
 	}
 
 	http.Redirect(w, r, "/", http.StatusSeeOther)
