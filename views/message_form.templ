@@ -1,7 +1,10 @@
 package views
 
 templ MessageForm(){
-    <form class="bg-base-300 p-3 rounded rounded-lg" method="post" action="/message" id="messageform">
-        <input type="text" placeholder="Messages" id="message_input" name="message" class="input input-bordered w-full max-w-xs"/>
+    <form class="bg-base-300 p-3 rounded rounded-lg" 
+        method="post" action="/message" id="messageform"
+        style="position: relative; bottom: -2%;"
+    >
+        <input type="text" placeholder="Messages" id="message_input" name="message" class="input input-bordered w-full"/>
     </form>
 }

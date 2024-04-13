@@ -118,7 +118,7 @@ func GetMessages(ctx context.Context) ([]app.Message, error) {
 	`
 	rows, err := app.DBConn.Query(ctx, query)
 	if err != nil {
-		log.Println("Error GetMessages", err)
+		log.Println("Error GetMessages: ", err)
 		return messages, err
 	}
 

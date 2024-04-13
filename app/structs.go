@@ -39,6 +39,28 @@ type User struct {
 	Email             string `db:"email"`
 }
 
+type Attribute struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
+}
+
+type KeyCloackUser struct {
+	ID                       string      `json:"id"`
+	Email                    *string     `json:"email"`
+	EmailConstraint          *string     `json:"email_constraint"`
+	EmailVerified            bool        `json:"email_verified"`
+	Enabled                  bool        `json:"enabled"`
+	FederationLink           *string     `json:"federation_link"`
+	FirstName                *string     `json:"first_name"`
+	LastName                 *string     `json:"last_name"`
+	RealmID                  *string     `json:"realm_id"`
+	Username                 *string     `json:"username"`
+	CreatedTimestamp         int64       `json:"created_timestamp"`
+	ServiceAccountClientLink *string     `json:"service_account_client_link"`
+	NotBefore                int32       `json:"not_before"`
+	Attributes               []Attribute `json:"attributes"`
+}
+
 type Message struct {
 	ID        int       `db:"id"`
 	TimeStamp time.Time `db:"timestamp"`
@@ -58,6 +80,7 @@ type MessageReceived struct {
 var MessageChannel = make(chan MessageReceived, 100)
 
 var DBConn *pgxpool.Pool
+var KeycloackDBConn *pgxpool.Pool
 
 var UserChannel = make(chan User, 100)
 

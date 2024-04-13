@@ -4,7 +4,29 @@ import "chatroom/app"
 import "fmt"
 
 templ Messages(messages []app.Message, session app.UserSession){
-    <div id="textchat" class="overflow-auto h-dvh bg-base-100 rounded-xl p-4">
+    <script>
+        function updateMessages(jsondata) {
+            console.log("this is me")
+            debugger
+            var currentUser = getCurrentUser();
+            var chatContent = `<div id="msg_7" class="user_message_true">
+                <div class="chat-header">
+                    "${jsondata.Name}"
+                    <time class="text-xs opacity-50">"${message.TimeStamp.Format("15:04")}"</time>
+                </div>
+                <div class="chat-image avatar placeholder">
+                    <div class="bg-neutral text-neutral-content rounded-full w-10">
+                        <span class="text-center">templ.JoinStringErrs(string(message.Name[0]))</span>
+                    </div>
+                </div>
+                <div class="chat-bubble">${message.Text}</div>
+            </div>`
+        }
+    </script>
+
+
+    <div id="textchat" class="overflow-auto bg-base-100 rounded-xl p-4"
+        style="height: 90%">
         for _, message := range messages{
             <div 
                 id={fmt.Sprintf("msg_%v", message.ID)} 

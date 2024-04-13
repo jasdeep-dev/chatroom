@@ -6,6 +6,7 @@ import (
 
 	"chatroom/app"
 	"chatroom/lib"
+	"chatroom/lib/keycloak"
 
 	"github.com/joho/godotenv"
 )
@@ -27,13 +28,16 @@ func main() {
 	app.DBConn = lib.EstablishConnection(ctx)
 	defer app.DBConn.Close()
 
+	app.KeycloackDBConn = keycloak.EstablishKeyCloakConnection(ctx)
+	defer app.KeycloackDBConn.Close()
+
 	//migrate database
 	// lib.MigrateDatabase((ctx))
 
 	// Connect to memcahed
 	err = lib.InitCache()
 	if err != nil {
-		log.Fatal("Unable to connect to Memcached", err)
+		log.Fatal("Unable to connect to Memcached: ", err)
 	}
 
 	go lib.MessageReceiver()

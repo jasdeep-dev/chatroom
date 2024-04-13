@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"chatroom/lib/keycloak"
 	"chatroom/views"
 	"context"
 	"html/template"
@@ -60,7 +61,12 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	views.Home(users, messages, session).Render(r.Context(), w)
+	keycloak_users, err := keycloak.GetUsers(r.Context())
+	if err != nil {
+		log.Fatal("Unable to connect to Keycloak: ", err)
+	}
+
+	views.Home(users, messages, session, keycloak_users).Render(r.Context(), w)
 }
 
 func userHandler(w http.ResponseWriter, r *http.Request) {

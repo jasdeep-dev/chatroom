@@ -31,7 +31,7 @@ services:
     environment:
       POSTGRES_PASSWORD: Chat123#
       POSTGRES_USER: chat
-      POSTGRES_DB: keycloak-db
+      KEYCLOCK_DB: keycloak-db
     volumes:
       - keycloak-db-db:/var/lib/postgresql/data
 

@@ -2,13 +2,18 @@ package views
 
 import "chatroom/app"
 
-templ Home(users []app.User, messages []app.Message, session app.UserSession) {
+templ Home(users []app.User, messages []app.Message, session app.UserSession, keycloak_users []app.KeyCloackUser) {
     @Layout(users, messages, session){
-        <div class="flex justify-between">
+        <div class="flex justify-between" style="height: calc(100vh - 200px)">
             <!-- Left Column (Users) -->
             <div class="w-1/3">
                 <!-- Users Component -->
                 @Users(users)
+            </div>
+
+            <div class="w-1/3">
+                <!-- Users Component -->
+                @KeyCloakUsers(keycloak_users)
             </div>
 
             <!-- Right Column (Messages) -->
@@ -16,7 +21,7 @@ templ Home(users []app.User, messages []app.Message, session app.UserSession) {
                 <!-- Messages Component -->
                 @Messages(messages, session)
                 <!-- Message Form -->
-                if (session.UserInfo.Name != "") {
+                if (session.UserInfo.Email != "") {
                     @MessageForm()
                 }
             </div>

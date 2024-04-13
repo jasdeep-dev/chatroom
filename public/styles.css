@@ -1023,15 +1023,6 @@ html {
   content: var(--tw-content);
 }
 
-.chat {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  -moz-column-gap: 0.75rem;
-       column-gap: 0.75rem;
-  padding-top: 0.25rem;
-  padding-bottom: 0.25rem;
-}
-
 .chat-image {
   grid-row: span 2 / span 2;
   align-self: flex-end;
@@ -1472,6 +1463,15 @@ html {
   outline-offset: 2px;
 }
 
+:where(.menu li:not(.menu-title, .disabled) > *:not(ul, details, .menu-title)):not(summary, .active, .btn).focus, :where(.menu li:not(.menu-title, .disabled) > *:not(ul, details, .menu-title)):not(summary, .active, .btn):focus, :where(.menu li:not(.menu-title, .disabled) > *:not(ul, details, .menu-title)):is(summary):not(.active, .btn):focus-visible, :where(.menu li:not(.menu-title, .disabled) > details > summary:not(.menu-title)):not(summary, .active, .btn).focus, :where(.menu li:not(.menu-title, .disabled) > details > summary:not(.menu-title)):not(summary, .active, .btn):focus, :where(.menu li:not(.menu-title, .disabled) > details > summary:not(.menu-title)):is(summary):not(.active, .btn):focus-visible {
+  cursor: pointer;
+  background-color: var(--fallback-bc,oklch(var(--bc)/0.1));
+  --tw-text-opacity: 1;
+  color: var(--fallback-bc,oklch(var(--bc)/var(--tw-text-opacity)));
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+
 .mockup-browser .mockup-browser-toolbar .input {
   position: relative;
   margin-left: auto;
@@ -1721,6 +1721,14 @@ html {
   right: 7%;
 }
 
+.fixed {
+  position: fixed;
+}
+
+.relative {
+  position: relative;
+}
+
 .mx-auto {
   margin-left: auto;
   margin-right: auto;
@@ -1735,8 +1743,8 @@ html {
   margin-left: 1rem;
 }
 
-.mt-24 {
-  margin-top: 6rem;
+.mt-4 {
+  margin-top: 1rem;
 }
 
 .mt-8 {
@@ -1749,14 +1757,6 @@ html {
 
 .hidden {
   display: none;
-}
-
-.h-dvh {
-  height: 100dvh;
-}
-
-.min-h-screen {
-  min-height: 100vh;
 }
 
 .w-1\/3 {

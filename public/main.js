@@ -34,12 +34,6 @@ function getCookie(cookieName) {
 }
 
 window.onload = function() {
-    //scroll to the bottom of the chat
-    var container = document.getElementById('textchat');
-    if (container){
-        container.scrollTop = container.scrollHeight;
-    }
-    document.getElementById('message_input')?.focus();
 
     //theme selection
     let value = localStorage.getItem('theme');
@@ -62,3 +56,6 @@ window.onload = function() {
         }
       });
 };
+document.addEventListener("DOMContentLoaded", function(event) { 
+    window.scrollTo(0,document.body.scrollHeight);
+});

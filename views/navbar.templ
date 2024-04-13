@@ -1,6 +1,7 @@
 package views
+import "chatroom/app"
 
-templ Navbar(currentUser string){
+templ Navbar(session app.UserSession){
     <script type="text/javascript">
         window.onload = function() {
             setLocalStorageTheme()
@@ -23,8 +24,8 @@ templ Navbar(currentUser string){
             <!-- Link to Keycloak User Page -->
             <li>
                 <a href="http://localhost:9000/realms/chatroom/account"
-                    class="btn" target="_blank">
-                    {currentUser}
+                    class="btn" target="_blank" id="user_name">
+                    {session.UserInfo.Email}
                 </a>
             </li>
 

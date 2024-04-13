@@ -1,5 +1,5 @@
 function updateMessages(jsondata) {
-
+    alert("here")
     const container = document.getElementById('textchat');
 
     var currentUser = getCurrentUser();
