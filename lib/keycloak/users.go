@@ -32,7 +32,7 @@ func GetUsers(ctx context.Context) ([]app.KeyCloakUser, error) {
 
 	users, err = pgx.CollectRows(rows, pgx.RowToStructByName[app.KeyCloakUser])
 	defer rows.Close()
-	fmt.Println("Users in Keycloak :=", users)
+
 	return users, err
 }
 

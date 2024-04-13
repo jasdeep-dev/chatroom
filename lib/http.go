@@ -119,7 +119,7 @@ func messageHandler(w http.ResponseWriter, r *http.Request) {
 		sendMessage(context.Background(), inputMessage, session, nil)
 	}
 
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+	// http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func logoutHandler(w http.ResponseWriter, r *http.Request) {

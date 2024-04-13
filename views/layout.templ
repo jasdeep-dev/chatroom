@@ -8,7 +8,7 @@ templ Layout(users []app.User, messages []app.Message, session app.UserSession) 
         <head>
             <meta charset="UTF-8"/>
             <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-            <meta name="current_user" content={session.UserInfo.Name} />
+            <meta name="current_user" content={*session.KeyCloakUser.Email} />
 
             <title>Chatroom</title>
             <link rel="stylesheet" type="text/css" href="/public/styles.css?version="/>

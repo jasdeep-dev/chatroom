@@ -50,7 +50,7 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	user.IsOnline = true
 	UpdateUser(r.Context(), user)
 
-	app.UserChannel <- user
+	// app.UserChannel <- user
 
 	listenForMessages(r.Context(), sessionID, conn, r)
 }
@@ -79,7 +79,7 @@ func listenForMessages(ctx context.Context, sessionID string, conn *websocket.Co
 				user.IsOnline = false
 				UpdateUser(ctx, user)
 
-				app.UserChannel <- user
+				// app.UserChannel <- user
 			} else {
 				log.Println("Error reading message:", err)
 			}

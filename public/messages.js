@@ -1,30 +1,3 @@
-function updateMessages(jsondata) {
-    alert("here")
-    const container = document.getElementById('textchat');
-
-    var currentUser = getCurrentUser();
-    var chatContent = "";
-
-    if(currentUser == jsondata.Name){
-        chatContent = `
-        <div id="${jsondata.Name}" class="bg-base-200 rounded p-2 my-2">
-            <div>
-                Me: ${jsondata.Text}
-            </div>
-        </div>`
-    }else{
-        chatContent = `
-        <div id="${jsondata.Name}" class="bg-base-100 rounded p-2 my-2">
-            <div>
-                ${jsondata.Name}: ${jsondata.Text}
-            </div>
-        </div>`
-    }
-
-    container.innerHTML += chatContent;
-    container.scrollTop = container.scrollHeight;
-}
-
 function updateUsers(jsondata){
     if(jsondata.Name == ""){
         return

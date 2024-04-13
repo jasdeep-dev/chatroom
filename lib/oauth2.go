@@ -5,7 +5,6 @@ import (
 	"chatroom/lib/keycloak"
 	"crypto/rand"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -126,7 +125,7 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := getUserInfo(oauth2Token.AccessToken)
+	// user := getUserInfo(oauth2Token.AccessToken)
 
 	newUser := app.User{
 		Name:              idTokenClaims.Name,
@@ -176,7 +175,6 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 		ID:           sessionID,
 		UserID:       currentUser.ID,
 		AccessToken:  oauth2Token.AccessToken,
-		UserInfo:     user,
 		KeyCloakUser: currentKUser,
 		LoggedInAt:   time.Now(),
 	}
@@ -205,37 +203,4 @@ func setCallbackCookie(w http.ResponseWriter, r *http.Request, name, value strin
 		HttpOnly: true,
 	}
 	http.SetCookie(w, c)
-}
-
-func getUserInfo(access_token string) app.UserInfo {
-
-	url := fmt.Sprintf("%s/realms/%s/protocol/openid-connect/userinfo",
-		os.Getenv("KEYCLOAK_URL"),
-		os.Getenv("REALM_NAME"),
-	)
-
-	client := &http.Client{}
-
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		log.Fatal("Error creating request: ", err)
-	}
-
-	req.Header.Set("Authorization", "Bearer "+access_token)
-
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Fatal("Error sending request: ", err)
-	}
-	defer resp.Body.Close()
-
-	var keyCloakUser app.UserInfo
-
-	err = json.NewDecoder(resp.Body).Decode(&keyCloakUser)
-	if err != nil {
-		log.Println("Error decoding JSON: ", err)
-	}
-
-	keyCloakUser.Name = Titleize(keyCloakUser.Name)
-	return keyCloakUser
 }

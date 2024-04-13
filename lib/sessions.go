@@ -4,7 +4,6 @@ import (
 	"chatroom/app"
 	"chatroom/lib/keycloak"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -32,11 +31,6 @@ func GetSession(sessionID string, r *http.Request) (app.UserSession, error) {
 		return userSession, err
 	}
 
-	keycloak, err := r.Cookie("KEYCLOAK_SESSION")
-	if err != nil {
-		log.Print("Error")
-	}
-	fmt.Println("===> keyclock", keycloak)
 	return userSession, err
 }
 

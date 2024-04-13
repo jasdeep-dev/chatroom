@@ -33,29 +33,6 @@ function getCookie(cookieName) {
     return "";
 }
 
-window.onload = function() {
-
-    //theme selection
-    let value = localStorage.getItem('theme');
-    var htmlElement = document.querySelector('html');
-    htmlElement.setAttribute('data-theme', value);
-
-    document.getElementById('messageform').addEventListener('submit', function(event) {
-        event.preventDefault();
-      
-        var message = document.getElementById('message_input');
-        if(message.value == ""){
-          return
-        }
-      
-        try {
-          ws.send(message.value);
-          message.value = "";
-        } catch (error) {
-          console.error('Error while sending WebSocket message:', error);
-        }
-      });
-};
 document.addEventListener("DOMContentLoaded", function(event) { 
     window.scrollTo(0,document.body.scrollHeight);
 });

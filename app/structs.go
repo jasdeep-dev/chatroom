@@ -24,7 +24,6 @@ type UserSession struct {
 	AccessToken  string       `json:"access_token"`
 	LoggedInAt   time.Time    `json:"logged_in_at"`
 	KeyCloakUser KeyCloakUser `json:"keycloak_user"`
-	UserInfo     UserInfo     `json:"user_info"`
 }
 
 var SocketConnections []*websocket.Conn

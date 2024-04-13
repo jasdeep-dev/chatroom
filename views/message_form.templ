@@ -1,8 +1,24 @@
 package views
 
 templ MessageForm(){
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const form = document.getElementById("messageform");
+
+            form.addEventListener("submit", function(event) {
+                event.preventDefault();
+                const message = document.getElementById("message_input").value.trim();
+                if (message !== "") {
+                    ws.send(message);
+                    console.log("Message sent via WebSocket:", message);
+                    document.getElementById("message_input").value = "";
+                }
+            });
+        });
+
+    </script>
     <form class="bg-base-300 p-3 rounded rounded-lg" 
-        method="post" action="/message" id="messageform"
+        id="messageform"
         style="position: relative; bottom: -2%;"
     >
         <input type="text" placeholder="Messages" id="message_input" name="message" class="input input-bordered w-full"/>
