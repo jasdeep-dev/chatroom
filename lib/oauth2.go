@@ -125,30 +125,6 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// user := getUserInfo(oauth2Token.AccessToken)
-
-	newUser := app.User{
-		Name:              idTokenClaims.Name,
-		IsOnline:          true,
-		Theme:             Settings.DefaultTheme,
-		PreferredUsername: idTokenClaims.PreferredUsername,
-		GivenName:         idTokenClaims.GivenName,
-		FamilyName:        idTokenClaims.FamilyName,
-		Email:             idTokenClaims.Email,
-	}
-
-	var currentUser app.User
-
-	currentUser, err = FindUserByEmail(ctx, newUser.Email)
-	if err != nil {
-		currentUser, err = insertUser(ctx, newUser)
-		if err != nil {
-			log.Println("Error in InsertUser", err)
-			http.Redirect(w, r, "/", http.StatusFound)
-			return
-		}
-	}
-
 	sessionID := idTokenClaims.Sid
 	currentKUser, err := keycloak.FindUserByID(ctx, idTokenClaims.Sub)
 	if err != nil {
@@ -173,7 +149,7 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 
 	session := app.UserSession{
 		ID:           sessionID,
-		UserID:       currentUser.ID,
+		UserID:       currentKUser.ID,
 		AccessToken:  oauth2Token.AccessToken,
 		KeyCloakUser: currentKUser,
 		LoggedInAt:   time.Now(),

@@ -41,8 +41,8 @@ func deliverErrorToSocket(conn *websocket.Conn, err error) error {
 }
 
 func UserReciver() {
-	for user := range app.UserChannel {
-		if user.Name != "" {
+	for user := range app.KUserChannel {
+		if user.ID != "" {
 			deliverUsersToWebSocketConnections(user)
 		}
 	}
@@ -62,14 +62,14 @@ func deliverMessageToWebSocketConnections(message app.Message) {
 	}
 }
 
-func deliverUsersToWebSocketConnections(user app.User) {
+func deliverUsersToWebSocketConnections(user app.KeyCloakUser) {
 	for _, conn := range app.SocketConnections {
 		if conn == nil {
 			continue
 		}
 
 		usr := struct {
-			User app.User
+			User app.KeyCloakUser
 		}{
 			User: user,
 		}
@@ -101,11 +101,7 @@ func GetMessages(ctx context.Context) ([]app.Message, error) {
 	var err error
 	var messages []app.Message
 
-	query := `
-		SELECT m.id, m.timestamp, m.text, u.id AS user_id, u.name AS name, u.email AS email
-		FROM messages m
-		LEFT JOIN users u ON m.user_id = u.id
-	`
+	query := `SELECT id, timestamp, text, id AS user_id, first_name AS name, email AS email FROM messages`
 	rows, err := app.DBConn.Query(ctx, query)
 	if err != nil {
 		log.Println("Error GetMessages: ", err)
@@ -119,16 +115,9 @@ func GetMessages(ctx context.Context) ([]app.Message, error) {
 }
 
 func InsertMessage(ctx context.Context, message app.Message) error {
-	query := "INSERT INTO messages (timestamp, text, user_id) VALUES ($1, $2, $3)"
+	query := "INSERT INTO messages (timestamp, text, user_id, first_name, email) VALUES ($1, $2, $3, $4, $5)"
 
-	newUser, err := FindUserByEmail(ctx, message.Email)
-	if err != nil {
-		log.Println("user with email does not exist in our database", err)
-		return err
-	}
-
-	// Execute the SQL statement
-	_, err = app.DBConn.Exec(ctx, query, message.TimeStamp, message.Text, newUser.ID)
+	_, err := app.DBConn.Exec(ctx, query, message.TimeStamp, message.Text, message.UserID, message.Name, message.Email)
 	if err != nil {
 		return err
 	}

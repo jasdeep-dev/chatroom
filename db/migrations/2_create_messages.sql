@@ -4,11 +4,13 @@ CREATE TABLE IF NOT EXISTS messages (
     id SERIAL PRIMARY KEY,
     timestamp TIMESTAMP,
     text TEXT,
-    user_id INTEGER
+    user_id varchar NOT NULL,
+    first_name varchar,
+    email varchar
 );
 
 -- Seed data for messages table
-INSERT INTO messages (timestamp, text, user_id) VALUES
-    ('2024-03-01 12:00:00', 'Hello, this is Alice!', 1),
-    ('2024-03-01 12:05:00', 'Hi, Alice!', 2),
-    ('2024-03-01 12:10:00', 'Hey, Bob!', 1);
+INSERT INTO messages (timestamp, text, user_id, first_name, email) VALUES
+    ('2024-03-01 12:00:00', 'Hello, this is Alice!', '2f1ee47f-4201-49b8-8a8a-7dae2ec11e40', 'smiley', 'smiley@gmail.com'),
+    ('2024-03-01 12:05:00', 'Hi, Alice!', '2f1ee47f-4201-49b8-8a8a-7dae2ec11e40', 'smiley', 'smiley@gmail.com'),
+    ('2024-03-01 12:10:00', 'Hey, Bob!', '2f1ee47f-4201-49b8-8a8a-7dae2ec11e40', 'smiley', 'smiley@gmail.com');

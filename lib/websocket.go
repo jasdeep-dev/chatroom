@@ -2,6 +2,7 @@ package lib
 
 import (
 	"chatroom/app"
+	"chatroom/lib/keycloak"
 	"context"
 	"log"
 	"net/http"
@@ -42,15 +43,15 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	// TODO: Remove the socket connection from app.SocketConnections when connection terminated
 	log.Println("New Socket Connection:", conn.RemoteAddr())
 
-	user, err := FindUserByID(r.Context(), session.UserID)
+	user, err := keycloak.FindUserByID(r.Context(), session.UserID)
 	if err != nil {
 		log.Println("User does not exist", err)
 	}
 
-	user.IsOnline = true
-	UpdateUser(r.Context(), user)
+	// user.IsOnline = true
+	// UpdateUser(r.Context(), user)
 
-	// app.UserChannel <- user
+	app.KUserChannel <- user
 
 	listenForMessages(r.Context(), sessionID, conn, r)
 }
@@ -70,16 +71,16 @@ func listenForMessages(ctx context.Context, sessionID string, conn *websocket.Co
 					return
 				}
 
-				user, err := FindUserByID(ctx, session.UserID)
+				user, err := keycloak.FindUserByID(ctx, session.UserID)
 				if err != nil {
 					log.Println("User does not exist", err)
 					return
 				}
 
-				user.IsOnline = false
-				UpdateUser(ctx, user)
+				// user.IsOnline = false
+				// UpdateUser(ctx, user)
 
-				// app.UserChannel <- user
+				app.KUserChannel <- user
 			} else {
 				log.Println("Error reading message:", err)
 			}

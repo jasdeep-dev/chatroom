@@ -1,41 +1,33 @@
 function updateUsers(jsondata){
-    if(jsondata.Name == ""){
+    if(jsondata.id == ""){
         return
     }
-    var user = document.getElementById("user_"+jsondata.ID);
+    var user = document.getElementById("user_"+jsondata.id);
     if(user == null){
 
-        // Assuming you have the user's name in a variable
-        var name = jsondata.Name; // This is where you dynamically set the name
+        var name = jsondata.first_name;
 
-        // Create the <li> element
         var li = document.createElement('li');
-        li.className = 'py-2 p-4 rounded-lg mb-2 bg-base-100 capitalize';
-        li.id = 'user_' + name; // Dynamic ID based on user name
+        li.className = 'bg-base-100 rounded p-2 my-2';
+        li.id = 'user_' + name;
 
-        // Create the <span> element for the badge
         var span = document.createElement('span');
         span.className = 'indicator-item badge badge-xs badge-success';
-        span.id = 'status_' + name; // Dynamic ID based on user name
-
-        // Append the <span> to the <li>
+        span.id = 'status_' + name;
+    
         li.appendChild(span);
-
-        // Set the text content for the <li>. Note: This text node is added after the <span>
+    
         var textNode = document.createTextNode(name);
         li.appendChild(textNode);
-
-        // Assuming there's an existing <ul> or <ol> element with an ID 'userList' in your document
+    
         var userList = document.getElementById('users_list');
         userList.appendChild(li);
-
     }
 
-
-    var status = document.getElementById("status_"+jsondata.Name);
-    if(jsondata.IsOnline){
-        status?.classList.add("badge-success");
-    }else{
-        status?.classList.remove("badge-success");
-    }
+    // var status = document.getElementById("status_"+jsondata.name);
+    // if(jsondata.IsOnline){
+    //     status?.classList.add("badge-success");
+    // }else{
+    //     status?.classList.remove("badge-success");
+    // }
 }

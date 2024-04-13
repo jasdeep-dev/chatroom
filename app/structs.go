@@ -8,19 +8,9 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type UserInfo struct {
-	Sub               string `json:"sub"`
-	EmailVerified     bool   `json:"email_verified"`
-	Name              string `json:"name"`
-	PreferredUsername string `json:"preferred_username"`
-	GivenName         string `json:"given_name"`
-	FamilyName        string `json:"family_name"`
-	Email             string `json:"email"`
-}
-
 type UserSession struct {
 	ID           string       `json:"id"`
-	UserID       int          `json:"user_id"`
+	UserID       string       `json:"user_id"`
 	AccessToken  string       `json:"access_token"`
 	LoggedInAt   time.Time    `json:"logged_in_at"`
 	KeyCloakUser KeyCloakUser `json:"keycloak_user"`
@@ -65,7 +55,7 @@ type Message struct {
 	ID        int       `db:"id"`
 	TimeStamp time.Time `db:"timestamp"`
 	Text      string    `db:"text"`
-	UserID    int       `db:"user_id"`
+	UserID    string    `db:"user_id"`
 	Name      string    `db:"name"`
 	Email     string    `db:"email"`
 }
@@ -82,7 +72,8 @@ var MessageChannel = make(chan MessageReceived, 100)
 var DBConn *pgxpool.Pool
 var KeycloackDBConn *pgxpool.Pool
 
-var UserChannel = make(chan User, 100)
+// var UserChannel = make(chan User, 100)
+var KUserChannel = make(chan KeyCloakUser, 100)
 
 type IDTokenClaims struct {
 	Exp               int64  `json:"exp"`
