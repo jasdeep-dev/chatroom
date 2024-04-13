@@ -77,31 +77,21 @@ func deliverUsersToWebSocketConnections(user app.User) {
 	}
 }
 
-func sendMessage(ctx context.Context, message string, sessionID string, sockConn *websocket.Conn) {
+func sendMessage(ctx context.Context, message string, session app.UserSession, sockConn *websocket.Conn) {
 	if message == "" {
 		log.Println("sendMessage: Message is blank")
 		return
 	}
 
-	if sessionID == "" {
-		log.Println("sendMessage: Session id is blank")
-		return
-	}
-
-	session, err := GetSession(sessionID)
-	if err != nil {
-		log.Println("sendMessage: Session not found", sessionID)
-	}
-
 	app.MessageChannel <- app.MessageReceived{
-		SessionID: sessionID,
+		SessionID: session.ID,
 		SockConn:  sockConn,
 		Context:   ctx,
 		Message: app.Message{
 			Text:      message,
 			UserID:    session.UserID,
-			Name:      session.UserInfo.Name,
-			Email:     session.UserInfo.Email,
+			Name:      *session.KeyCloakUser.FirstName,
+			Email:     *session.KeyCloakUser.Email,
 			TimeStamp: time.Now(),
 		},
 	}

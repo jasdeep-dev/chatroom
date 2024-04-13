@@ -19,11 +19,12 @@ type UserInfo struct {
 }
 
 type UserSession struct {
-	ID          string    `json:"id"`
-	UserID      int       `json:"user_id"`
-	AccessToken string    `json:"access_token"`
-	LoggedInAt  time.Time `json:"logged_in_at"`
-	UserInfo    UserInfo  `json:"user_info"`
+	ID           string       `json:"id"`
+	UserID       int          `json:"user_id"`
+	AccessToken  string       `json:"access_token"`
+	LoggedInAt   time.Time    `json:"logged_in_at"`
+	KeyCloakUser KeyCloakUser `json:"keycloak_user"`
+	UserInfo     UserInfo     `json:"user_info"`
 }
 
 var SocketConnections []*websocket.Conn
@@ -44,7 +45,7 @@ type Attribute struct {
 	Value string `json:"value"`
 }
 
-type KeyCloackUser struct {
+type KeyCloakUser struct {
 	ID                       string      `json:"id"`
 	Email                    *string     `json:"email"`
 	EmailConstraint          *string     `json:"email_constraint"`

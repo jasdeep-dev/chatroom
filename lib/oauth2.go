@@ -2,6 +2,7 @@ package lib
 
 import (
 	"chatroom/app"
+	"chatroom/lib/keycloak"
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
@@ -150,6 +151,12 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sessionID := idTokenClaims.Sid
+	currentKUser, err := keycloak.FindUserByID(ctx, idTokenClaims.Sub)
+	if err != nil {
+		log.Println("Error in InsertUse findinfr", err)
+		http.Redirect(w, r, "/", http.StatusFound)
+		return
+	}
 
 	http.SetCookie(w, &http.Cookie{
 		Name:     "session_id",
@@ -158,12 +165,20 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 	})
 
+	http.SetCookie(w, &http.Cookie{
+		Name:     "user_id",
+		Value:    idTokenClaims.Sub,
+		Path:     "/",
+		HttpOnly: true,
+	})
+
 	session := app.UserSession{
-		ID:          sessionID,
-		UserID:      currentUser.ID,
-		AccessToken: oauth2Token.AccessToken,
-		UserInfo:    user,
-		LoggedInAt:  time.Now(),
+		ID:           sessionID,
+		UserID:       currentUser.ID,
+		AccessToken:  oauth2Token.AccessToken,
+		UserInfo:     user,
+		KeyCloakUser: currentKUser,
+		LoggedInAt:   time.Now(),
 	}
 	SetSession(session)
 

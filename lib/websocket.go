@@ -32,7 +32,7 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	}
 	sessionID := sessionCookie.Value
 
-	session, err := GetSession(sessionID)
+	session, err := GetSession(sessionID, r)
 	if err != nil {
 		log.Println("User session not found for Socket connection:", sessionID)
 		return
@@ -52,10 +52,10 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 	app.UserChannel <- user
 
-	listenForMessages(r.Context(), sessionID, conn)
+	listenForMessages(r.Context(), sessionID, conn, r)
 }
 
-func listenForMessages(ctx context.Context, sessionID string, conn *websocket.Conn) {
+func listenForMessages(ctx context.Context, sessionID string, conn *websocket.Conn, r *http.Request) {
 	log.Println("User connected and listening for messages over Socket:", sessionID)
 
 	for {
@@ -64,7 +64,7 @@ func listenForMessages(ctx context.Context, sessionID string, conn *websocket.Co
 			if strings.Contains(err.Error(), "close 1001") {
 				log.Println("Session terminated by client: ", sessionID)
 
-				session, err := GetSession(sessionID)
+				session, err := GetSession(sessionID, r)
 				if err != nil {
 					log.Println("Session does not exist", err)
 					return
@@ -88,7 +88,17 @@ func listenForMessages(ctx context.Context, sessionID string, conn *websocket.Co
 
 		log.Printf("%s sent from browser: %s\n", conn.RemoteAddr(), message)
 
-		sendMessage(ctx, string(message), sessionID, conn)
+		if sessionID == "" {
+			log.Println("sendMessage: Session id is blank")
+			return
+		}
+
+		session, err := GetSession(sessionID, r)
+		if err != nil {
+			log.Println("sendMessage: Session not found", sessionID)
+		}
+
+		sendMessage(ctx, string(message), session, conn)
 	}
 }
 

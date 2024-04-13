@@ -2,7 +2,7 @@ package views
 
 import "chatroom/app"
 
-templ Home(users []app.User, messages []app.Message, session app.UserSession, keycloak_users []app.KeyCloackUser) {
+templ Home(users []app.User, messages []app.Message, session app.UserSession, keycloak_users []app.KeyCloakUser) {
     @Layout(users, messages, session){
         <div class="flex justify-between" style="height: calc(100vh - 200px)">
             <!-- Left Column (Users) -->

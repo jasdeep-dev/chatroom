@@ -30,20 +30,19 @@ func StartHTTP() {
 }
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
-	cookie, err := r.Cookie("session_id")
-
 	handleError := func() {
 		url := createNewProvider(w, r)
 
 		http.Redirect(w, r, url, http.StatusFound)
 	}
 
+	cookie, err := r.Cookie("session_id")
 	if err != nil {
 		handleError()
 		return
 	}
 
-	session, err := GetSession(cookie.Value)
+	session, err := GetSession(cookie.Value, r)
 	if err != nil {
 		handleError()
 		return
@@ -107,7 +106,17 @@ func messageHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println("Error in cookies", err)
 	} else {
 		log.Println("Message received in messageHandler:", cookie.Value, inputMessage)
-		sendMessage(context.Background(), inputMessage, cookie.Value, nil)
+		if cookie.Value == "" {
+			log.Println("sendMessage: Session id is blank")
+			return
+		}
+
+		session, err := GetSession(cookie.Value, r)
+		if err != nil {
+			log.Println("sendMessage: Session not found", cookie.Value)
+		}
+
+		sendMessage(context.Background(), inputMessage, session, nil)
 	}
 
 	http.Redirect(w, r, "/", http.StatusSeeOther)
