@@ -1,32 +1,24 @@
 package views
 
-import "chatroom/app"
-import "fmt"
+import (
+    "chatroom/app"
+    "fmt"
+)
 
-templ Messages(messages []app.Message, session app.UserSession){
+templ Messages(messages []app.Message, session app.UserSession, group app.Group){
     <script>
-
-        // jsondata = {
-        //     Email: "jasdeepk1995@gmail.com"
-        //     ID: 0
-        //     Name: "jasdeep"
-        //     Text: "sssss"
-        //     TimeStamp: "2024-04-13T17:55:18.384173-04:00"
-        //     UserID: 3
-        // }
         function updateMessages(jsondata) {
 
             const timestampStr = jsondata.TimeStamp;
             const timestamp = new Date(timestampStr);
 
-            // Get the hour and minute components
-            const hour = timestamp.getHours().toString().padStart(2, "0"); // Pad with leading zero if needed
-            const minute = timestamp.getMinutes().toString().padStart(2, "0"); // Pad with leading zero if needed
+            const hour = timestamp.getHours().toString().padStart(2, "0");
+            const minute = timestamp.getMinutes().toString().padStart(2, "0");
             const timeFormatted = `${hour}:${minute}`;
 
             var currentUser = getCurrentUser();
 
-            var cont = document.getElementById('textchat');
+            var cont = document.getElementById('textchat_'+jsondata.GroupID);
 
 
             var chatContent = `<div id='msg_7' class='user_message_${currentUser == jsondata.Email}'>
@@ -46,27 +38,31 @@ templ Messages(messages []app.Message, session app.UserSession){
         }
     </script>
 
-
-    <div id="textchat" class="overflow-auto bg-base-100 rounded-xl p-4"
-        style="height: 90%">
-        for _, message := range messages{
-            <div 
-                id={fmt.Sprintf("msg_%v", message.ID)} 
-                class={fmt.Sprintf("user_message_%v", session.UserID == message.UserID)}
-            >
-                <div class="chat-header">
-                    {message.Name}
-                    <time class="text-xs opacity-50">{message.TimeStamp.Format("15:04")}</time>
-                </div>
-
-                <div class="chat-image avatar placeholder">
-                    <div class="bg-neutral text-neutral-content rounded-full w-10">
-                        <span class="text-center">{templ.JoinStringErrs(string(message.Name[0]))}</span>
+    <div id="textchat" class="overflow-auto bg-base-100 rounded-xl" style="height: 90%;">
+        <nav class="bg-base-300 p-4 text-center">{group.Name}</nav>
+        <div class="p-2">
+            for _, message := range messages{
+                <div 
+                    id={fmt.Sprintf("msg_%v", message.ID)} 
+                    class={fmt.Sprintf("user_message_%v", session.UserID == message.UserID)}
+                >
+                    <div class="chat-header">
+                        {message.Name}
+                        <time class="text-xs opacity-50">{message.TimeStamp.Format("15:04")}</time>
                     </div>
-                </div>
 
-                <div class="chat-bubble">{message.Text}</div>
-            </div>
-        }
+                    <div class="chat-image avatar placeholder">
+                        <div class="bg-neutral text-neutral-content rounded-full w-10">
+                            <span class="text-center">{templ.JoinStringErrs(string(message.Name[0]))}</span>
+                        </div>
+                    </div>
+
+                    <div class="chat-bubble">{message.Text}</div>
+                </div>
+            }
+        </div>
     </div>
+    if (session.KeyCloakUser.Email != "") {
+        @MessageForm(group.ID)
+    }
 }

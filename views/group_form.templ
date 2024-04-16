@@ -1,0 +1,21 @@
+package views
+
+templ GroupForm(){
+    <div>
+        <button class="btn w-full" onclick="my_modal_1.showModal()">Create Group</button>
+        <dialog id="my_modal_1" class="modal">
+            <div class="modal-box">
+                <h3 class="font-bold text-lg">Hello!</h3>
+                <p class="py-4">Press ESC key or click the button below to close</p>
+                <div class="modal-action">
+                    <form action="/groups" method="post" id="groupForm" style="position: relative; bottom: -2%;">
+                        <label for="name">Name:</label>
+                        <input type="text" id="name" name="name"/><br/>
+                        <input type="submit" value="Submit"/>
+                        <button class="btn">Close</button>
+                    </form>
+                </div>
+            </div>
+        </dialog>
+    </div>
+}

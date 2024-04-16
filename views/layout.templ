@@ -2,13 +2,13 @@ package views
 
 import "chatroom/app"
 
-templ Layout(users []app.User, messages []app.Message, session app.UserSession) {
+templ Layout(messages []app.Message, session app.UserSession) {
 	<!DOCTYPE html>
     <html data-theme="cupcake">
         <head>
             <meta charset="UTF-8"/>
             <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-            <meta name="current_user" content={*session.KeyCloakUser.Email} />
+            <meta name="current_user" content={session.KeyCloakUser.Email} />
 
             <title>Chatroom</title>
             <link rel="stylesheet" type="text/css" href="/public/styles.css?version="/>
@@ -16,6 +16,7 @@ templ Layout(users []app.User, messages []app.Message, session app.UserSession) 
             <script src="/public/main.js"></script>
             <script src="/public/socket.js"></script>
             <script src="/public/messages.js"></script>
+            <script src="https://unpkg.com/htmx.org@1.9.11"></script>
         </head>
         <script>
             document.addEventListener("DOMContentLoaded", function(event) { 
@@ -28,24 +29,19 @@ templ Layout(users []app.User, messages []app.Message, session app.UserSession) 
             });
         </script>
         <body>
-            <!-- Navbar -->
             <nav class="bg-primary-500 p-4 bg-base-300">
                 @Navbar(session)
             </nav>
 
-            <!-- Content -->
             <div class="container mx-auto p-4 bg-base-200 rounded rounded-xl mt-4"
             >
                 { children... }
             </div>
-            <!-- Footer -->
             <footer 
                 class="bg-gray-800 text-white p-4 mt-8 mx-auto text-center fixed w-full"
                 style="position:fixed; bottom: 0"
             >
-                // <div class="container mx-auto text-center">
                     <p>&copy; 2024 My Website. All rights reserved.</p>
-                // </div>
             </footer>
         </body>
     </html>

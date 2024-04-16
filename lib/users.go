@@ -1,98 +1,89 @@
 package lib
 
-import (
-	"chatroom/app"
-	"context"
-	"fmt"
-	"log"
+// func GetUsers(ctx context.Context) ([]app.User, error) {
+// 	var err error
+// 	var users []app.User
 
-	"github.com/jackc/pgx/v5"
-)
+// 	query := "SELECT id, name, is_online, theme, preferred_username, given_name, family_name, email FROM users ORDER BY name ASC"
+// 	rows, err := app.DBConn.Query(ctx, query)
+// 	if err != nil {
+// 		log.Println("Error GetUsers", err)
+// 		return users, err
+// 	}
 
-func GetUsers(ctx context.Context) ([]app.User, error) {
-	var err error
-	var users []app.User
+// 	users, err = pgx.CollectRows(rows, pgx.RowToStructByName[app.User])
+// 	defer rows.Close()
+// 	return users, err
+// }
 
-	query := "SELECT id, name, is_online, theme, preferred_username, given_name, family_name, email FROM users ORDER BY name ASC"
-	rows, err := app.DBConn.Query(ctx, query)
-	if err != nil {
-		log.Println("Error GetUsers", err)
-		return users, err
-	}
+// func FindUserByEmail(ctx context.Context, email string) (app.User, error) {
+// 	var user app.User
 
-	users, err = pgx.CollectRows(rows, pgx.RowToStructByName[app.User])
-	defer rows.Close()
-	return users, err
-}
+// 	query := "SELECT id, name, is_online, theme, preferred_username, given_name, family_name, email FROM users WHERE email = $1"
 
-func FindUserByEmail(ctx context.Context, email string) (app.User, error) {
-	var user app.User
+// 	rows, err := app.DBConn.Query(ctx, query, email)
+// 	if err != nil {
+// 		log.Println("Error in FindUserByEmail", email, err)
+// 		return user, err
+// 	}
 
-	query := "SELECT id, name, is_online, theme, preferred_username, given_name, family_name, email FROM users WHERE email = $1"
+// 	user, err = pgx.CollectOneRow(rows, pgx.RowToStructByName[app.User])
+// 	defer rows.Close()
+// 	if err != nil {
+// 		return user, fmt.Errorf("error scanning row: %w - email %v", err, email)
+// 	}
+// 	return user, nil
+// }
 
-	rows, err := app.DBConn.Query(ctx, query, email)
-	if err != nil {
-		log.Println("Error in FindUserByEmail", email, err)
-		return user, err
-	}
+// func FindUserByID(ctx context.Context, id int) (app.User, error) {
+// 	var user app.User
 
-	user, err = pgx.CollectOneRow(rows, pgx.RowToStructByName[app.User])
-	defer rows.Close()
-	if err != nil {
-		return user, fmt.Errorf("error scanning row: %w - email %v", err, email)
-	}
-	return user, nil
-}
+// 	query := "SELECT id, name, is_online, theme, preferred_username, given_name, family_name, email FROM users WHERE id = $1"
+// 	err := app.DBConn.QueryRow(ctx, query, id).Scan(
+// 		&user.ID,
+// 		&user.Name,
+// 		&user.IsOnline,
+// 		&user.Theme,
+// 		&user.PreferredUsername,
+// 		&user.GivenName,
+// 		&user.FamilyName,
+// 		&user.Email,
+// 	)
+// 	if err != nil {
+// 		return user, fmt.Errorf("error scanning row: %w", err)
+// 	}
+// 	return user, nil
+// }
 
-func FindUserByID(ctx context.Context, id int) (app.User, error) {
-	var user app.User
+// func insertUser(ctx context.Context, user app.User) (app.User, error) {
+// 	var id int
 
-	query := "SELECT id, name, is_online, theme, preferred_username, given_name, family_name, email FROM users WHERE id = $1"
-	err := app.DBConn.QueryRow(ctx, query, id).Scan(
-		&user.ID,
-		&user.Name,
-		&user.IsOnline,
-		&user.Theme,
-		&user.PreferredUsername,
-		&user.GivenName,
-		&user.FamilyName,
-		&user.Email,
-	)
-	if err != nil {
-		return user, fmt.Errorf("error scanning row: %w", err)
-	}
-	return user, nil
-}
+// 	query := `INSERT INTO users (name, is_online, theme, preferred_username, given_name, family_name, email) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id;`
 
-func insertUser(ctx context.Context, user app.User) (app.User, error) {
-	var id int
+// 	err := app.DBConn.QueryRow(ctx, query, Titleize(user.Name), user.IsOnline, user.Theme, user.PreferredUsername, user.GivenName, user.FamilyName, user.Email).Scan(&id)
+// 	if err != nil {
+// 		log.Fatal("Error executing INSERT statement:", err)
+// 		return user, err
 
-	query := `INSERT INTO users (name, is_online, theme, preferred_username, given_name, family_name, email) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id;`
+// 	}
 
-	err := app.DBConn.QueryRow(ctx, query, Titleize(user.Name), user.IsOnline, user.Theme, user.PreferredUsername, user.GivenName, user.FamilyName, user.Email).Scan(&id)
-	if err != nil {
-		log.Fatal("Error executing INSERT statement:", err)
-		return user, err
+// 	user.ID = id
+// 	return user, nil
+// }
 
-	}
+// func UpdateUser(ctx context.Context, user app.User) {
+// 	// Update statement
+// 	query := `UPDATE users
+//               SET name = $1,
+//                   is_online = $2,
+//                   theme = $3,
+//                   preferred_username = $4,
+//                   given_name = $5,
+//                   family_name = $6,
+//                   email = $7
+//               WHERE id = $8;`
 
-	user.ID = id
-	return user, nil
-}
-
-func UpdateUser(ctx context.Context, user app.User) {
-	// Update statement
-	query := `UPDATE users 
-              SET name = $1, 
-                  is_online = $2, 
-                  theme = $3, 
-                  preferred_username = $4, 
-                  given_name = $5, 
-                  family_name = $6, 
-                  email = $7 
-              WHERE id = $8;`
-
-	// Execute the update statement
-	app.DBConn.Exec(ctx, query, Titleize(user.Name), user.IsOnline, user.Theme, user.PreferredUsername, user.GivenName, user.FamilyName, user.Email, user.ID)
-	log.Println("Field updated successfully", user.ID)
-}
+// 	// Execute the update statement
+// 	app.DBConn.Exec(ctx, query, Titleize(user.Name), user.IsOnline, user.Theme, user.PreferredUsername, user.GivenName, user.FamilyName, user.Email, user.ID)
+// 	log.Println("Field updated successfully", user.ID)
+// }

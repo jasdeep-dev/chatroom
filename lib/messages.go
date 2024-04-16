@@ -77,8 +77,8 @@ func deliverUsersToWebSocketConnections(user app.KeyCloakUser) {
 	}
 }
 
-func sendMessage(ctx context.Context, message string, session app.UserSession, sockConn *websocket.Conn) {
-	if message == "" {
+func sendMessage(ctx context.Context, message app.MessageData, session app.UserSession, sockConn *websocket.Conn) {
+	if message.Message == "" {
 		log.Println("sendMessage: Message is blank")
 		return
 	}
@@ -88,10 +88,11 @@ func sendMessage(ctx context.Context, message string, session app.UserSession, s
 		SockConn:  sockConn,
 		Context:   ctx,
 		Message: app.Message{
-			Text:      message,
+			Text:      message.Message,
 			UserID:    session.UserID,
-			Name:      *session.KeyCloakUser.FirstName,
-			Email:     *session.KeyCloakUser.Email,
+			GroupID:   message.GroupID,
+			Name:      session.KeyCloakUser.FirstName,
+			Email:     session.KeyCloakUser.Email,
 			TimeStamp: time.Now(),
 		},
 	}
@@ -101,7 +102,17 @@ func GetMessages(ctx context.Context) ([]app.Message, error) {
 	var err error
 	var messages []app.Message
 
-	query := `SELECT id, timestamp, text, id AS user_id, first_name AS name, email AS email FROM messages`
+	query := `
+		SELECT
+			id,
+			timestamp,
+			text,
+			user_id,
+			group_id,
+			first_name AS name,
+			email
+		FROM
+			messages`
 	rows, err := app.DBConn.Query(ctx, query)
 	if err != nil {
 		log.Println("Error GetMessages: ", err)
@@ -115,9 +126,9 @@ func GetMessages(ctx context.Context) ([]app.Message, error) {
 }
 
 func InsertMessage(ctx context.Context, message app.Message) error {
-	query := "INSERT INTO messages (timestamp, text, user_id, first_name, email) VALUES ($1, $2, $3, $4, $5)"
+	query := "INSERT INTO messages (timestamp, text, user_id, first_name, email, group_id) VALUES ($1, $2, $3, $4, $5, $6)"
 
-	_, err := app.DBConn.Exec(ctx, query, message.TimeStamp, message.Text, message.UserID, message.Name, message.Email)
+	_, err := app.DBConn.Exec(ctx, query, message.TimeStamp, message.Text, message.UserID, message.Name, message.Email, message.GroupID)
 	if err != nil {
 		return err
 	}

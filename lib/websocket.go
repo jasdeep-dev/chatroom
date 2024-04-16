@@ -4,6 +4,8 @@ import (
 	"chatroom/app"
 	"chatroom/lib/keycloak"
 	"context"
+	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -60,7 +62,7 @@ func listenForMessages(ctx context.Context, sessionID string, conn *websocket.Co
 	log.Println("User connected and listening for messages over Socket:", sessionID)
 
 	for {
-		_, message, err := conn.ReadMessage()
+		_, data, err := conn.ReadMessage()
 		if err != nil {
 			if strings.Contains(err.Error(), "close 1001") {
 				log.Println("Session terminated by client: ", sessionID)
@@ -87,7 +89,15 @@ func listenForMessages(ctx context.Context, sessionID string, conn *websocket.Co
 			break
 		}
 
-		log.Printf("%s sent from browser: %s\n", conn.RemoteAddr(), message)
+		var messageData app.MessageData
+
+		err = json.Unmarshal([]byte(data), &messageData)
+		if err != nil {
+			fmt.Println("Error:", err)
+			return
+		}
+
+		log.Printf("%s sent from browser: %s\n", conn.RemoteAddr(), messageData)
 
 		if sessionID == "" {
 			log.Println("sendMessage: Session id is blank")
@@ -99,7 +109,7 @@ func listenForMessages(ctx context.Context, sessionID string, conn *websocket.Co
 			log.Println("sendMessage: Session not found", sessionID)
 		}
 
-		sendMessage(ctx, string(message), session, conn)
+		sendMessage(ctx, messageData, session, conn)
 	}
 }
 

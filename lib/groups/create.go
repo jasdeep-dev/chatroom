@@ -1,5 +1,0 @@
-package groups
-
-func CreateGroup(){
-	
-}

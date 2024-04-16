@@ -2,22 +2,14 @@ package views
 
 import "chatroom/app"
 import "fmt"
-import (
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
-)
+
 
 templ KeyCloakUsers(users []app.KeyCloakUser){
     <div class="p-2 bg-base-300 overflow-auto p-4 rounded-xl">
         <ul id="users_list">
             for _, user := range users{
                 <li id={fmt.Sprintf("user_%v", user.ID)} class="bg-base-100 rounded p-2 my-2">
-                    // id: {user.ID}
-                    {Titleize(*user.FirstName)}
-
-                    // for _, attr := range user.Attributes {
-                    //     {Titleize(attr.Name)} : {Titleize(attr.Value)}
-                    // }
+                    {app.Titleize(user.FirstName)}
                 </li>
             }
         </ul>
@@ -29,10 +21,4 @@ func Email(email *string) string {
         return *email
     }
     return ""
-}
-
-
-func Titleize(name string) string {
-	caser := cases.Title(language.English)
-	return caser.String(name)
 }

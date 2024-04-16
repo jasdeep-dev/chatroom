@@ -32,7 +32,7 @@ func main() {
 	defer app.KeycloackDBConn.Close()
 
 	//migrate database
-	lib.MigrateDatabase((ctx))
+	// lib.MigrateDatabase((ctx))
 
 	// Connect to memcahed
 	err = lib.InitCache()

@@ -1,26 +1,27 @@
 package views
-
-templ MessageForm(){
+import "fmt"
+templ MessageForm(groupID string){
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            const form = document.getElementById("messageform");
+        function handleFormSubmission(event) {
+            event.preventDefault();
+            const groupId = event.target.id.split("_")[1];
+            const messageInput = event.target.children.message_input;
+            const message = messageInput.value.trim();
 
-            form.addEventListener("submit", function(event) {
-                event.preventDefault();
-                const message = document.getElementById("message_input").value.trim();
-                if (message !== "") {
-                    ws.send(message);
-                    console.log("Message sent via WebSocket:", message);
-                    document.getElementById("message_input").value = "";
-                }
-            });
-        });
+            if (message !== "" && groupId !== "") {
+                const data = {
+                    message: message,
+                    group_id: groupId
+                };
 
+                ws.send(JSON.stringify(data));
+                console.log("Message sent via WebSocket:", data);
+                messageInput.value = "";
+            }
+        }
     </script>
-    <form class="bg-base-300 p-3 rounded rounded-lg" 
-        id="messageform"
-        style="position: relative; bottom: -2%;"
-    >
+
+    <form onsubmit="handleFormSubmission(event)" class="bg-base-300 p-3 rounded rounded-lg" id={fmt.Sprintf("messageform_%v", groupID)} style="position: relative; bottom: -2%;">
         <input type="text" placeholder="Messages" id="message_input" name="message" class="input input-bordered w-full"/>
     </form>
 }

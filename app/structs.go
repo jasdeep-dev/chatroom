@@ -34,21 +34,46 @@ type Attribute struct {
 	Value string `json:"value"`
 }
 
+// type KeyCloakUser struct {
+// 	ID                       string      `json:"id"`
+// 	Email                    *string     `json:"email"`
+// 	EmailConstraint          *string     `json:"email_constraint"`
+// 	EmailVerified            bool        `json:"email_verified"`
+// 	Enabled                  bool        `json:"enabled"`
+// 	FederationLink           *string     `json:"federation_link"`
+// 	FirstName                *string     `json:"first_name"`
+// 	LastName                 *string     `json:"last_name"`
+// 	RealmID                  *string     `json:"realm_id"`
+// 	Username                 *string     `json:"username"`
+// 	CreatedTimestamp         int64       `json:"created_timestamp"`
+// 	ServiceAccountClientLink *string     `json:"service_account_client_link"`
+// 	NotBefore                int32       `json:"not_before"`
+// 	Attributes               []Attribute `json:"attributes"`
+// }
+
 type KeyCloakUser struct {
-	ID                       string      `json:"id"`
-	Email                    *string     `json:"email"`
-	EmailConstraint          *string     `json:"email_constraint"`
-	EmailVerified            bool        `json:"email_verified"`
-	Enabled                  bool        `json:"enabled"`
-	FederationLink           *string     `json:"federation_link"`
-	FirstName                *string     `json:"first_name"`
-	LastName                 *string     `json:"last_name"`
-	RealmID                  *string     `json:"realm_id"`
-	Username                 *string     `json:"username"`
-	CreatedTimestamp         int64       `json:"created_timestamp"`
-	ServiceAccountClientLink *string     `json:"service_account_client_link"`
-	NotBefore                int32       `json:"not_before"`
-	Attributes               []Attribute `json:"attributes"`
+	ID                         string              `json:"id"`
+	Username                   string              `json:"username"`
+	FirstName                  string              `json:"firstName"`
+	LastName                   string              `json:"lastName"`
+	Email                      string              `json:"email"`
+	EmailVerified              bool                `json:"emailVerified"`
+	Attributes                 map[string][]string `json:"attributes"`
+	CreatedTimestamp           int64               `json:"createdTimestamp"`
+	Enabled                    bool                `json:"enabled"`
+	Totp                       bool                `json:"totp"`
+	DisableableCredentialTypes []string            `json:"disableableCredentialTypes"`
+	RequiredActions            []string            `json:"requiredActions"`
+	NotBefore                  int64               `json:"notBefore"`
+	Access                     Access              `json:"access"`
+}
+
+type Access struct {
+	ManageGroupMembership bool `json:"manageGroupMembership"`
+	View                  bool `json:"view"`
+	MapRoles              bool `json:"mapRoles"`
+	Impersonate           bool `json:"impersonate"`
+	Manage                bool `json:"manage"`
 }
 
 type Message struct {
@@ -56,6 +81,7 @@ type Message struct {
 	TimeStamp time.Time `db:"timestamp"`
 	Text      string    `db:"text"`
 	UserID    string    `db:"user_id"`
+	GroupID   string    `db:"group_id"`
 	Name      string    `db:"name"`
 	Email     string    `db:"email"`
 }
@@ -96,4 +122,29 @@ type IDTokenClaims struct {
 	GivenName         string `json:"given_name"`
 	FamilyName        string `json:"family_name"`
 	Email             string `json:"email"`
+}
+
+type KeycloakGroup struct {
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	ParentGroup string `json:"parent_group"`
+	RealmID     string `json:"realm_id"`
+}
+
+type UserGroupMembership struct {
+	GroupID string `json:"group_id"`
+	UserID  string `json:"user_id"`
+}
+
+type Group struct {
+	ID            string   `json:"id"`
+	Name          string   `json:"name"`
+	Path          string   `json:"path"`
+	SubGroupCount int      `json:"subGroupCount"`
+	SubGroups     []string `json:"subGroups"`
+}
+
+type MessageData struct {
+	Message string `json:"message"`
+	GroupID string `json:"group_id"`
 }

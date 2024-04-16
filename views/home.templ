@@ -2,23 +2,11 @@ package views
 
 import "chatroom/app"
 
-templ Home(users []app.User, messages []app.Message, session app.UserSession, keycloak_users []app.KeyCloakUser) {
-    @Layout(users, messages, session){
+templ Home(messages []app.Message, session app.UserSession, keycloak_users []app.KeyCloakUser, groups []app.Group) {
+    @Layout(messages, session){
         <div class="flex justify-between" style="height: calc(100vh - 200px)">
-            <!-- Left Column (Users) -->
-            <div class="w-1/3">
-                @KeyCloakUsers(keycloak_users)
-            </div>
-
-            <!-- Right Column (Messages) -->
-            <div class="w-2/3 ml-4">
-                <!-- Messages Component -->
-                @Messages(messages, session)
-                <!-- Message Form -->
-                if (*session.KeyCloakUser.Email != "") {
-                    @MessageForm()
-                }
-            </div>
+            @LeftPanel(keycloak_users, groups)
+            @RightPanel(session, messages)
         </div>
     }
 }

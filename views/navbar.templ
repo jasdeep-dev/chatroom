@@ -25,7 +25,7 @@ templ Navbar(session app.UserSession){
             <li>
                 <a href="http://localhost:9000/realms/chatroom/account"
                     class="btn" target="_blank" id="user_name">
-                    {*session.KeyCloakUser.Email}
+                    {session.KeyCloakUser.Email}
                 </a>
             </li>
 
