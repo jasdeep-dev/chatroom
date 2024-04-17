@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -77,24 +78,26 @@ func deliverUsersToWebSocketConnections(user app.KeyCloakUser) {
 	}
 }
 
-func sendMessage(ctx context.Context, message app.MessageData, session app.UserSession, sockConn *websocket.Conn) {
+func sendMessage(ctx context.Context, message app.MessageData, session app.UserSession, sockConn *websocket.Conn, w http.ResponseWriter, r *http.Request) {
 	if message.Message == "" {
 		log.Println("sendMessage: Message is blank")
 		return
 	}
+	newMessage := app.Message{
+		Text:      message.Message,
+		UserID:    session.UserID,
+		GroupID:   message.GroupID,
+		Name:      session.KeyCloakUser.FirstName,
+		Email:     session.KeyCloakUser.Email,
+		TimeStamp: time.Now(),
+	}
 
+	// views.ChatBubble(newMessage, session).Render(r.Context(), w)
 	app.MessageChannel <- app.MessageReceived{
 		SessionID: session.ID,
 		SockConn:  sockConn,
 		Context:   ctx,
-		Message: app.Message{
-			Text:      message.Message,
-			UserID:    session.UserID,
-			GroupID:   message.GroupID,
-			Name:      session.KeyCloakUser.FirstName,
-			Email:     session.KeyCloakUser.Email,
-			TimeStamp: time.Now(),
-		},
+		Message:   newMessage,
 	}
 }
 

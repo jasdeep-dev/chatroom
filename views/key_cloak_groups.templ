@@ -10,15 +10,16 @@ import (
 templ KeyCloakGroups(keycloak_users []app.KeyCloakUser, groups []app.Group){
     <div>
 		<ul id="groupsList">
-        for _, group := range groups{
-			<li class="bg-base-100 rounded p-2 my-2">
-				<a href="#" data-target={group.ID}
-					hx-get={"/messages?groupId="+group.ID}
-					hx-trigger="click"
-					hx-target={"#rightPanel"}
-				>{group.Name}</a>
-			</li>
-        }
+			for _, group := range groups{
+				<li class="bg-base-100 rounded p-2 my-2">
+					<a href="#" data-target={group.ID}
+						hx-get={"/messages?groupId="+group.ID}
+						hx-trigger="click"
+						hx-target="#rightPanel"
+						hx-push-url="true"
+					>{group.Name}</a>
+				</li>
+			}
 		</ul>
     </div>
 }

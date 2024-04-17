@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"chatroom/app"
 	"chatroom/lib/keycloak"
 	"chatroom/views"
 	"context"
@@ -15,7 +16,7 @@ func StartHTTP() {
 
 	http.HandleFunc("/", homeHandler)
 	http.HandleFunc("/user", userHandler)
-	http.HandleFunc("/message", messageHandler)
+	http.HandleFunc("/messages/create", messageHandler)
 	http.HandleFunc("/messages", messagesHandler)
 	http.HandleFunc("/login", loginHandler)
 	http.HandleFunc("/oauth2", callbackHandler)
@@ -163,26 +164,32 @@ func messageHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error parsing form", http.StatusBadRequest)
 		return
 	}
-	inputMessage := r.Form.Get("message")
 
 	cookie, err := r.Cookie("session_id")
-
 	if err != nil {
 		log.Println("Error in cookies", err)
-	} else {
-		log.Println("Message received in messageHandler:", cookie.Value, inputMessage)
-		if cookie.Value == "" {
-			log.Println("sendMessage: Session id is blank")
-			return
-		}
-
-		// session, err := GetSession(cookie.Value, r)
-		// if err != nil {
-		// 	log.Println("sendMessage: Session not found", cookie.Value)
-		// }
-
-		// sendMessage(context.Background(), inputMessage, session, nil)
+		return
 	}
+
+	if cookie.Value == "" {
+		log.Println("sendMessage: Session id is blank")
+		return
+	}
+
+	session, err := GetSession(cookie.Value, r)
+	if err != nil {
+		log.Println("sendMessage: Session not found", cookie.Value)
+		return
+	}
+
+	message := app.MessageData{
+		Message: r.Form.Get("message"),
+		GroupID: r.Form.Get("groupId"),
+	}
+	log.Println("Message received in messageHandler:", cookie.Value, message)
+
+	// Send the to all users in the group via websockets
+	sendMessage(context.Background(), message, session, nil, w, r)
 
 	// http.Redirect(w, r, "/", http.StatusSeeOther)
 }

@@ -8,13 +8,13 @@ templ Navbar(session app.UserSession){
         }
 
         function setLocalStorageTheme(){
-            let value = localStorage.getItem('theme');
-            var htmlElement = document.querySelector('html');
-            htmlElement.setAttribute('data-theme', value);
+            let value = localStorage.getItem("theme");
+            var htmlElement = document.querySelector("html");
+            htmlElement.setAttribute("data-theme", value);
         }
 
         function addTheThemeToLocalStorage(value){
-            localStorage.setItem('theme', value);
+            localStorage.setItem("theme", value);
             setLocalStorageTheme()
         }
     </script>

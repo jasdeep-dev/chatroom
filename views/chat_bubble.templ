@@ -1,0 +1,24 @@
+package views
+import (
+    "chatroom/app"
+    "fmt"
+)
+
+templ ChatBubble(message app.Message, session app.UserSession){
+    <div
+        id={fmt.Sprintf("msg_%v", message.ID)}
+        class={fmt.Sprintf("user_message_%v", session.UserID == message.UserID)}>
+        <div class="chat-header">
+            {message.Name}
+            <time class="text-xs opacity-50">{message.TimeStamp.Format("15:04")}</time>
+        </div>
+
+        <div class="chat-image avatar placeholder">
+            <div class="bg-neutral text-neutral-content rounded-full w-10">
+                <span class="text-center">{templ.JoinStringErrs(string(message.Name[0]))}</span>
+            </div>
+        </div>
+
+        <div class="chat-bubble">{message.Text}</div>
+    </div>
+}

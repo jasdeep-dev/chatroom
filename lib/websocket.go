@@ -55,10 +55,10 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 	app.KUserChannel <- user
 
-	listenForMessages(r.Context(), sessionID, conn, r)
+	listenForMessages(r.Context(), sessionID, conn, w, r)
 }
 
-func listenForMessages(ctx context.Context, sessionID string, conn *websocket.Conn, r *http.Request) {
+func listenForMessages(ctx context.Context, sessionID string, conn *websocket.Conn, w http.ResponseWriter, r *http.Request) {
 	log.Println("User connected and listening for messages over Socket:", sessionID)
 
 	for {
@@ -109,7 +109,7 @@ func listenForMessages(ctx context.Context, sessionID string, conn *websocket.Co
 			log.Println("sendMessage: Session not found", sessionID)
 		}
 
-		sendMessage(ctx, messageData, session, conn)
+		sendMessage(ctx, messageData, session, conn, w, r)
 	}
 }
 
