@@ -34,6 +34,9 @@ type Attribute struct {
 	Value string `json:"value"`
 }
 
+var GroupIds = []string{}
+var Users = []KeyCloakUser{}
+
 // type KeyCloakUser struct {
 // 	ID                       string      `json:"id"`
 // 	Email                    *string     `json:"email"`
@@ -147,4 +150,9 @@ type Group struct {
 type MessageData struct {
 	Message string `json:"message"`
 	GroupID string `json:"group_id"`
+}
+
+type Option struct {
+	Value string `json:"value"`
+	Label string `json:"label"`
 }

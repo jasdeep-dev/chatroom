@@ -1,4 +1,4 @@
-var ws = new WebSocket("ws://localhost:3000/ws");
+var ws = new WebSocket("ws://192.168.2.12:3000/ws");
 
 document.addEventListener("DOMContentLoaded", function() {
 

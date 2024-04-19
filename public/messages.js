@@ -32,22 +32,29 @@ function updateMessages(jsondata) {
     const timeFormatted = `${hour}:${minute}`;
 
     var currentUser = getCurrentUser();
+    var cont = document.getElementById("item-list-"+jsondata.GroupID);
 
-    var cont = document.getElementById('item-list');
+    if(cont == null){
 
-
-    var chatContent = `<div id='msg_7' class='user_message_${currentUser == jsondata.Email}'>
-            <div class='chat-header'>
-                ${jsondata.Name}
-                <time class='text-xs opacity-50'>${timeFormatted}</time>
-            </div>
-            <div class='chat-image avatar placeholder'>
-                <div class='bg-neutral text-neutral-content rounded-full w-10'>
-                    <span class='text-center'>${jsondata.Name[0]}</span>
+        var list = document.querySelector("#li"+jsondata.GroupID+ " span")
+        list.classList.remove("hidden")
+        var currentCount = parseInt(list.innerText);
+        var newCount = currentCount + 1;
+        list.innerText = newCount;
+    }else{
+        var chatContent = `<div id='msg_7' class='user_message_${currentUser == jsondata.Email}'>
+                <div class='chat-header'>
+                    ${jsondata.Name}
+                    <time class='text-xs opacity-50'>${timeFormatted}</time>
                 </div>
-            </div>
-            <div class='chat-bubble'>${jsondata.Text}</div>
-        </div>`
-    cont.innerHTML += chatContent;
-    cont.scrollTop = cont.scrollHeight;
+                <div class='chat-image avatar placeholder'>
+                    <div class='bg-neutral text-neutral-content rounded-full w-10'>
+                        <span class='text-center'>${jsondata.Name[0]}</span>
+                    </div>
+                </div>
+                <div class='chat-bubble'>${jsondata.Text}</div>
+            </div>`
+        cont.innerHTML += chatContent;
+        cont.scrollTop = cont.scrollHeight;
+    }
 }

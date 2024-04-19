@@ -3,22 +3,19 @@ package views
 import "chatroom/app"
 import "fmt"
 
-
-templ KeyCloakUsers(users []app.KeyCloakUser){
-    <div class="p-2 bg-base-300 overflow-auto p-4 rounded-xl">
-        <ul id="users_list">
-            for _, user := range users{
-                <li id={fmt.Sprintf("user_%v", user.ID)} class="bg-base-100 rounded p-2 my-2">
-                    {app.Titleize(user.FirstName)}
-                </li>
-            }
-        </ul>
-    </div>
+templ KeyCloakUsers(users []app.KeyCloakUser) {
+    <ul id="users_list">
+        for _, user := range users {
+            <li id={ fmt.Sprintf("user_%v", user.ID) } class="bg-base-100 rounded p-2 my-2">
+                { app.Titleize(user.FirstName) }
+            </li>
+        }
+    </ul>
 }
 
 func Email(email *string) string {
-    if email != nil {
-        return *email
-    }
-    return ""
+	if email != nil {
+		return *email
+	}
+	return ""
 }

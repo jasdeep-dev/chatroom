@@ -31,6 +31,7 @@ func main() {
 	app.KeycloackDBConn = keycloak.EstablishKeyCloakConnection(ctx)
 	defer app.KeycloackDBConn.Close()
 
+	keycloak.SetAdminToken()
 	//migrate database
 	// lib.MigrateDatabase((ctx))
 

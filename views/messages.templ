@@ -1,27 +1,75 @@
 package views
 
 import (
-    "chatroom/app"
+	"chatroom/app"
 )
 
-templ Messages(messages []app.Message, session app.UserSession, group app.Group){
-    <script>
+templ Messages(messages []app.Message, session app.UserSession, group app.Group) {
+	<script>
         function scrollToBottom() {
-            var cont = document.getElementById("item-list");
+            var cont = document.querySelectorAll('#textchat .messageList')[0]
             cont.scrollTop = cont.scrollHeight;
         }
-
         scrollToBottom()
     </script>
-        <div id="textchat" class="bg-base-100 rounded-xl" style="height: 90%;">
-            <nav class="bg-base-300 p-4 text-center">{group.Name}</nav>
-            <div class="p-2 overflow-auto" id="item-list" style="height: 94%;">
-                for _, message := range messages{
-                    @ChatBubble(message, session)
-                }
-            </div>
-        </div>
-        if (session.KeyCloakUser.Email != "") {
-            @MessageForm(group.ID)
-        }
+	
+    <div id="textchat" class="bg-base-100 rounded-xl" style="height: 90%;">
+		<nav class="bg-base-300 p-4 text-center flex">
+			{ group.Name }
+			<a class="ml-auto cursor-pointer" onclick="add_user_to_group.showModal()">
+				<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+					<path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12a7.5 7.5 0 0 0 15 0m-15 0a7.5 7.5 0 1 1 15 0m-15 0H3m16.5 0H21m-1.5 0H12m-8.457 3.077 1.41-.513m14.095-5.13 1.41-.513M5.106 17.785l1.15-.964m11.49-9.642 1.149-.964M7.501 19.795l.75-1.3m7.5-12.99.75-1.3m-6.063 16.658.26-1.477m2.605-14.772.26-1.477m0 17.726-.26-1.477M10.698 4.614l-.26-1.477M16.5 19.794l-.75-1.299M7.5 4.205 12 12m6.894 5.785-1.149-.964M6.256 7.178l-1.15-.964m15.352 8.864-1.41-.513M4.954 9.435l-1.41-.514M12.002 12l-3.75 6.495" />
+				</svg>
+			</a>
+			@AddUser(group.ID)
+		</nav>
+		<div class="p-2 overflow-auto messageList" id={ "item-list-" + group.ID } style="height: 94%;">
+			for _, message := range messages {
+				@ChatBubble(message, session)
+			}
+		</div>
+		if (session.KeyCloakUser.Email != "") {
+			@MessageForm(group.ID)
+		}
+	</div>
+}
+
+templ AddUser(groupID string) {
+	<dialog id="add_user_to_group" class="modal modal-bottom sm:modal-middle">
+		<div class="modal-box">
+			<form method="dialog">
+				<button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+			</form>
+			<h3 class="font-bold text-lg">Create Group</h3>
+			<p class="py-4">You will automatically be added to this group.</p>
+			@SearchBar(groupID)
+			<form method="dialog">
+				<button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+			</form>
+		</div>
+	</dialog>
+}
+
+templ Drawer(groupID string) {
+	<div class="drawer drawer-end">
+		<input id="my-drawer-4" type="checkbox" class="drawer-toggle"/>
+		<div class="drawer-content">
+			<!-- Page content here -->
+			<label for="my-drawer-4" class="drawer-button btn btn-primary">Open drawer</label>
+		</div>
+		<div class="drawer-side">
+			<label for="my-drawer-4" aria-label="close sidebar" class="drawer-overlay"></label>
+			<ul class="menu p-4 w-80 min-h-full bg-base-200 text-base-content">
+				<form method="dialog">
+					<button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+				</form>
+				<h3 class="font-bold text-lg">Create Group</h3>
+				<p class="py-4">You will automatically be added to this group.</p>
+				@SearchBar(groupID)
+				<form method="dialog">
+					<button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+				</form>
+			</ul>
+		</div>
+	</div>
 }

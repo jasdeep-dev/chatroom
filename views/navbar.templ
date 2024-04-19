@@ -23,7 +23,7 @@ templ Navbar(session app.UserSession){
         <ul class="flex space-x-4">
             <!-- Link to Keycloak User Page -->
             <li>
-                <a href="http://localhost:9000/realms/chatroom/account"
+                <a href="http://192.168.2.12:9000/realms/chatroom/account"
                     class="btn" target="_blank" id="user_name">
                     {session.KeyCloakUser.Email}
                 </a>
@@ -31,9 +31,9 @@ templ Navbar(session app.UserSession){
 
             <!-- Logout -->
             <li>
-                <form action="http://localhost:9000/realms/chatroom/protocol/openid-connect/logout" method="post">
+                <form action="http://192.168.2.12:9000/realms/chatroom/protocol/openid-connect/logout" method="post">
                     <input type="hidden" value="chatroom" name="client_id" />
-                    <input name="post_logout_redirect_uri" value="http://localhost:8080/logout" type="hidden" />
+                    <input name="post_logout_redirect_uri" value="http://192.168.2.12:8080/logout" type="hidden" />
                     <input type="submit" value="Logout" class="btn"></input>
                 </form>
             </li>

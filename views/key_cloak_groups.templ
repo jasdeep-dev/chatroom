@@ -1,47 +1,48 @@
 package views
+
 import (
-    "chatroom/app"
+	"chatroom/app"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
 )
 
-templ KeyCloakGroups(keycloak_users []app.KeyCloakUser, groups []app.Group){
-    <div>
-		<ul id="groupsList">
-			for _, group := range groups{
-				<li class="bg-base-100 rounded p-2 my-2">
-					<a href="#" data-target={group.ID}
-						hx-get={"/messages?groupId="+group.ID}
-						hx-trigger="click"
-						hx-target="#rightPanel"
-						hx-push-url="true"
-					>{group.Name}</a>
-				</li>
-			}
-		</ul>
-    </div>
+templ KeyCloakGroups(keycloak_users []app.KeyCloakUser, groups []app.Group) {
+	<ul id="groupsList">
+		for _, group := range groups {
+			<li class="bg-base-100 rounded p-2 my-2 flex" id={ "li" + group.ID }>
+				<a
+					href="#"
+					data-target={ group.ID }
+					hx-get={ "/messages?groupId=" + group.ID }
+					hx-trigger="click"
+					hx-target="#rightPanel"
+					hx-on::after-request="this.parentNode.classList.add('bg-secondary-100')"
+				>{ group.Name }</a>
+				<span class="indicator-item badge badge-secondary ml-auto hidden">0</span>
+			</li>
+		}
+	</ul>
 }
 
-templ ShowUsers(keycloak_users []app.KeyCloakUser, group app.Group){
-    for _, user := range GetUsers(group.ID){
-        <li id={fmt.Sprintf("user_%v", user.ID)}>
-            <a target="_blank">{user.FirstName}</a>
-        </li>
-    }
-
+templ ShowUsers(keycloak_users []app.KeyCloakUser, group app.Group) {
+	for _, user := range GetUsers(group.ID) {
+		<li id={ fmt.Sprintf("user_%v", user.ID) }>
+			<a target="_blank">{ user.FirstName }</a>
+		</li>
+	}
 }
 
 func GetUsers(groupID string) []app.KeyCloakUser {
-    var users []app.KeyCloakUser
-    users, err := GetGroupMembersViaAPI(groupID)
+	var users []app.KeyCloakUser
+	users, err := GetGroupMembersViaAPI(groupID)
 
-    if err != nil{
-        return users
-    }
+	if err != nil {
+		return users
+	}
 
-    return users
+	return users
 }
 
 func GetGroupMembersViaAPI(groupID string) ([]app.KeyCloakUser, error) {
@@ -78,7 +79,6 @@ func GetGroupMembersViaAPI(groupID string) ([]app.KeyCloakUser, error) {
 		return users, err
 	}
 
-	fmt.Println(string(groupsBody))
 	err = json.Unmarshal([]byte(groupsBody), &users)
 	if err != nil {
 		fmt.Println("Error parsing JSON:", err)

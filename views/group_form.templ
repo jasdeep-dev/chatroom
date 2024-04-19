@@ -1,21 +1,28 @@
 package views
 
-templ GroupForm(){
-    <div>
-        <button class="btn w-full" onclick="my_modal_1.showModal()">Create Group</button>
-        <dialog id="my_modal_1" class="modal">
-            <div class="modal-box">
-                <h3 class="font-bold text-lg">Hello!</h3>
-                <p class="py-4">Press ESC key or click the button below to close</p>
-                <div class="modal-action">
-                    <form action="/groups" method="post" id="groupForm" style="position: relative; bottom: -2%;">
-                        <label for="name">Name:</label>
-                        <input type="text" id="name" name="name"/><br/>
-                        <input type="submit" value="Submit"/>
-                        <button class="btn">Close</button>
-                    </form>
-                </div>
-            </div>
-        </dialog>
-    </div>
+templ GroupForm() {
+	<div>
+		<button class="p-4" onclick="my_modal_5.showModal()">Create Group</button>
+		<dialog id="my_modal_5" class="modal modal-bottom sm:modal-middle">
+			<div class="modal-box">
+				<form method="dialog">
+					<button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+				</form>
+				<h3 class="font-bold text-lg">Create Group</h3>
+				<p class="py-4">You will automatically be added to this group.</p>
+				<form action="/groups" method="post" id="groupForm" style="position: relative; bottom: -2%;">
+					<label class="form-control w-full">
+						<div class="label">
+							<span class="label-text">Group Name:</span>
+						</div>
+						<input type="text" id="name" name="name" placeholder="Group name" class="input input-bordered w-full"/>
+					</label>
+					<input class="btn flex ml-auto mt-4" type="submit" value="Submit"/>
+				</form>
+				<form method="dialog">
+					<button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+				</form>
+			</div>
+		</dialog>
+	</div>
 }

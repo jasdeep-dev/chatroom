@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -94,7 +95,7 @@ func GetGroupsByUserIDViaAPI(groupID string) (app.Group, error) {
 	}
 	defer groupsResp.Body.Close()
 
-	groupsBody, err := ioutil.ReadAll(groupsResp.Body)
+	groupsBody, err := io.ReadAll(groupsResp.Body)
 	if err != nil {
 		log.Println("Error reading groups response body:", err)
 	}
@@ -145,7 +146,7 @@ func GetGroupsViaAPI() ([]app.Group, error) {
 	return groups, err
 }
 
-func CreateGroup(name string) error {
+func CreateGroup(name string, userID string) error {
 	var err error
 	// Define the URL for creating a group
 
@@ -157,11 +158,15 @@ func CreateGroup(name string) error {
 	access_token := os.Getenv("ADMIN_ACCESS_TOKEN")
 
 	group := struct {
-		Name string `json:"name"`
-		Path string `json:"path"`
+		Name       string                 `json:"name"`
+		Path       string                 `json:"path"`
+		Attributes map[string]interface{} `json:"attributes"`
 	}{
 		Name: app.Titleize(name),
 		Path: fmt.Sprintf("/%s", name),
+		Attributes: map[string]interface{}{
+			"created_by": []string{userID},
+		},
 	}
 
 	groupJSON, err := json.Marshal(group)
@@ -251,7 +256,6 @@ func GetUsersGroupsViaAPI(userID string) ([]app.Group, error) {
 	}
 
 	access_token := os.Getenv("ADMIN_ACCESS_TOKEN")
-
 	groupsReq.Header.Set("Authorization", "Bearer "+access_token)
 
 	groupsResp, err := client.Do(groupsReq)
@@ -260,7 +264,7 @@ func GetUsersGroupsViaAPI(userID string) ([]app.Group, error) {
 	}
 	defer groupsResp.Body.Close()
 
-	groupsBody, err := ioutil.ReadAll(groupsResp.Body)
+	groupsBody, err := io.ReadAll(groupsResp.Body)
 	if err != nil {
 		log.Println("Error reading groups response body:", err)
 	}
@@ -269,19 +273,21 @@ func GetUsersGroupsViaAPI(userID string) ([]app.Group, error) {
 	if err != nil {
 		log.Println("Error parsing JSON:", err)
 	}
-
+	for _, group := range groups {
+		app.GroupIds = append(app.GroupIds, group.ID)
+	}
 	return groups, err
 }
 
-func AddUserToGroup(user app.KeyCloakUser, group app.KeycloakGroup) error {
+func AddUserToGroup(userID string, groupID string) error {
 	var err error
 	// Define the URL for creating a group
 
 	url := fmt.Sprintf("%s/admin/realms/%s/users/%s/groups/%s",
 		os.Getenv("KEYCLOAK_URL"),
 		os.Getenv("REALM_NAME"),
-		user.ID,
-		group.ID,
+		userID,
+		groupID,
 	)
 
 	access_token := os.Getenv("ADMIN_ACCESS_TOKEN")
@@ -302,12 +308,12 @@ func AddUserToGroup(user app.KeyCloakUser, group app.KeycloakGroup) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode == 409 {
-		log.Printf("%s added to %s group already exists!", user.FirstName, group.Name)
+		log.Printf("User added to group already exists!")
 	} else if resp.StatusCode != http.StatusCreated {
 		log.Printf("unexpected response status: %s", resp.Status)
 	}
 
-	fmt.Printf("%s added to the %s group!", user.FirstName, group.Name)
+	fmt.Printf("User has been added to the group!")
 	return nil
 }
 
@@ -328,6 +334,69 @@ func FindGroupByName(ctx context.Context, name string) (app.KeycloakGroup, error
 		return group, fmt.Errorf("error scanning row: %w - email %v", err, name)
 	}
 	return group, nil
+}
+
+func GroupsCreatedByUser(ctx context.Context, userID string) (groupIds []string, err error) {
+	query := `
+        SELECT kg.id
+        FROM keycloak_group kg
+        JOIN group_attribute ga ON kg.id = ga.group_id
+        WHERE ga.name = 'created_by' AND ga.value = $1;
+    `
+
+	rows, err := app.KeycloackDBConn.Query(ctx, query, userID)
+	if err != nil {
+		log.Println("Error fetching groups from Keycloak:", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var groupID string
+		if err := rows.Scan(&groupID); err != nil {
+			log.Println("Error scanning group row:", err)
+			return nil, err
+		}
+		groupIds = append(groupIds, groupID)
+	}
+	if err := rows.Err(); err != nil {
+		log.Println("Error iterating over group rows:", err)
+		return nil, err
+	}
+
+	return groupIds, nil
+}
+
+func BulkInsertUserGroupMembership(ctx context.Context, groupIds []string, userID string) error {
+	query := "INSERT INTO user_group_membership (group_id, user_id) VALUES "
+
+	values := ""
+
+	for i, pair := range groupIds {
+
+		values += fmt.Sprintf("('%s', '%s')", string(pair), userID)
+
+		// If it's not the last pair, add a comma to separate the values
+		if i != len(groupIds)-1 {
+			values += ","
+		}
+	}
+
+	// Complete the SQL statement
+	query += values
+
+	// Add the WHERE NOT EXISTS clause to ensure duplicates are not inserted
+	query += `
+		ON CONFLICT (group_id, user_id) DO NOTHING;
+	`
+
+	// Execute the SQL statement
+	_, err := app.KeycloackDBConn.Exec(context.Background(), query)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func GetMessagesByGroupID(groupID string) []app.Message {

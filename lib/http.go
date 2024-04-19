@@ -8,6 +8,9 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"net/url"
+	"slices"
+	"strings"
 )
 
 func StartHTTP() {
@@ -22,6 +25,8 @@ func StartHTTP() {
 	http.HandleFunc("/oauth2", callbackHandler)
 	http.HandleFunc("/logout", logoutHandler)
 	http.HandleFunc("/groups", formHandler)
+	http.HandleFunc("/api/search", searchHandler)
+	http.HandleFunc("/addUser", AddUserToGroupHandler)
 
 	log.Println("Starting HTTP Server on", Settings.HttpServer)
 
@@ -29,6 +34,57 @@ func StartHTTP() {
 	if err != nil {
 		log.Fatal("error starting http server", err)
 	}
+}
+
+func AddUserToGroupHandler(w http.ResponseWriter, r *http.Request) {
+	queryValues, err := url.ParseQuery(r.URL.RawQuery)
+	if err != nil {
+		http.Error(w, "Invalid query", http.StatusBadRequest)
+		return
+	}
+
+	// Extract the groupId parameter from the query
+	userIds, ok := queryValues["userId"]
+	if !ok || len(userIds[0]) < 1 {
+		http.Error(w, "groupId parameter is required", http.StatusBadRequest)
+		return
+	}
+
+	groupIds, ok := queryValues["groupID"]
+	if !ok || len(groupIds[0]) < 1 {
+		http.Error(w, "groupId parameter is required", http.StatusBadRequest)
+		return
+	}
+
+	err = keycloak.AddUserToGroup(userIds[0], groupIds[0])
+	if err != nil {
+		log.Println(" Error Adding user to the group")
+	}
+
+	views.UserAdded("Added!").Render(r.Context(), w)
+}
+
+func searchHandler(w http.ResponseWriter, r *http.Request) {
+	query := r.FormValue("search")
+	queryValues, err := url.ParseQuery(r.URL.RawQuery)
+	if err != nil {
+		http.Error(w, "Invalid query", http.StatusBadRequest)
+		return
+	}
+
+	// Extract the groupId parameter from the query
+	groupIds, ok := queryValues["groupId"]
+	if !ok || len(groupIds[0]) < 1 {
+		http.Error(w, "groupId parameter is required", http.StatusBadRequest)
+		return
+	}
+	var matches []app.KeyCloakUser
+	for _, user := range app.Users {
+		if strings.Contains(strings.ToLower(user.FirstName), strings.ToLower(query)) {
+			matches = append(matches, user)
+		}
+	}
+	views.SearchedUsers(matches, groupIds[0]).Render(r.Context(), w)
 }
 
 func messagesHandler(w http.ResponseWriter, r *http.Request) {
@@ -62,12 +118,6 @@ func formHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		name := r.Form.Get("name")
-		err = keycloak.CreateGroup(name)
-		if err != nil {
-			log.Fatal("Unable to create the keycloak groups: ", err)
-		}
-
 		cookie, err := r.Cookie("session_id")
 		if err != nil {
 			log.Fatal("Unable to find the session cookie: ", err)
@@ -79,15 +129,27 @@ func formHandler(w http.ResponseWriter, r *http.Request) {
 			log.Fatal("Unable to get the sessions struct: ", err)
 		}
 
-		group, err := keycloak.FindGroupByName(context.Background(), name)
+		name := r.Form.Get("name")
+		err = keycloak.CreateGroup(name, session.KeyCloakUser.ID)
 		if err != nil {
-			log.Fatal("Unable to find the group: ", err)
+			log.Fatal("Unable to create the keycloak groups: ", err)
 		}
 
-		err = keycloak.AddUserToGroup(session.KeyCloakUser, group)
+		ctx := context.Background()
+		groupsCreatedByUser, err := keycloak.GroupsCreatedByUser(ctx, session.KeyCloakUser.ID)
 		if err != nil {
-			log.Printf("unable to add the users to %s group", group.Name)
+			log.Fatal("Unable to find the group created by this user: ", err)
 		}
+
+		for _, groupID := range groupsCreatedByUser {
+			if !slices.Contains(app.GroupIds, groupID) {
+				err = keycloak.AddUserToGroup(session.KeyCloakUser.ID, groupID)
+				if err != nil {
+					log.Println("Unable to find the group: ", err)
+				}
+			}
+		}
+
 	} else {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
@@ -126,12 +188,12 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 		log.Fatal("Unable to connect to Keycloak: ", err)
 	}
 
-	groups, err := keycloak.GetUsersGroupsViaAPI(session.UserID)
+	Groups, err := keycloak.GetUsersGroupsViaAPI(session.UserID)
 	if err != nil {
 		log.Fatal("Unable to find the keycloak groups: ", err)
 	}
 
-	views.Home(messages, session, keycloak_users, groups).Render(r.Context(), w)
+	views.Home(messages, session, keycloak_users, Groups).Render(r.Context(), w)
 }
 
 func userHandler(w http.ResponseWriter, r *http.Request) {
