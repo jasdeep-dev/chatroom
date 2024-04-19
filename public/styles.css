@@ -2718,6 +2718,10 @@ html:has(.drawer-toggle:checked) {
   top: 0.5rem;
 }
 
+.row-span-2 {
+  grid-row: span 2 / span 2;
+}
+
 .mx-auto {
   margin-left: auto;
   margin-right: auto;
@@ -2726,6 +2730,10 @@ html:has(.drawer-toggle:checked) {
 .my-2 {
   margin-top: 0.5rem;
   margin-bottom: 0.5rem;
+}
+
+.mb-auto {
+  margin-bottom: auto;
 }
 
 .ml-4 {
@@ -2744,8 +2752,16 @@ html:has(.drawer-toggle:checked) {
   margin-top: 2rem;
 }
 
+.mt-auto {
+  margin-top: auto;
+}
+
 .flex {
   display: flex;
+}
+
+.grid {
+  display: grid;
 }
 
 .hidden {

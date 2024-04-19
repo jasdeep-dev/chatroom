@@ -13,8 +13,9 @@ templ Messages(messages []app.Message, session app.UserSession, group app.Group)
         scrollToBottom()
     </script>
 	
-    <div id="textchat" class="bg-base-100 rounded-xl" style="height: 90%;">
-		<nav class="bg-base-300 p-4 text-center flex">
+    <div id="textchat" class="bg-base-100 rounded-xl h-full">
+		<div class="h-full grid">
+		<nav class="bg-base-300 p-4 text-center flex row-span-2 flex mb-auto">
 			{ group.Name }
 			<a class="ml-auto cursor-pointer" onclick="add_user_to_group.showModal()">
 				<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
@@ -23,7 +24,7 @@ templ Messages(messages []app.Message, session app.UserSession, group app.Group)
 			</a>
 			@AddUser(group.ID)
 		</nav>
-		<div class="p-2 overflow-auto messageList" id={ "item-list-" + group.ID } style="height: 94%;">
+		<div class="p-2 overflow-auto messageList" id={ "item-list-" + group.ID }>
 			for _, message := range messages {
 				@ChatBubble(message, session)
 			}
@@ -31,6 +32,7 @@ templ Messages(messages []app.Message, session app.UserSession, group app.Group)
 		if (session.KeyCloakUser.Email != "") {
 			@MessageForm(group.ID)
 		}
+		</div>
 	</div>
 }
 
