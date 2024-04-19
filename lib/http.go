@@ -78,6 +78,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "groupId parameter is required", http.StatusBadRequest)
 		return
 	}
+
 	var matches []app.KeyCloakUser
 	for _, user := range app.Users {
 		if strings.Contains(strings.ToLower(user.FirstName), strings.ToLower(query)) {
@@ -107,6 +108,12 @@ func messagesHandler(w http.ResponseWriter, r *http.Request) {
 		log.Fatal("Unable to get the sessions struct: ", err)
 	}
 
+	app.GroupUsers, err = keycloak.GetGroupMembersViaAPI(group.ID)
+	if err != nil {
+		log.Printf("unable to find the users for %s group", group.Name)
+	}
+
+	log.Printf("Set the Users hash for group %s with the count %s", group.Name, len(app.GroupUsers))
 	views.Messages(messages, session, group).Render(r.Context(), w)
 }
 

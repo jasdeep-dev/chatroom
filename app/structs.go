@@ -156,3 +156,5 @@ type Option struct {
 	Value string `json:"value"`
 	Label string `json:"label"`
 }
+
+var GroupUsers []KeyCloakUser
