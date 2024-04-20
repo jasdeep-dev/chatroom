@@ -97,7 +97,13 @@ func RemoveUserFromGroupHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println("User removed from Group", err)
 	}
 
-	app.GroupUsers, err = keycloak.GetGroupMembersViaAPI(groupIds[0])
+	kc := keycloak.NewKeycloakService(
+		os.Getenv("ADMIN_ACCESS_TOKEN"),
+		os.Getenv("KEYCLOAK_URL"),
+		os.Getenv("REALM_NAME"),
+	)
+
+	app.GroupUsers, err = kc.GetGroupMembersViaAPI(groupIds[0])
 	if err != nil {
 		log.Println("Unable to parse the user", err)
 	}
@@ -136,7 +142,13 @@ func messagesHandler(w http.ResponseWriter, r *http.Request) {
 	groupId := r.URL.Query().Get("groupId")
 	messages := GetMessagesByGroupID(groupId)
 
-	group, err := keycloak.GetGroupsByUserIDViaAPI(groupId)
+	kc := keycloak.NewKeycloakService(
+		os.Getenv("ADMIN_ACCESS_TOKEN"),
+		os.Getenv("KEYCLOAK_URL"),
+		os.Getenv("REALM_NAME"),
+	)
+
+	group, err := kc.GetGroupByIDViaAPI(groupId)
 	if err != nil {
 		log.Fatal("unable to find the group for messages", err)
 	}
@@ -152,9 +164,9 @@ func messagesHandler(w http.ResponseWriter, r *http.Request) {
 		log.Fatal("Unable to get the sessions struct: ", err)
 	}
 
-	app.GroupUsers, err = keycloak.GetGroupMembersViaAPI(group.ID)
+	app.GroupUsers, err = kc.GetGroupMembersViaAPI(group.ID)
 	if err != nil {
-		log.Printf("unable to find the users for %s group", group.Name)
+		log.Println("Unable to parse the user", err)
 	}
 
 	subtractSlices(app.AllUsers, app.GroupUsers)
@@ -200,7 +212,13 @@ func formHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		name := r.Form.Get("name")
-		err = keycloak.CreateGroup(name, session.KeyCloakUser.ID)
+
+		kc := keycloak.NewKeycloakService(
+			os.Getenv("ADMIN_ACCESS_TOKEN"),
+			os.Getenv("KEYCLOAK_URL"),
+			os.Getenv("REALM_NAME"),
+		)
+		err = kc.CreateGroup(name, session.KeyCloakUser.ID)
 		if err != nil {
 			log.Fatal("Unable to create the keycloak groups: ", err)
 		}
@@ -268,11 +286,6 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("Error getting groups: %v", err)
 	}
-
-	// Groups, err := keycloak.GetUsersGroupsViaAPI(session.UserID)
-	// if err != nil {
-	// 	log.Fatal("Unable to find the keycloak groups: ", err)
-	// }
 
 	views.Home(messages, session, keycloak_users, Groups).Render(r.Context(), w)
 }

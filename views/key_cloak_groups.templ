@@ -2,10 +2,6 @@ package views
 
 import (
 	"chatroom/app"
-	"encoding/json"
-	"fmt"
-	"net/http"
-	"os"
 )
 
 templ KeyCloakGroups(keycloak_users []app.KeyCloakUser, groups []app.Group) {
@@ -24,65 +20,4 @@ templ KeyCloakGroups(keycloak_users []app.KeyCloakUser, groups []app.Group) {
 			</li>
 		}
 	</ul>
-}
-
-templ ShowUsers(keycloak_users []app.KeyCloakUser, group app.Group) {
-	for _, user := range GetUsers(group.ID) {
-		<li id={ fmt.Sprintf("user_%v", user.ID) }>
-			<a target="_blank">{ user.FirstName }</a>
-		</li>
-	}
-}
-
-func GetUsers(groupID string) []app.KeyCloakUser {
-	var users []app.KeyCloakUser
-	users, err := GetGroupMembersViaAPI(groupID)
-
-	if err != nil {
-		return users
-	}
-
-	return users
-}
-
-func GetGroupMembersViaAPI(groupID string) ([]app.KeyCloakUser, error) {
-	var users []app.KeyCloakUser
-	var err error
-
-	groupsURL := fmt.Sprintf("%s/admin/realms/%s/groups/%s/members",
-		os.Getenv("KEYCLOAK_URL"),
-		os.Getenv("REALM_NAME"),
-		groupID,
-	)
-	client := &http.Client{}
-
-	groupsReq, err := http.NewRequest("GET", groupsURL, nil)
-	if err != nil {
-		fmt.Println("Error creating groups request:", err)
-		return users, err
-	}
-
-	access_token := os.Getenv("ADMIN_ACCESS_TOKEN")
-
-	groupsReq.Header.Set("Authorization", "Bearer "+access_token)
-
-	groupsResp, err := client.Do(groupsReq)
-	if err != nil {
-		fmt.Println("Error making groups request:", err)
-		return users, err
-	}
-	defer groupsResp.Body.Close()
-
-	groupsBody, err := io.ReadAll(groupsResp.Body)
-	if err != nil {
-		fmt.Println("Error reading groups response body:", err)
-		return users, err
-	}
-
-	err = json.Unmarshal([]byte(groupsBody), &users)
-	if err != nil {
-		fmt.Println("Error parsing JSON:", err)
-		return users, err
-	}
-	return users, err
 }
