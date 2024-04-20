@@ -15,26 +15,31 @@ import (
 )
 
 func StartHTTP() {
+
+	mux := http.NewServeMux()
+
+	//Serve static files from the public directory
 	fs := http.FileServer(http.Dir("./public"))
-	http.Handle("/public/", http.StripPrefix("/public/", fs))
+	mux.Handle("/public/", http.StripPrefix("/public/", fs))
 
-	http.HandleFunc("/", homeHandler)
-	http.HandleFunc("/user", userHandler)
-	http.HandleFunc("/messages/create", createMessgeHandler)
-	http.HandleFunc("/messages", messagesHandler)
-	http.HandleFunc("/login", loginHandler)
-	http.HandleFunc("/oauth2", callbackHandler)
-	http.HandleFunc("/logout", logoutHandler)
-	http.HandleFunc("/groups", formHandler)
-	http.HandleFunc("/api/search", searchHandler)
-	http.HandleFunc("/addUser", AddUserToGroupHandler)
-	http.HandleFunc("/removeUser", RemoveUserFromGroupHandler)
+	//Authentications
+	mux.HandleFunc("/login", loginHandler)
+	mux.HandleFunc("/oauth2", callbackHandler)
+	mux.HandleFunc("/logout", logoutHandler)
 
-	log.Println("Starting HTTP Server on", Settings.HttpServer)
+	mux.HandleFunc("/", homeHandler)
+	mux.HandleFunc("/user", userHandler)
+	mux.HandleFunc("/messages/create", createMessageHandler)
+	mux.HandleFunc("/messages", messagesHandler)
+	mux.HandleFunc("/groups", GroupsHandler)
+	mux.HandleFunc("/api/search", searchHandler)
+	mux.HandleFunc("/addUser", AddUserToGroupHandler)
+	mux.HandleFunc("/removeUser", RemoveUserFromGroupHandler)
 
-	err := http.ListenAndServe(Settings.HttpServer, nil)
+	// Start the server
+	err := http.ListenAndServe(Settings.HttpServer, mux) // Start the server
 	if err != nil {
-		log.Fatal("error starting http server", err)
+		log.Fatal("ListenAndServe:", err)
 	}
 }
 
@@ -185,7 +190,7 @@ func subtractSlices(slice1 []app.KeyCloakUser, slice2 []app.KeyCloakUser) {
 	}
 	fmt.Println("Avaiable users to add to the group!")
 }
-func formHandler(w http.ResponseWriter, r *http.Request) {
+func GroupsHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
 		err := r.ParseForm()
 		if err != nil {
@@ -300,7 +305,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func createMessgeHandler(w http.ResponseWriter, r *http.Request) {
+func createMessageHandler(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
 		http.Error(w, "Error parsing form", http.StatusBadRequest)
@@ -328,7 +333,7 @@ func createMessgeHandler(w http.ResponseWriter, r *http.Request) {
 		Message: r.Form.Get("message"),
 		GroupID: r.Form.Get("groupId"),
 	}
-	log.Println("Message received in createMessgeHandler:", cookie.Value, message)
+	log.Println("Message received in createMessageHandler:", cookie.Value, message)
 
 	// Send the to all users in the group via websockets
 	sendMessage(context.Background(), message, session, nil, w, r)
