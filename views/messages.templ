@@ -12,47 +12,107 @@ templ Messages(messages []app.Message, session app.UserSession, group app.Group)
         }
         scrollToBottom()
     </script>
-	
-    <div id="textchat" class="bg-base-100 rounded-xl h-full">
-		<div class="h-full grid">
-		<nav class="bg-base-300 p-4 text-center flex row-span-2 flex mb-auto">
-			{ group.Name }
-			<p class="text-ellipsis overflow-hidden">
-				for _, user := range app.GroupUsers{
-					<span>{user.FirstName}</span>
+	<div id="textchat" class="bg-base-100 rounded-xl h-full border-solid border-2">
+		<div class="h-full grid bg-base-200 rounded-xl">
+			<nav class="bg-base-300 rounded-xl p-4 text-center flex row-span-2 flex mb-auto">
+				<div class="avatar placeholder mr-4">
+					<div class="bg-neutral text-neutral-content rounded-full w-12">
+						<span>{ string(group.Name[0]) }</span>
+					</div>
+				</div>
+				<div>
+					<p class="text-left">{ group.Name }</p>
+					<p class="text-ellipsis overflow-hidden">
+						for _, user := range app.GroupUsers {
+							<span>{ user.FirstName },</span>
+						}
+					</p>
+				</div>
+				<a class="ml-auto cursor-pointer flex items-center" onclick="add_user_to_group.showModal()">
+					<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+						<path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12a7.5 7.5 0 0 0 15 0m-15 0a7.5 7.5 0 1 1 15 0m-15 0H3m16.5 0H21m-1.5 0H12m-8.457 3.077 1.41-.513m14.095-5.13 1.41-.513M5.106 17.785l1.15-.964m11.49-9.642 1.149-.964M7.501 19.795l.75-1.3m7.5-12.99.75-1.3m-6.063 16.658.26-1.477m2.605-14.772.26-1.477m0 17.726-.26-1.477M10.698 4.614l-.26-1.477M16.5 19.794l-.75-1.299M7.5 4.205 12 12m6.894 5.785-1.149-.964M6.256 7.178l-1.15-.964m15.352 8.864-1.41-.513M4.954 9.435l-1.41-.514M12.002 12l-3.75 6.495"></path>
+					</svg>
+				</a>
+				@AddUser(group.ID)
+			</nav>
+			<div class="p-2 overflow-auto messageList" id={ "item-list-" + group.ID }>
+				for _, message := range messages {
+					@ChatBubble(message, session)
 				}
-			</p>
-			<a class="ml-auto cursor-pointer" onclick="add_user_to_group.showModal()">
-				<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-					<path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12a7.5 7.5 0 0 0 15 0m-15 0a7.5 7.5 0 1 1 15 0m-15 0H3m16.5 0H21m-1.5 0H12m-8.457 3.077 1.41-.513m14.095-5.13 1.41-.513M5.106 17.785l1.15-.964m11.49-9.642 1.149-.964M7.501 19.795l.75-1.3m7.5-12.99.75-1.3m-6.063 16.658.26-1.477m2.605-14.772.26-1.477m0 17.726-.26-1.477M10.698 4.614l-.26-1.477M16.5 19.794l-.75-1.299M7.5 4.205 12 12m6.894 5.785-1.149-.964M6.256 7.178l-1.15-.964m15.352 8.864-1.41-.513M4.954 9.435l-1.41-.514M12.002 12l-3.75 6.495" />
-				</svg>
-			</a>
-			@AddUser(group.ID)
-		</nav>
-		<div class="p-2 overflow-auto messageList" id={ "item-list-" + group.ID }>
-			for _, message := range messages {
-				@ChatBubble(message, session)
+			</div>
+			if (session.KeyCloakUser.Email != "") {
+				@MessageForm(group.ID)
 			}
-		</div>
-		if (session.KeyCloakUser.Email != "") {
-			@MessageForm(group.ID)
-		}
 		</div>
 	</div>
 }
 
 templ AddUser(groupID string) {
-	<dialog id="add_user_to_group" class="modal modal-bottom sm:modal-middle">
-		<div class="modal-box">
+	<dialog id="add_user_to_group" class="modal">
+		<div class="modal-box max-w-2xl h-1/3">
 			<form method="dialog">
 				<button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
 			</form>
-			<h3 class="font-bold text-lg">Create Group</h3>
-			<p class="py-4">You will automatically be added to this group.</p>
-			@SearchBar(groupID)
+			<h3 class="font-bold text-lg mb-4">Users </h3>
+			<div class="overflow-auto min-h-14 h-5/6">
+				<div class="flex w-full">
+					@SearchBar(groupID)
+					<div class="divider divider-horizontal"></div>
+					@UsersList(app.GroupUsers, groupID)
+				</div>
+			</div>
 			<form method="dialog">
 				<button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
 			</form>
 		</div>
 	</dialog>
+}
+
+templ UsersList(users []app.KeyCloakUser, groupID string) {
+	<div class="grid flex-grow rounded-box" id="usersList">
+		<div class="overflow-x-auto">
+			<table class="table">
+				<thead>
+					<tr>
+						<th>Users</th>
+					</tr>
+				</thead>
+				<tbody>
+					for _, user := range users {
+						<tr>
+							<td>
+								<div class="flex items-center gap-3">
+									<div class="avatar placeholder mr-4">
+										<div class="bg-neutral text-neutral-content rounded-full w-12">
+											<span>{ string(user.FirstName[0]) }</span>
+										</div>
+									</div>
+									<div>
+										<div class="font-bold">{ user.FirstName }</div>
+										<div class="text-sm opacity-50">{ user.LastName }</div>
+									</div>
+									<div class="flex ml-auto">
+										<a
+											href="#"
+											data-target={ user.ID }
+											id={ "li-" + user.ID + groupID }
+											hx-get={ "/removeUser?userId=" + user.ID + "&groupID=" + groupID }
+											hx-trigger="click, groupId"
+											hx-target="#userSearchBox"
+											hx-on::after-request="RemoveUser(this)"
+											class="w-full"
+										>
+											<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+  												<path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14" />
+											</svg>
+										</a>
+									</div>
+								</div>
+							</td>
+						</tr>
+					}
+				</tbody>
+			</table>
+		</div>
+	</div>
 }

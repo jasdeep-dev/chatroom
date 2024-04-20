@@ -5,6 +5,7 @@ import (
 	"chatroom/lib/keycloak"
 	"chatroom/views"
 	"context"
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -27,6 +28,7 @@ func StartHTTP() {
 	http.HandleFunc("/groups", formHandler)
 	http.HandleFunc("/api/search", searchHandler)
 	http.HandleFunc("/addUser", AddUserToGroupHandler)
+	http.HandleFunc("/removeUser", RemoveUserFromGroupHandler)
 
 	log.Println("Starting HTTP Server on", Settings.HttpServer)
 
@@ -37,6 +39,39 @@ func StartHTTP() {
 }
 
 func AddUserToGroupHandler(w http.ResponseWriter, r *http.Request) {
+	queryValues, err := url.ParseQuery(r.URL.RawQuery)
+	if err != nil {
+		http.Error(w, "Invalid query", http.StatusBadRequest)
+		return
+	}
+
+	userIds, ok := queryValues["userId"]
+	if !ok || len(userIds[0]) < 1 {
+		http.Error(w, "groupId parameter is required", http.StatusBadRequest)
+		return
+	}
+
+	groupIds, ok := queryValues["groupID"]
+	if !ok || len(groupIds[0]) < 1 {
+		http.Error(w, "groupId parameter is required", http.StatusBadRequest)
+		return
+	}
+
+	err = keycloak.AddUserToGroup(userIds[0], groupIds[0])
+	if err != nil {
+		log.Println("Error Adding user to the group")
+	}
+
+	user, err := keycloak.FindUserByID(userIds[0])
+	if err != nil {
+		log.Println("Unable to parse the user")
+	}
+
+	app.GroupUsers = append(app.GroupUsers, user)
+	views.UsersList(app.GroupUsers, groupIds[0]).Render(r.Context(), w)
+}
+
+func RemoveUserFromGroupHandler(w http.ResponseWriter, r *http.Request) {
 	queryValues, err := url.ParseQuery(r.URL.RawQuery)
 	if err != nil {
 		http.Error(w, "Invalid query", http.StatusBadRequest)
@@ -56,12 +91,20 @@ func AddUserToGroupHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = keycloak.AddUserToGroup(userIds[0], groupIds[0])
+	err = keycloak.RemoveUserFromGroup(userIds[0], groupIds[0])
 	if err != nil {
-		log.Println(" Error Adding user to the group")
+		log.Println("User removed from Group", err)
 	}
 
-	views.UserAdded("Added!").Render(r.Context(), w)
+	app.GroupUsers, err = keycloak.GetGroupMembersViaAPI(groupIds[0])
+	if err != nil {
+		log.Println("Unable to parse the user", err)
+	}
+
+	subtractSlices(app.AllUsers, app.GroupUsers)
+
+	views.SearchBar(groupIds[0]).Render(r.Context(), w)
+	// views.UsersList(app.GroupUsers, groupIds[0]).Render(r.Context(), w)
 }
 
 func searchHandler(w http.ResponseWriter, r *http.Request) {
@@ -80,7 +123,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var matches []app.KeyCloakUser
-	for _, user := range app.Users {
+	for _, user := range app.RestUsers {
 		if strings.Contains(strings.ToLower(user.FirstName), strings.ToLower(query)) {
 			matches = append(matches, user)
 		}
@@ -113,10 +156,29 @@ func messagesHandler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("unable to find the users for %s group", group.Name)
 	}
 
-	log.Printf("Set the Users hash for group %s with the count %s", group.Name, len(app.GroupUsers))
+	subtractSlices(app.AllUsers, app.GroupUsers)
+
+	log.Printf("Set the Users hash for group %s with the count %v", group.Name, len(app.GroupUsers))
+
 	views.Messages(messages, session, group).Render(r.Context(), w)
 }
 
+func subtractSlices(slice1 []app.KeyCloakUser, slice2 []app.KeyCloakUser) {
+
+	// Create a map to track names in slice2 for quick lookup
+	present := make(map[string]bool)
+	for _, person := range slice2 {
+		present[person.ID] = true
+	}
+	app.RestUsers = []app.KeyCloakUser{}
+	// Add to result only those from slice1 not in slice2
+	for _, person := range slice1 {
+		if _, found := present[person.ID]; !found {
+			app.RestUsers = append(app.RestUsers, person)
+		}
+	}
+	fmt.Println("Avaiable users to add to the group!")
+}
 func formHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
 		err := r.ParseForm()

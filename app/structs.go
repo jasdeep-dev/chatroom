@@ -158,3 +158,5 @@ type Option struct {
 }
 
 var GroupUsers []KeyCloakUser
+var AllUsers []KeyCloakUser
+var RestUsers []KeyCloakUser

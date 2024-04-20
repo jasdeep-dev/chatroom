@@ -3,7 +3,7 @@ package views
 templ MessageForm(groupID string) {
 	<div class="flex mt-auto">
 		<form
-			class="bg-base-300 p-3 rounded rounded-lg messageForm w-full"
+			class="bg-base-300 p-3 rounded rounded-xl messageForm w-full"
 			id={ "messageform_" + groupID }
 			hx-post="/messages/create"
 			hx-swap="beforeend"

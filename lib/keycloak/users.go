@@ -1,8 +1,8 @@
 package keycloak
 
 import (
+	"bytes"
 	"chatroom/app"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -10,33 +10,6 @@ import (
 	"net/http"
 	"os"
 )
-
-// func GetUsers(ctx context.Context) ([]app.KeyCloakUser, error) {
-// 	var err error
-// 	var users []app.KeyCloakUser
-
-// 	query := `
-// 		SELECT
-// 			usr.*,
-// 			json_agg(json_build_object('name', attr.name, 'value', attr.value)) AS attributes
-// 		FROM
-// 			public.user_entity usr
-// 		LEFT JOIN public.user_attribute attr ON usr.id = attr.user_id
-// 		GROUP BY
-// 			usr.id;
-// 	`
-
-// 	rows, err := app.KeycloackDBConn.Query(ctx, query)
-// 	if err != nil {
-// 		log.Println("Error GetUsers from Keycloak", err)
-// 		return users, err
-// 	}
-
-// 	users, err = pgx.CollectRows(rows, pgx.RowToStructByName[app.KeyCloakUser])
-// 	defer rows.Close()
-
-// 	return users, err
-// }
 
 func GetUsersViaAPI() ([]app.KeyCloakUser, error) {
 	var users []app.KeyCloakUser
@@ -76,10 +49,11 @@ func GetUsersViaAPI() ([]app.KeyCloakUser, error) {
 		return users, err
 	}
 	app.Users = users
+	app.AllUsers = users
 	return users, err
 }
 
-func FindUserByID(ctx context.Context, id string) (app.KeyCloakUser, error) {
+func FindUserByID(id string) (app.KeyCloakUser, error) {
 	var user app.KeyCloakUser
 	var err error
 	url := fmt.Sprintf("%s/admin/realms/%s/users/%s",
@@ -122,4 +96,41 @@ func FindUserByID(ctx context.Context, id string) (app.KeyCloakUser, error) {
 		return user, err
 	}
 	return user, err
+}
+
+func RemoveUserFromGroup(userID string, groupID string) error {
+	var err error
+
+	url := fmt.Sprintf("%s/admin/realms/%s/users/%s/groups/%s",
+		os.Getenv("KEYCLOAK_URL"),
+		os.Getenv("REALM_NAME"),
+		userID,
+		groupID,
+	)
+
+	access_token := os.Getenv("ADMIN_ACCESS_TOKEN")
+
+	req, err := http.NewRequest("DELETE", url, bytes.NewBuffer([]byte{}))
+	if err != nil {
+		log.Printf("error creating request: %v", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+access_token)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Printf("error making request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == 409 {
+		log.Printf("User not present in the group!")
+	} else if resp.StatusCode != http.StatusCreated {
+		log.Printf("unexpected response status: %s", resp.Status)
+	}
+
+	fmt.Printf("User has been removed from the group!")
+	return nil
 }
