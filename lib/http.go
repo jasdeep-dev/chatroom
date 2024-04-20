@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"slices"
 	"strings"
 )
@@ -133,7 +134,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 
 func messagesHandler(w http.ResponseWriter, r *http.Request) {
 	groupId := r.URL.Query().Get("groupId")
-	messages := keycloak.GetMessagesByGroupID(groupId)
+	messages := GetMessagesByGroupID(groupId)
 
 	group, err := keycloak.GetGroupsByUserIDViaAPI(groupId)
 	if err != nil {
@@ -257,10 +258,21 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 		log.Fatal("Unable to connect to Keycloak: ", err)
 	}
 
-	Groups, err := keycloak.GetUsersGroupsViaAPI(session.UserID)
+	kc := keycloak.NewKeycloakService(
+		os.Getenv("ADMIN_ACCESS_TOKEN"),
+		os.Getenv("KEYCLOAK_URL"),
+		os.Getenv("REALM_NAME"),
+	)
+
+	Groups, err := kc.GetUsersGroupsViaAPI(session.UserID)
 	if err != nil {
-		log.Fatal("Unable to find the keycloak groups: ", err)
+		log.Printf("Error getting groups: %v", err)
 	}
+
+	// Groups, err := keycloak.GetUsersGroupsViaAPI(session.UserID)
+	// if err != nil {
+	// 	log.Fatal("Unable to find the keycloak groups: ", err)
+	// }
 
 	views.Home(messages, session, keycloak_users, Groups).Render(r.Context(), w)
 }

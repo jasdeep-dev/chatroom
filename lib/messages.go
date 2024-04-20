@@ -101,6 +101,39 @@ func sendMessage(ctx context.Context, message app.MessageData, session app.UserS
 	}
 }
 
+func GetMessagesByGroupID(groupID string) []app.Message {
+	var err error
+	var messages []app.Message
+
+	query := `
+		SELECT
+			id,
+			timestamp,
+			text,
+			user_id,
+			group_id,
+			first_name AS name,
+			email
+		FROM
+			messages
+		WHERE group_id=$1`
+
+	rows, err := app.DBConn.Query(context.Background(), query, groupID)
+	if err != nil {
+		log.Println("Error GetUsers from Keycloak", err)
+		return messages
+	}
+
+	messages, err = pgx.CollectRows(rows, pgx.RowToStructByName[app.Message])
+	if err != nil {
+		log.Println("Error GetUsers from Keycloak", err)
+		return messages
+	}
+	defer rows.Close()
+
+	return messages
+}
+
 func GetMessages(ctx context.Context) ([]app.Message, error) {
 	var err error
 	var messages []app.Message

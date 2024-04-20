@@ -20,13 +20,8 @@ templ Messages(messages []app.Message, session app.UserSession, group app.Group)
 						<span>{ string(group.Name[0]) }</span>
 					</div>
 				</div>
-				<div>
-					<p class="text-left">{ group.Name }</p>
-					<p class="text-ellipsis overflow-hidden">
-						for _, user := range app.GroupUsers {
-							<span>{ user.FirstName },</span>
-						}
-					</p>
+				<div class="text-left flex items-center">
+					<p>{ group.Name }</p>
 				</div>
 				<a class="ml-auto cursor-pointer flex items-center" onclick="add_user_to_group.showModal()">
 					<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
