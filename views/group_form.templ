@@ -10,7 +10,12 @@ templ GroupForm() {
 				</form>
 				<h3 class="font-bold text-lg">Create Group</h3>
 				<p class="py-4">You will automatically be added to this group.</p>
-				<form action="/groups" method="post" id="groupForm" style="position: relative; bottom: -2%;">
+				<form 
+					action="/api/groups"
+					method="post"
+					id="groupForm"
+					style="position: relative; bottom: -2%;"
+				>
 					<label class="form-control w-full">
 						<div class="label">
 							<span class="label-text">Group Name:</span>

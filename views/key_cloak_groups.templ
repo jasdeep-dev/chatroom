@@ -11,7 +11,7 @@ templ KeyCloakGroups(keycloak_users []app.KeyCloakUser, groups []app.Group) {
 				<a
 					href="#"
 					data-target={ group.ID }
-					hx-get={ "/messages?groupId=" + group.ID }
+					hx-get={ "/api/messages?groupId=" + group.ID }
 					hx-trigger="click"
 					hx-target="#rightPanel"
 					hx-on::after-request="this.parentNode.classList.add('bg-secondary-100')"

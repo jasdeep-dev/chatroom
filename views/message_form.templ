@@ -5,7 +5,7 @@ templ MessageForm(groupID string) {
 		<form
 			class="bg-base-300 p-3 rounded rounded-xl messageForm w-full"
 			id={ "messageform_" + groupID }
-			hx-post="/messages/create"
+			hx-post="/api/messages"
 			hx-swap="beforeend"
 			hx-target={ "#item-list-" + groupID }
 			hx-trigger="submit"

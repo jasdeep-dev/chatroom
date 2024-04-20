@@ -22,16 +22,15 @@ func StartHTTP() {
 	fs := http.FileServer(http.Dir("./public"))
 	mux.Handle("/public/", http.StripPrefix("/public/", fs))
 
-	//Authentications
 	mux.HandleFunc("/login", loginHandler)
 	mux.HandleFunc("/oauth2", callbackHandler)
 	mux.HandleFunc("/logout", logoutHandler)
 
 	mux.HandleFunc("/", homeHandler)
-	mux.HandleFunc("/user", userHandler)
-	mux.HandleFunc("/messages/create", createMessageHandler)
-	mux.HandleFunc("/messages", messagesHandler)
-	mux.HandleFunc("/groups", GroupsHandler)
+	mux.HandleFunc("/api/users", userHandler)
+	mux.HandleFunc("/api/messages", MessageHandler)
+
+	mux.HandleFunc("/api/groups", GroupsHandler)
 	mux.HandleFunc("/api/search", searchHandler)
 	mux.HandleFunc("/addUser", AddUserToGroupHandler)
 	mux.HandleFunc("/removeUser", RemoveUserFromGroupHandler)
@@ -140,38 +139,86 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	views.SearchedUsers(matches, groupIds[0]).Render(r.Context(), w)
 }
 
-func messagesHandler(w http.ResponseWriter, r *http.Request) {
-	groupId := r.URL.Query().Get("groupId")
-	messages := GetMessagesByGroupID(groupId)
-
-	kc := keycloak.NewKeycloakService()
-
-	group, err := kc.GetGroupByIDViaAPI(groupId)
-	if err != nil {
-		log.Fatal("unable to find the group for messages", err)
-	}
-
+func MessageHandler(w http.ResponseWriter, r *http.Request) {
+	// Retrieve session ID from cookie
 	cookie, err := r.Cookie("session_id")
 	if err != nil {
-		log.Fatal("Unable to find the session cookie: ", err)
+		log.Println("Error retrieving session ID from cookie:", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
 	}
 
-	//ADD user to the Group
+	// Check if session ID is empty
+	if cookie.Value == "" {
+		log.Println("sendMessage: Session id is blank")
+		http.Error(w, "Session ID is blank", http.StatusBadRequest)
+		return
+	}
+
+	// Get session using session ID
 	session, err := GetSession(cookie.Value, r)
 	if err != nil {
-		log.Fatal("Unable to get the sessions struct: ", err)
+		log.Println("sendMessage: Session not found:", cookie.Value)
+		http.Error(w, "Session not found", http.StatusUnauthorized)
+		return
 	}
 
-	app.GroupUsers, err = kc.GetGroupMembersViaAPI(group.ID)
-	if err != nil {
-		log.Println("Unable to parse the user", err)
+	// Handle POST request
+	if r.Method == http.MethodPost {
+		err := r.ParseForm()
+		if err != nil {
+			log.Println("Error parsing form:", err)
+			http.Error(w, "Error parsing form", http.StatusBadRequest)
+			return
+		}
+
+		// Extract message data from form
+		message := app.MessageData{
+			Message: r.Form.Get("message"),
+			GroupID: r.Form.Get("groupId"),
+		}
+
+		// Send message
+		sendMessage(context.Background(), message, session, nil, w, r)
+
+	} else if r.Method == http.MethodGet { // Handle GET request
+		// Extract group ID from URL query parameter
+		groupID := r.URL.Query().Get("groupId")
+
+		// Retrieve messages for the group ID
+		messages := GetMessagesByGroupID(groupID)
+
+		// Retrieve group information
+		kc := keycloak.NewKeycloakService()
+		group, err := kc.GetGroupByIDViaAPI(groupID)
+		if err != nil {
+			log.Fatal("Unable to find the group for messages:", err)
+			http.Error(w, "Group not found", http.StatusNotFound)
+			return
+		}
+
+		// Retrieve group members
+		app.GroupUsers, err = kc.GetGroupMembersViaAPI(group.ID)
+		if err != nil {
+			log.Println("Unable to retrieve group members:", err)
+			http.Error(w, "Unable to retrieve group members", http.StatusInternalServerError)
+			return
+		}
+
+		// Remove group users from all users
+		subtractSlices(app.AllUsers, app.GroupUsers)
+
+		// Log the count of group users
+		log.Printf("Set the Users hash for group %s with the count %v", group.Name, len(app.GroupUsers))
+
+		// Render the messages view
+		err = views.Messages(messages, session, group).Render(r.Context(), w)
+		if err != nil {
+			log.Println("Error rendering messages view:", err)
+			http.Error(w, "Error rendering messages view", http.StatusInternalServerError)
+			return
+		}
 	}
-
-	subtractSlices(app.AllUsers, app.GroupUsers)
-
-	log.Printf("Set the Users hash for group %s with the count %v", group.Name, len(app.GroupUsers))
-
-	views.Messages(messages, session, group).Render(r.Context(), w)
 }
 
 func subtractSlices(slice1 []app.KeyCloakUser, slice2 []app.KeyCloakUser) {
@@ -303,42 +350,6 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println("Unable to render templates.", err)
 		w.Write([]byte(err.Error()))
 	}
-}
-
-func createMessageHandler(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseForm()
-	if err != nil {
-		http.Error(w, "Error parsing form", http.StatusBadRequest)
-		return
-	}
-
-	cookie, err := r.Cookie("session_id")
-	if err != nil {
-		log.Println("Error in cookies", err)
-		return
-	}
-
-	if cookie.Value == "" {
-		log.Println("sendMessage: Session id is blank")
-		return
-	}
-
-	session, err := GetSession(cookie.Value, r)
-	if err != nil {
-		log.Println("sendMessage: Session not found", cookie.Value)
-		return
-	}
-
-	message := app.MessageData{
-		Message: r.Form.Get("message"),
-		GroupID: r.Form.Get("groupId"),
-	}
-	log.Println("Message received in createMessageHandler:", cookie.Value, message)
-
-	// Send the to all users in the group via websockets
-	sendMessage(context.Background(), message, session, nil, w, r)
-
-	// http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func logoutHandler(w http.ResponseWriter, r *http.Request) {
