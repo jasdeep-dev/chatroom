@@ -1,6 +1,7 @@
 package keycloak
 
 import (
+	"chatroom/app"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -43,6 +44,25 @@ func EstablishKeyCloakConnection(ctx context.Context) *pgxpool.Pool {
 
 	fmt.Println("Connection established")
 	return KeycloackDBConn
+}
+
+type GroupService interface {
+	GetGroups() ([]app.KeycloakGroup, error)
+}
+
+type KeycloakService struct {
+	AccessToken string
+	URL         string
+	Realm       string
+}
+
+func NewKeycloakService() *KeycloakService {
+	SetAdminToken()
+	return &KeycloakService{
+		AccessToken: os.Getenv("ADMIN_ACCESS_TOKEN"),
+		URL:         os.Getenv("KEYCLOAK_URL"),
+		Realm:       os.Getenv("REALM_NAME"),
+	}
 }
 
 func SetAdminToken() {

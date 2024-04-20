@@ -1,3 +1,9 @@
+function UserAdded(event){
+    event.parentNode.setAttribute("hidden", true)
+}
+function RemoveUser(event){
+    event.parentNode.parentNode.parentNode.setAttribute('hidden', true)
+}
 function updateUsers(jsondata){
     // if(jsondata.id == ""){
     //     return

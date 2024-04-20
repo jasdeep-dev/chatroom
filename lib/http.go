@@ -10,7 +10,6 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"os"
 	"slices"
 	"strings"
 )
@@ -21,7 +20,7 @@ func StartHTTP() {
 
 	http.HandleFunc("/", homeHandler)
 	http.HandleFunc("/user", userHandler)
-	http.HandleFunc("/messages/create", messageHandler)
+	http.HandleFunc("/messages/create", createMessgeHandler)
 	http.HandleFunc("/messages", messagesHandler)
 	http.HandleFunc("/login", loginHandler)
 	http.HandleFunc("/oauth2", callbackHandler)
@@ -58,12 +57,14 @@ func AddUserToGroupHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = keycloak.AddUserToGroup(userIds[0], groupIds[0])
+	kc := keycloak.NewKeycloakService()
+
+	err = kc.AddUserToGroup(userIds[0], groupIds[0])
 	if err != nil {
 		log.Println("Error Adding user to the group")
 	}
 
-	user, err := keycloak.FindUserByID(userIds[0])
+	user, err := kc.FindUserByID(userIds[0])
 	if err != nil {
 		log.Println("Unable to parse the user")
 	}
@@ -92,16 +93,12 @@ func RemoveUserFromGroupHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = keycloak.RemoveUserFromGroup(userIds[0], groupIds[0])
+	kc := keycloak.NewKeycloakService()
+
+	err = kc.RemoveUserFromGroup(userIds[0], groupIds[0])
 	if err != nil {
 		log.Println("User removed from Group", err)
 	}
-
-	kc := keycloak.NewKeycloakService(
-		os.Getenv("ADMIN_ACCESS_TOKEN"),
-		os.Getenv("KEYCLOAK_URL"),
-		os.Getenv("REALM_NAME"),
-	)
 
 	app.GroupUsers, err = kc.GetGroupMembersViaAPI(groupIds[0])
 	if err != nil {
@@ -142,11 +139,7 @@ func messagesHandler(w http.ResponseWriter, r *http.Request) {
 	groupId := r.URL.Query().Get("groupId")
 	messages := GetMessagesByGroupID(groupId)
 
-	kc := keycloak.NewKeycloakService(
-		os.Getenv("ADMIN_ACCESS_TOKEN"),
-		os.Getenv("KEYCLOAK_URL"),
-		os.Getenv("REALM_NAME"),
-	)
+	kc := keycloak.NewKeycloakService()
 
 	group, err := kc.GetGroupByIDViaAPI(groupId)
 	if err != nil {
@@ -213,11 +206,8 @@ func formHandler(w http.ResponseWriter, r *http.Request) {
 
 		name := r.Form.Get("name")
 
-		kc := keycloak.NewKeycloakService(
-			os.Getenv("ADMIN_ACCESS_TOKEN"),
-			os.Getenv("KEYCLOAK_URL"),
-			os.Getenv("REALM_NAME"),
-		)
+		kc := keycloak.NewKeycloakService()
+
 		err = kc.CreateGroup(name, session.KeyCloakUser.ID)
 		if err != nil {
 			log.Fatal("Unable to create the keycloak groups: ", err)
@@ -231,7 +221,7 @@ func formHandler(w http.ResponseWriter, r *http.Request) {
 
 		for _, groupID := range groupsCreatedByUser {
 			if !slices.Contains(app.GroupIds, groupID) {
-				err = keycloak.AddUserToGroup(session.KeyCloakUser.ID, groupID)
+				err = kc.AddUserToGroup(session.KeyCloakUser.ID, groupID)
 				if err != nil {
 					log.Println("Unable to find the group: ", err)
 				}
@@ -263,6 +253,8 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	kc := keycloak.NewKeycloakService()
+
 	messages, err := GetMessages(r.Context())
 	if err != nil {
 		log.Println("Error GetMessages in homeHandler", err)
@@ -271,16 +263,10 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 
 	keycloak.SetAdminToken()
 
-	keycloak_users, err := keycloak.GetUsersViaAPI()
+	keycloak_users, err := kc.GetUsersViaAPI()
 	if err != nil {
 		log.Fatal("Unable to connect to Keycloak: ", err)
 	}
-
-	kc := keycloak.NewKeycloakService(
-		os.Getenv("ADMIN_ACCESS_TOKEN"),
-		os.Getenv("KEYCLOAK_URL"),
-		os.Getenv("REALM_NAME"),
-	)
 
 	Groups, err := kc.GetUsersGroupsViaAPI(session.UserID)
 	if err != nil {
@@ -314,7 +300,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func messageHandler(w http.ResponseWriter, r *http.Request) {
+func createMessgeHandler(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
 		http.Error(w, "Error parsing form", http.StatusBadRequest)
@@ -342,7 +328,7 @@ func messageHandler(w http.ResponseWriter, r *http.Request) {
 		Message: r.Form.Get("message"),
 		GroupID: r.Form.Get("groupId"),
 	}
-	log.Println("Message received in messageHandler:", cookie.Value, message)
+	log.Println("Message received in createMessgeHandler:", cookie.Value, message)
 
 	// Send the to all users in the group via websockets
 	sendMessage(context.Background(), message, session, nil, w, r)

@@ -5,15 +5,6 @@ import (
 )
 
 templ SearchedUsers(users []app.KeyCloakUser, groupID string) {
-	<script>
-        function UserAdded(event){
-			event.parentNode.setAttribute("hidden", true)
-        }
-        function RemoveUser(event){
-			event.parentNode.parentNode.parentNode.setAttribute('hidden', true)
-        }
-
-    </script>
 	for _, user := range users {
 		<li class="pt-2">
 			<a

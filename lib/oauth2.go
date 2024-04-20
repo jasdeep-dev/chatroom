@@ -126,7 +126,9 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sessionID := idTokenClaims.Sid
-	currentKUser, err := keycloak.FindUserByID(idTokenClaims.Sub)
+
+	kc := keycloak.NewKeycloakService()
+	currentKUser, err := kc.FindUserByID(idTokenClaims.Sub)
 	if err != nil {
 		log.Println("Error in InsertUse findinfr", err)
 		http.Redirect(w, r, "/", http.StatusFound)

@@ -8,27 +8,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 )
-
-type GroupService interface {
-	GetGroups() ([]app.KeycloakGroup, error)
-}
-
-type KeycloakService struct {
-	AccessToken string
-	URL         string
-	Realm       string
-}
-
-func NewKeycloakService(accessToken, url, realm string) *KeycloakService {
-	SetAdminToken()
-	return &KeycloakService{
-		AccessToken: os.Getenv("ADMIN_ACCESS_TOKEN"),
-		URL:         url,
-		Realm:       realm,
-	}
-}
 
 func (kc *KeycloakService) newRequest(method, url string, body []byte) (*http.Request, error) {
 	req, err := http.NewRequest(method, url, bytes.NewBuffer(body))
@@ -70,27 +50,12 @@ func (kc *KeycloakService) doRequestWithoutResponse(req *http.Request) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode == http.StatusConflict {
-		log.Printf("group already exists!")
-	} else if resp.StatusCode != http.StatusCreated {
+		return fmt.Errorf("%s group already exists", resp.Status)
+	} else if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return fmt.Errorf("unexpected response status: %s", resp.Status)
 	}
-
-	fmt.Println("Group created successfully")
 	return nil
 }
-
-// Example usage
-// kc := NewKeycloakService(
-// 	os.Getenv("ADMIN_ACCESS_TOKEN"),
-// 	os.Getenv("KEYCLOAK_URL"),
-// 	os.Getenv("REALM_NAME"),
-// )
-
-// groups, err := kc.GetUsersGroupsViaAPI(userID)
-//
-//	if err != nil {
-//		log.Printf("Error getting groups: %v", err)
-//	}
 
 func (kc *KeycloakService) GetUsersGroupsViaAPI(userID string) (groups []app.Group, err error) {
 	groupsURL := fmt.Sprintf("%s/admin/realms/%s/users/%s/groups", kc.URL, kc.Realm, userID)
@@ -179,42 +144,21 @@ func (kc *KeycloakService) GetGroupMembersViaAPI(groupID string) (users []app.Ke
 	return users, nil
 }
 
-func AddUserToGroup(userID string, groupID string) error {
+func (kc *KeycloakService) AddUserToGroup(userID string, groupID string) error {
 	var err error
-	// Define the URL for creating a group
 
 	url := fmt.Sprintf("%s/admin/realms/%s/users/%s/groups/%s",
-		os.Getenv("KEYCLOAK_URL"),
-		os.Getenv("REALM_NAME"),
+		kc.URL, kc.Realm,
 		userID,
 		groupID,
 	)
 
-	access_token := os.Getenv("ADMIN_ACCESS_TOKEN")
-
-	req, err := http.NewRequest("PUT", url, bytes.NewBuffer([]byte{}))
+	req, err := kc.newRequest("PUT", url, nil)
 	if err != nil {
 		log.Printf("error creating request: %v", err)
 	}
 
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+access_token)
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Printf("error making request: %v", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode == 409 {
-		log.Printf("User added to group already exists!")
-	} else if resp.StatusCode != http.StatusCreated {
-		log.Printf("unexpected response status: %s", resp.Status)
-	}
-
-	fmt.Printf("User has been added to the group!")
-	return nil
+	return kc.doRequestWithoutResponse(req)
 }
 
 func GroupsCreatedByUser(ctx context.Context, userID string) (groupIds []string, err error) {

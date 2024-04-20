@@ -45,7 +45,7 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	// TODO: Remove the socket connection from app.SocketConnections when connection terminated
 	log.Println("New Socket Connection:", conn.RemoteAddr())
 
-	user, err := keycloak.FindUserByID(session.UserID)
+	user, err := keycloak.NewKeycloakService().FindUserByID(session.UserID)
 	if err != nil {
 		log.Println("User does not exist", err)
 	}
@@ -70,7 +70,7 @@ func listenForMessages(ctx context.Context, sessionID string, conn *websocket.Co
 					return
 				}
 
-				user, err := keycloak.FindUserByID(session.UserID)
+				user, err := keycloak.NewKeycloakService().FindUserByID(session.UserID)
 				if err != nil {
 					log.Println("User does not exist", err)
 					return

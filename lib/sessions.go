@@ -44,7 +44,7 @@ func GetUserFromSession(r *http.Request) (app.KeyCloakUser, error) {
 
 	userID := extractUserID(keyCloakSessionID.Value)
 
-	user, err = keycloak.FindUserByID(userID)
+	user, err = keycloak.NewKeycloakService().FindUserByID(userID)
 	if err != nil {
 		return user, err
 	}

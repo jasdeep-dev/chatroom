@@ -1,8 +1,9 @@
 package views
+
 import "chatroom/app"
 
-templ Navbar(session app.UserSession){
-    <script type="text/javascript">
+templ Navbar(session app.UserSession) {
+	<script type="text/javascript">
         window.onload = function() {
             setLocalStorageTheme()
         }
@@ -18,38 +19,40 @@ templ Navbar(session app.UserSession){
             setLocalStorageTheme()
         }
     </script>
-    <div class="container mx-auto flex justify-between items-center">
-        <h1 class="text-2xl font-bold">Chatroom</h1>
-        <ul class="flex space-x-4">
-            <!-- Link to Keycloak User Page -->
-            <li>
-                <a href="http://192.168.2.12:9000/realms/chatroom/account"
-                    class="btn" target="_blank" id="user_name">
-                    {session.KeyCloakUser.Email}
-                </a>
-            </li>
-
-            <!-- Logout -->
-            <li>
-                <form action="http://192.168.2.12:9000/realms/chatroom/protocol/openid-connect/logout" method="post">
-                    <input type="hidden" value="chatroom" name="client_id" />
-                    <input name="post_logout_redirect_uri" value="http://192.168.2.12:8080/logout" type="hidden" />
-                    <input type="submit" value="Logout" class="btn"></input>
-                </form>
-            </li>
-
-            <!-- Set the theme -->
-            <li>
-                <select name="selectThemeOption" onchange="addTheThemeToLocalStorage(this.value)" class="select w-full max-w-xs bg-primary-100">
-                    <option disabled selected>Pick a Theme</option>
-                    <option>dark</option>
-                    <option>light</option>
-                    <option>retro</option>
-                    <option>cyberpunk</option>
-                    <option>valentine</option>
-                    <option>aqua</option>
-                </select>
-            </li>
-        </ul>
-    </div>
+	<div class="container mx-auto flex justify-between items-center">
+		<h1 class="text-2xl font-bold">Chatroom</h1>
+		<ul class="flex space-x-4">
+			<!-- Link to Keycloak User Page -->
+			<li>
+				<a
+					href="http://192.168.2.12:9000/realms/chatroom/account"
+					class="btn"
+					target="_blank"
+					id="user_name"
+				>
+					{ session.KeyCloakUser.Email }
+				</a>
+			</li>
+			<!-- Logout -->
+			<li>
+				<form action="http://192.168.2.12:9000/realms/chatroom/protocol/openid-connect/logout" method="post">
+					<input type="hidden" value="chatroom" name="client_id"/>
+					<input name="post_logout_redirect_uri" value="http://192.168.2.12:8080/logout" type="hidden"/>
+					<input type="submit" value="Logout" class="btn"/>
+				</form>
+			</li>
+			<!-- Set the theme -->
+			<li>
+				<select name="selectThemeOption" onchange="addTheThemeToLocalStorage(this.value)" class="select w-full max-w-xs bg-primary-100">
+					<option disabled selected>Pick a Theme</option>
+					<option>dark</option>
+					<option>light</option>
+					<option>retro</option>
+					<option>cyberpunk</option>
+					<option>valentine</option>
+					<option>aqua</option>
+				</select>
+			</li>
+		</ul>
+	</div>
 }
