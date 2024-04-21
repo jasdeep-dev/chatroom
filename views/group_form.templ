@@ -13,7 +13,7 @@ templ GroupForm(responseText string) {
 				<p class="py-4">You will automatically be added to this group.</p>
 
 				<div id="createGroupError" class="bg-base-200 flex p-2 m-2 rounded-xl hidden">
-					<span class="text-left errorMsg"></span>
+					<span class="mb-auto mt-auto text-left errorMsg"></span>
 					<a class="ml-auto btn btn-sm btn-circle btn-ghost right-2 top-2" href="#" onclick="document.getElementById('createGroupError').classList.add('hidden');">x</a>
 				</div>
 
@@ -24,7 +24,6 @@ templ GroupForm(responseText string) {
 					hx-post="/api/groups"
 					hx-trigger="submit"
 					htmx:beforeSwap
-					hx-on::after-request="this.reset()"
 				>
 					<label class="form-control w-full">
 						<div class="label">
