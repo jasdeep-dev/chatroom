@@ -4,18 +4,29 @@ import (
 	"chatroom/app"
 )
 
-templ KeyCloakGroups(keycloak_users []app.KeyCloakUser, groups []app.Group) {
+templ KeyCloakGroups(keycloak_users []app.KeyCloakUser, groups []app.Group, selectedGroup app.Group) {
 	<ul id="groupsList">
 		for _, group := range groups {
-			<li class="bg-base-100 rounded p-2 my-2 flex" id={ "li" + group.ID }>
+			<li
+				id={ "li" + group.ID }
+				if selectedGroup.ID == group.ID {
+					class="border-current border-2 flex w-full my-2 rounded"
+				} else {
+					class="bg-base-300 flex w-full my-2 rounded"
+				}
+			>
 				<a
+					class="flex my-2 pl-2 w-full"
 					href="#"
 					data-target={ group.ID }
 					hx-get={ "/api/messages?groupId=" + group.ID }
 					hx-trigger="click"
-					hx-target="#rightPanel"
+					hx-target="#Chatroom"
+					hx-push-url="true"
 					hx-on::after-request="this.parentNode.classList.add('bg-secondary-100')"
-				>{ group.Name }</a>
+				>
+					{ group.Name }
+				</a>
 				<span class="indicator-item badge badge-secondary ml-auto hidden">0</span>
 			</li>
 		}

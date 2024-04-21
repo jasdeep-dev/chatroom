@@ -2,15 +2,15 @@ package views
 
 import "chatroom/app"
 
-templ LeftPanel(keycloak_users []app.KeyCloakUser, groups []app.Group) {
+templ LeftPanel(keycloak_users []app.KeyCloakUser, groups []app.Group, group app.Group) {
 	<div class="w-1/3 bg-base-200 h-full overflow-auto">
-		<div class="collapse bg-base-200">
+		<div class="collapse bg-base-200 collapse-open">
 			<input type="checkbox"/>
 			<div class="collapse-title text-xl font-medium">
 				Groups
 			</div>
 			<div class="collapse-content">
-				@KeyCloakGroups(keycloak_users, groups)
+				@KeyCloakGroups(keycloak_users, groups, group)
 			</div>
 		</div>
         <hr/>

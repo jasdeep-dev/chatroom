@@ -19,7 +19,6 @@ func (kc *KeycloakService) GetUsersViaAPI() (users []app.KeyCloakUser, err error
 		return nil, err
 	}
 
-	app.Users = users
 	app.AllUsers = users
 
 	return users, nil

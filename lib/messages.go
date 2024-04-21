@@ -101,7 +101,7 @@ func sendMessage(ctx context.Context, message app.MessageData, session app.UserS
 	}
 }
 
-func GetMessagesByGroupID(groupID string) []app.Message {
+func GetMessagesByGroupID(ctx context.Context, groupID string) []app.Message {
 	var err error
 	var messages []app.Message
 
@@ -118,7 +118,7 @@ func GetMessagesByGroupID(groupID string) []app.Message {
 			messages
 		WHERE group_id=$1`
 
-	rows, err := app.DBConn.Query(context.Background(), query, groupID)
+	rows, err := app.DBConn.Query(ctx, query, groupID)
 	if err != nil {
 		log.Println("Error GetUsers from Keycloak", err)
 		return messages

@@ -30,7 +30,7 @@ templ Layout(messages []app.Message, session app.UserSession) {
                 document.getElementById('message_input')?.focus();
             });
         </script>
-        <body>
+        <body id="Chatroom">
             <nav class="bg-primary-500 p-4 bg-base-300">
                 @Navbar(session)
             </nav>

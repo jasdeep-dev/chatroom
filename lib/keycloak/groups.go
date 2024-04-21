@@ -94,11 +94,11 @@ func (kc *KeycloakService) GetGroupsViaAPI() (groups []app.Group, err error) {
 		return nil, err
 	}
 
-	if err := kc.doRequest(req, &groups); err != nil {
+	if err := kc.doRequest(req, &app.Groups); err != nil {
 		return nil, err
 	}
 
-	return groups, nil
+	return app.Groups, nil
 }
 
 func (kc *KeycloakService) CreateGroup(name string, userID string) error {

@@ -2697,6 +2697,10 @@ details.collapse summary::-webkit-details-marker {
   border-style: solid;
 }
 
+.border-current {
+  border-color: currentColor;
+}
+
 .bg-base-100 {
   --tw-bg-opacity: 1;
   background-color: var(--fallback-b1,oklch(var(--b1)/var(--tw-bg-opacity)));
@@ -2737,6 +2741,10 @@ details.collapse summary::-webkit-details-marker {
 .py-4 {
   padding-top: 1rem;
   padding-bottom: 1rem;
+}
+
+.pl-2 {
+  padding-left: 0.5rem;
 }
 
 .pt-2 {
