@@ -4,6 +4,7 @@ import "chatroom/app"
 
 templ Home(messages []app.Message, session app.UserSession, keycloak_users []app.KeyCloakUser, groups []app.Group, group app.Group) {
     @Layout(messages, session){
+        <script>ScrollToTop()</script>
         <div class="flex justify-between" style="height: calc(100vh - 200px)">
             @LeftPanel(keycloak_users, groups, group)
             @RightPanel(session, messages, group)

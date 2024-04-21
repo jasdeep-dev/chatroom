@@ -18,6 +18,18 @@ function CreateGroupFunction() {
         }
     });
 }
+
+function ScrollToTop(){
+    var cont = document.querySelectorAll('#textchat .messageList')[0]
+    if(cont){
+        cont.scrollTop = cont.scrollHeight;
+    }
+    document.getElementById("GroupSelection")?.addEventListener('htmx:beforeSwap', function(evt) {
+        var cont = document.querySelectorAll('#textchat .messageList')[0]
+        cont.scrollTop = cont.scrollHeight;
+    });
+}
+
 function updateUsers(jsondata){
     // if(jsondata.id == ""){
     //     return

@@ -59,18 +59,18 @@ func (kc *KeycloakService) doRequestWithoutResponse(req *http.Request) error {
 	return nil
 }
 
-func (kc *KeycloakService) GetUsersGroupsViaAPI(userID string) (groups []app.Group, err error) {
+func (kc *KeycloakService) GetUsersGroupsViaAPI(userID string) (err error) {
 	groupsURL := fmt.Sprintf("%s/admin/realms/%s/users/%s/groups", kc.URL, kc.Realm, userID)
 	req, err := kc.newRequest("GET", groupsURL, nil)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	if err := kc.doRequest(req, &groups); err != nil {
-		return nil, err
+	if err := kc.doRequest(req, &app.Groups); err != nil {
+		return err
 	}
 
-	return groups, nil
+	return nil
 }
 
 func (kc *KeycloakService) GetGroupByIDViaAPI(groupID string) (group app.Group, err error) {
@@ -87,18 +87,18 @@ func (kc *KeycloakService) GetGroupByIDViaAPI(groupID string) (group app.Group, 
 	return group, nil
 }
 
-func (kc *KeycloakService) GetGroupsViaAPI() (groups []app.Group, err error) {
+func (kc *KeycloakService) GetGroupsViaAPI() (err error) {
 	groupsURL := fmt.Sprintf("%s/admin/realms/%s/groups", kc.URL, kc.Realm)
 	req, err := kc.newRequest("GET", groupsURL, nil)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	if err := kc.doRequest(req, &app.Groups); err != nil {
-		return nil, err
+		return err
 	}
 
-	return app.Groups, nil
+	return nil
 }
 
 func (kc *KeycloakService) CreateGroup(name string, userID string) error {
@@ -129,7 +129,7 @@ func (kc *KeycloakService) CreateGroup(name string, userID string) error {
 	return kc.doRequestWithoutResponse(req)
 }
 
-func (kc *KeycloakService) GetGroupMembersViaAPI(groupID string) (users []app.KeyCloakUser, err error) {
+func (kc *KeycloakService) GetGroupMembersViaAPI(groupID string) (err error) {
 	url := fmt.Sprintf("%s/admin/realms/%s/groups/%s/members",
 		kc.URL,
 		kc.Realm,
@@ -138,13 +138,28 @@ func (kc *KeycloakService) GetGroupMembersViaAPI(groupID string) (users []app.Ke
 
 	req, err := kc.newRequest("GET", url, nil)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	if err := kc.doRequest(req, &users); err != nil {
-		return nil, err
+	if err := kc.doRequest(req, &app.GroupUsers); err != nil {
+		return err
 	}
-	return users, nil
+	return nil
+}
+
+func (kc *KeycloakService) DeleteGroupViaAPI(groupID string) (err error) {
+	url := fmt.Sprintf("%s/admin/realms/%s/groups/%s/members",
+		kc.URL,
+		kc.Realm,
+		groupID,
+	)
+
+	req, err := kc.newRequest("DELETE", url, nil)
+	if err != nil {
+		return err
+	}
+
+	return kc.doRequestWithoutResponse(req)
 }
 
 func (kc *KeycloakService) AddUserToGroup(userID string, groupID string) error {

@@ -8,7 +8,7 @@ templ KeyCloakGroups(keycloak_users []app.KeyCloakUser, groups []app.Group, sele
 	<ul id="groupsList">
 		for _, group := range groups {
 			<li
-				id={ "li" + group.ID }
+				id="GroupSelection"
 				if selectedGroup.ID == group.ID {
 					class="bg-base-100 border-2 flex w-full my-2 rounded"
 				} else {
@@ -17,6 +17,7 @@ templ KeyCloakGroups(keycloak_users []app.KeyCloakUser, groups []app.Group, sele
 			>
 				<a
 					class="flex my-2 pl-2 w-full"
+					id={ "li" + group.ID }
 					href="#"
 					data-target={ group.ID }
 					hx-get={ "/api/groups/"+ group.ID }

@@ -5,13 +5,6 @@ import (
 )
 
 templ Messages(messages []app.Message, session app.UserSession, group app.Group) {
-	<script>
-        function scrollToBottom() {
-            var cont = document.querySelectorAll('#textchat .messageList')[0]
-            cont.scrollTop = cont.scrollHeight;
-        }
-        scrollToBottom()
-    </script>
 
 	<div id="textchat" class="bg-base-100 rounded-xl h-full border-solid border-2">
 		<div class="h-full grid bg-base-200 rounded-xl">

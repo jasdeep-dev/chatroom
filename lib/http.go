@@ -20,19 +20,6 @@ func StartHTTP() {
 
 	mux := mux.NewRouter()
 
-	keycloak.SetAdminToken()
-
-	var err error
-	_, err = keycloak.NewKeycloakService().GetUsersViaAPI()
-	if err != nil {
-		log.Fatal("Unable to connect to Keycloak: ", err)
-	}
-
-	_, err = keycloak.NewKeycloakService().GetGroupsViaAPI()
-	if err != nil {
-		log.Fatal("Unable to connect to Keycloak: ", err)
-	}
-
 	//Serve static files from the public directory
 	fs := http.FileServer(http.Dir("./public"))
 	mux.PathPrefix("/public/").Handler(http.StripPrefix("/public/", fs))
@@ -53,9 +40,47 @@ func StartHTTP() {
 	mux.HandleFunc("/api/search", searchHandler)
 
 	// Start the server
-	err = http.ListenAndServe(Settings.HttpServer, mux)
+	err := http.ListenAndServe(Settings.HttpServer, mux)
 	if err != nil {
 		log.Fatal("ListenAndServe:", err)
+	}
+}
+
+func sessionData(w http.ResponseWriter, r *http.Request) {
+	handleError := func() {
+		url := createNewProvider(w, r)
+
+		http.Redirect(w, r, url, http.StatusFound)
+	}
+
+	var err error
+
+	cookie, err := r.Cookie("session_id")
+	if err != nil {
+		handleError()
+		return
+	}
+
+	app.Session, err = GetSession(cookie.Value, r)
+	if err != nil {
+		handleError()
+		return
+	}
+}
+
+func setBasicData() {
+	var err error
+
+	keycloak.SetAdminToken()
+
+	_, err = keycloak.NewKeycloakService().GetUsersViaAPI()
+	if err != nil {
+		log.Fatal("Unable to connect to Keycloak: ", err)
+	}
+
+	err = keycloak.NewKeycloakService().GetUsersGroupsViaAPI(app.Session.KeyCloakUser.ID)
+	if err != nil {
+		log.Fatal("Unable to connect to Keycloak: ", err)
 	}
 }
 
@@ -67,9 +92,11 @@ func GroupUsersHandler(w http.ResponseWriter, r *http.Request) {
 
 	kc := keycloak.NewKeycloakService()
 
+	setBasicData()
 	if r.Method == http.MethodPost {
 
 		var response string
+
 		err = kc.AddUserToGroup(userID, "groupID")
 		if err != nil {
 			log.Println(response, err)
@@ -97,7 +124,7 @@ func GroupUsersHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		app.GroupUsers, err = kc.GetGroupMembersViaAPI(groupID)
+		err = kc.GetGroupMembersViaAPI(groupID)
 		if err != nil {
 			log.Println("Unable to fetch the group members", err)
 			views.SearchBar(groupID, "Unable to fetch the group members").Render(r.Context(), w)
@@ -135,30 +162,8 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func MessageHandler(w http.ResponseWriter, r *http.Request) {
-	// Retrieve session ID from cookie
-	cookie, err := r.Cookie("session_id")
-	if err != nil {
-		log.Println("Error retrieving session ID from cookie:", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	sessionData(w, r)
 
-	// Check if session ID is empty
-	if cookie.Value == "" {
-		log.Println("sendMessage: Session id is blank")
-		http.Error(w, "Session ID is blank", http.StatusBadRequest)
-		return
-	}
-
-	// Get session using session ID
-	session, err := GetSession(cookie.Value, r)
-	if err != nil {
-		log.Println("sendMessage: Session not found:", cookie.Value)
-		http.Error(w, "Session not found", http.StatusUnauthorized)
-		return
-	}
-
-	// Handle POST request
 	if r.Method == http.MethodPost {
 		err := r.ParseForm()
 		if err != nil {
@@ -167,14 +172,12 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Extract message data from form
 		message := app.MessageData{
 			Message: r.Form.Get("message"),
 			GroupID: r.Form.Get("groupId"),
 		}
 
-		// Send message
-		sendMessage(context.Background(), message, session, nil, w, r)
+		sendMessage(context.Background(), message, app.Session, nil, w, r)
 
 	} else if r.Method == http.MethodGet {
 		groupID := r.URL.Query().Get("groupId")
@@ -189,7 +192,7 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		app.GroupUsers, err = kc.GetGroupMembersViaAPI(group.ID)
+		err = kc.GetGroupMembersViaAPI(group.ID)
 		if err != nil {
 			log.Println("Unable to retrieve group members:", err)
 			http.Error(w, "Unable to retrieve group members", http.StatusInternalServerError)
@@ -200,7 +203,7 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 
 		log.Printf("Set the Users hash for group %s with the count %v", group.Name, len(app.GroupUsers))
 
-		views.Home(messages, session, app.AllUsers, app.Groups, group).Render(r.Context(), w)
+		views.Home(messages, app.Session, app.AllUsers, app.Groups, group).Render(r.Context(), w)
 	}
 }
 
@@ -220,23 +223,8 @@ func subtractSlices(slice1 []app.KeyCloakUser, slice2 []app.KeyCloakUser) {
 }
 
 func GroupsHandler(w http.ResponseWriter, r *http.Request) {
-	handleError := func() {
-		url := createNewProvider(w, r)
 
-		http.Redirect(w, r, url, http.StatusFound)
-	}
-
-	cookie, err := r.Cookie("session_id")
-	if err != nil {
-		handleError()
-		return
-	}
-
-	session, err := GetSession(cookie.Value, r)
-	if err != nil {
-		handleError()
-		return
-	}
+	sessionData(w, r)
 
 	kc := keycloak.NewKeycloakService()
 
@@ -249,14 +237,14 @@ func GroupsHandler(w http.ResponseWriter, r *http.Request) {
 
 		name := r.Form.Get("name")
 
-		err = kc.CreateGroup(name, session.KeyCloakUser.ID)
+		err = kc.CreateGroup(name, app.Session.KeyCloakUser.ID)
 		if err != nil {
 			http.Error(w, "Unable to create the groups", http.StatusBadRequest)
 			return
 		}
 
 		ctx := context.Background()
-		groupsCreatedByUser, err := keycloak.GroupsCreatedByUser(ctx, session.KeyCloakUser.ID)
+		groupsCreatedByUser, err := keycloak.GroupsCreatedByUser(ctx, app.Session.KeyCloakUser.ID)
 		if err != nil {
 			log.Fatal("Unable to find the group created by this user: ", err)
 			return
@@ -264,27 +252,64 @@ func GroupsHandler(w http.ResponseWriter, r *http.Request) {
 
 		for _, groupID := range groupsCreatedByUser {
 			if !slices.Contains(app.GroupIds, groupID) {
-				err = kc.AddUserToGroup(session.KeyCloakUser.ID, groupID)
+				err = kc.AddUserToGroup(app.Session.KeyCloakUser.ID, groupID)
 				if err != nil {
 					log.Println("Unable to find the group: ", err)
 				}
 			}
 		}
 	} else if r.Method == http.MethodGet {
-
+		setBasicData()
 		vars := mux.Vars(r)
 		groupID := vars["groupID"]
 
 		var group app.Group
-		messages := GetMessagesByGroupID(context.Background(), groupID)
-		group, err = kc.GetGroupByIDViaAPI(groupID)
+		var err error
 
-		if err != nil {
-			handleError()
+		var groupIds []string
+		for _, group = range app.Groups {
+			groupIds = append(groupIds, group.ID)
+		}
+
+		messages := GetMessagesByGroupID(context.Background(), groupID)
+		if !slices.Contains(groupIds, groupID) {
+			fmt.Println("User does not have the acess to this group")
+			views.Home(messages, app.Session, app.AllUsers, app.Groups, app.Groups[0]).Render(r.Context(), w)
 			return
 		}
 
-		views.Home(messages, session, app.AllUsers, app.Groups, group).Render(r.Context(), w)
+		group, err = kc.GetGroupByIDViaAPI(groupID)
+		if err != nil {
+			return
+		}
+
+		err = kc.GetGroupMembersViaAPI(group.ID)
+		if err != nil {
+			log.Printf("Error getting groups: %v", err)
+		}
+
+		subtractSlices(app.AllUsers, app.GroupUsers)
+
+		views.Home(messages, app.Session, app.AllUsers, app.Groups, group).Render(r.Context(), w)
+	} else if r.Method == http.MethodDelete {
+		var err error
+		vars := mux.Vars(r)
+		groupID := vars["groupID"]
+		err = kc.DeleteGroupViaAPI(groupID)
+		if err != nil {
+			return
+		}
+
+		setBasicData()
+
+		err = kc.GetUsersGroupsViaAPI(app.Session.UserID)
+		if err != nil {
+			log.Printf("Error getting groups: %v", err)
+		}
+		messages := GetMessagesByGroupID(context.Background(), groupID)
+
+		views.Home(messages, app.Session, app.AllUsers, app.Groups, app.Groups[0]).Render(r.Context(), w)
+
 	} else {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
@@ -292,38 +317,24 @@ func GroupsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
-	handleError := func() {
-		url := createNewProvider(w, r)
+	sessionData(w, r)
+	setBasicData()
 
-		http.Redirect(w, r, url, http.StatusFound)
-	}
-
-	cookie, err := r.Cookie("session_id")
-	if err != nil {
-		handleError()
-		return
-	}
-
-	session, err := GetSession(cookie.Value, r)
-	if err != nil {
-		handleError()
-		return
-	}
-
+	var err error
 	kc := keycloak.NewKeycloakService()
+	err = kc.GetGroupMembersViaAPI(app.Groups[0].ID)
+	if err != nil {
+		log.Printf("Error getting groups: %v", err)
+	}
 
-	messages, err := GetMessages(r.Context())
+	var messages []app.Message
+	messages, err = GetMessages(r.Context())
 	if err != nil {
 		log.Println("Error GetMessages in homeHandler", err)
 		return
 	}
 
-	app.Groups, err = kc.GetUsersGroupsViaAPI(session.UserID)
-	if err != nil {
-		log.Printf("Error getting groups: %v", err)
-	}
-
-	views.Home(messages, session, app.AllUsers, app.Groups, app.Groups[0]).Render(r.Context(), w)
+	views.Home(messages, app.Session, app.AllUsers, app.Groups, app.Groups[0]).Render(r.Context(), w)
 }
 
 func userHandler(w http.ResponseWriter, r *http.Request) {
