@@ -4,6 +4,20 @@ function UserAdded(event){
 function RemoveUser(event){
     event.parentNode.parentNode.parentNode.setAttribute('hidden', true)
 }
+function CreateGroupFunction() {
+    my_modal_5.showModal()
+    document.getElementById("messageForm")?.addEventListener('htmx:beforeSwap', function(evt) {
+        if (evt.detail.isError) {
+            classList = document.getElementById("createGroupError").classList
+            classList.remove("hidden");
+            classList.add("text-error");
+            document.querySelector("#createGroupError .errorMsg").innerText = evt.detail.xhr.response;
+            setTimeout(function() {
+                classList.add("hidden");
+            }, 5000);
+        }
+    });
+}
 function updateUsers(jsondata){
     // if(jsondata.id == ""){
     //     return

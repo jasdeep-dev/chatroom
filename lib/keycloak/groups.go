@@ -43,6 +43,7 @@ func (kc *KeycloakService) doRequest(req *http.Request, v interface{}) error {
 
 func (kc *KeycloakService) doRequestWithoutResponse(req *http.Request) error {
 	client := &http.Client{}
+
 	resp, err := client.Do(req)
 	if err != nil {
 		return err
@@ -54,6 +55,7 @@ func (kc *KeycloakService) doRequestWithoutResponse(req *http.Request) error {
 	} else if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return fmt.Errorf("unexpected response status: %s", resp.Status)
 	}
+
 	return nil
 }
 
@@ -126,6 +128,7 @@ func (kc *KeycloakService) CreateGroup(name string, userID string) error {
 
 	return kc.doRequestWithoutResponse(req)
 }
+
 func (kc *KeycloakService) GetGroupMembersViaAPI(groupID string) (users []app.KeyCloakUser, err error) {
 	url := fmt.Sprintf("%s/admin/realms/%s/groups/%s/members",
 		kc.URL,

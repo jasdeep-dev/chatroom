@@ -51,9 +51,9 @@ templ AddUser(groupID string) {
 			<h3 class="font-bold text-lg mb-4">Users </h3>
 			<div class="overflow-auto min-h-14 h-5/6">
 				<div class="flex w-full">
-					@SearchBar(groupID)
+					@SearchBar(groupID, "")
 					<div class="divider divider-horizontal"></div>
-					@UsersList(app.GroupUsers, groupID)
+					@UsersList(app.GroupUsers, groupID, string(""))
 				</div>
 			</div>
 			<form method="dialog">
@@ -63,7 +63,13 @@ templ AddUser(groupID string) {
 	</dialog>
 }
 
-templ UsersList(users []app.KeyCloakUser, groupID string) {
+templ UsersList(users []app.KeyCloakUser, groupID string, responseText string) {
+	if responseText != "" {
+		<div id="usersError" class="bg-base-200 flex p-2 rounded-xl text-error">
+			<span class="text-left">{ responseText }</span>
+			<a class="ml-auto" href="#" onclick="document.getElementById('usersError').classList.add('hidden');">x</a>
+		</div>
+	}
 	<div class="grid flex-grow rounded-box" id="usersList">
 		<div class="overflow-x-auto">
 			<table class="table">
@@ -91,14 +97,14 @@ templ UsersList(users []app.KeyCloakUser, groupID string) {
 											href="#"
 											data-target={ user.ID }
 											id={ "li-" + user.ID + groupID }
-											hx-get={ "/removeUser?userId=" + user.ID + "&groupID=" + groupID }
+											hx-delete={ "/api/users/" + user.ID + "/groups/" + groupID }
 											hx-trigger="click, groupId"
 											hx-target="#userSearchBox"
 											hx-on::after-request="RemoveUser(this)"
 											class="w-full"
 										>
 											<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
-  												<path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14" />
+												<path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14"></path>
 											</svg>
 										</a>
 									</div>

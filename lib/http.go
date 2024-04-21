@@ -12,15 +12,17 @@ import (
 	"net/url"
 	"slices"
 	"strings"
+
+	"github.com/gorilla/mux"
 )
 
 func StartHTTP() {
 
-	mux := http.NewServeMux()
+	mux := mux.NewRouter()
 
 	//Serve static files from the public directory
 	fs := http.FileServer(http.Dir("./public"))
-	mux.Handle("/public/", http.StripPrefix("/public/", fs))
+	mux.PathPrefix("/public/").Handler(http.StripPrefix("/public/", fs))
 
 	mux.HandleFunc("/login", loginHandler)
 	mux.HandleFunc("/oauth2", callbackHandler)
@@ -28,91 +30,70 @@ func StartHTTP() {
 
 	mux.HandleFunc("/", homeHandler)
 	mux.HandleFunc("/api/users", userHandler)
+	mux.HandleFunc("/api/users/{userID}/groups/{groupID}", GroupUsersHandler)
+
 	mux.HandleFunc("/api/messages", MessageHandler)
 
 	mux.HandleFunc("/api/groups", GroupsHandler)
+
 	mux.HandleFunc("/api/search", searchHandler)
-	mux.HandleFunc("/addUser", AddUserToGroupHandler)
-	mux.HandleFunc("/removeUser", RemoveUserFromGroupHandler)
 
 	// Start the server
-	err := http.ListenAndServe(Settings.HttpServer, mux) // Start the server
+	err := http.ListenAndServe(Settings.HttpServer, mux)
 	if err != nil {
 		log.Fatal("ListenAndServe:", err)
 	}
 }
 
-func AddUserToGroupHandler(w http.ResponseWriter, r *http.Request) {
-	queryValues, err := url.ParseQuery(r.URL.RawQuery)
-	if err != nil {
-		http.Error(w, "Invalid query", http.StatusBadRequest)
-		return
-	}
-
-	userIds, ok := queryValues["userId"]
-	if !ok || len(userIds[0]) < 1 {
-		http.Error(w, "groupId parameter is required", http.StatusBadRequest)
-		return
-	}
-
-	groupIds, ok := queryValues["groupID"]
-	if !ok || len(groupIds[0]) < 1 {
-		http.Error(w, "groupId parameter is required", http.StatusBadRequest)
-		return
-	}
+func GroupUsersHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	userID := vars["userID"]
+	groupID := vars["groupID"]
+	var err error
 
 	kc := keycloak.NewKeycloakService()
 
-	err = kc.AddUserToGroup(userIds[0], groupIds[0])
-	if err != nil {
-		log.Println("Error Adding user to the group")
+	if r.Method == http.MethodPost {
+
+		var response string
+		err = kc.AddUserToGroup(userID, "groupID")
+		if err != nil {
+			log.Println(response, err)
+			views.UsersList(app.GroupUsers, groupID, "Unable to add the user to group").Render(r.Context(), w)
+			return
+		}
+
+		user, err := kc.FindUserByID(userID)
+		if err != nil {
+			log.Println("Unable to find the user:", err)
+			views.UsersList(app.GroupUsers, groupID, "Unable to add the user to group").Render(r.Context(), w)
+			return
+		}
+
+		app.GroupUsers = append(app.GroupUsers, user)
+
+		views.UsersList(app.GroupUsers, groupID, response).Render(r.Context(), w)
+
+	} else if r.Method == http.MethodDelete {
+
+		err = kc.RemoveUserFromGroup(userID, "groupID")
+		if err != nil {
+			log.Println("Unable to remove the user", err)
+			views.SearchBar(groupID, "Unable to remove the user").Render(r.Context(), w)
+			return
+		}
+
+		app.GroupUsers, err = kc.GetGroupMembersViaAPI(groupID)
+		if err != nil {
+			log.Println("Unable to fetch the group members", err)
+			views.SearchBar(groupID, "Unable to fetch the group members").Render(r.Context(), w)
+			return
+		}
+
+		subtractSlices(app.AllUsers, app.GroupUsers)
+
+		views.SearchBar(groupID, "").Render(r.Context(), w)
 	}
-
-	user, err := kc.FindUserByID(userIds[0])
-	if err != nil {
-		log.Println("Unable to parse the user")
-	}
-
-	app.GroupUsers = append(app.GroupUsers, user)
-	views.UsersList(app.GroupUsers, groupIds[0]).Render(r.Context(), w)
-}
-
-func RemoveUserFromGroupHandler(w http.ResponseWriter, r *http.Request) {
-	queryValues, err := url.ParseQuery(r.URL.RawQuery)
-	if err != nil {
-		http.Error(w, "Invalid query", http.StatusBadRequest)
-		return
-	}
-
-	// Extract the groupId parameter from the query
-	userIds, ok := queryValues["userId"]
-	if !ok || len(userIds[0]) < 1 {
-		http.Error(w, "groupId parameter is required", http.StatusBadRequest)
-		return
-	}
-
-	groupIds, ok := queryValues["groupID"]
-	if !ok || len(groupIds[0]) < 1 {
-		http.Error(w, "groupId parameter is required", http.StatusBadRequest)
-		return
-	}
-
-	kc := keycloak.NewKeycloakService()
-
-	err = kc.RemoveUserFromGroup(userIds[0], groupIds[0])
-	if err != nil {
-		log.Println("User removed from Group", err)
-	}
-
-	app.GroupUsers, err = kc.GetGroupMembersViaAPI(groupIds[0])
-	if err != nil {
-		log.Println("Unable to parse the user", err)
-	}
-
-	subtractSlices(app.AllUsers, app.GroupUsers)
-
-	views.SearchBar(groupIds[0]).Render(r.Context(), w)
-	// views.UsersList(app.GroupUsers, groupIds[0]).Render(r.Context(), w)
 }
 
 func searchHandler(w http.ResponseWriter, r *http.Request) {
@@ -262,13 +243,15 @@ func GroupsHandler(w http.ResponseWriter, r *http.Request) {
 
 		err = kc.CreateGroup(name, session.KeyCloakUser.ID)
 		if err != nil {
-			log.Fatal("Unable to create the keycloak groups: ", err)
+			http.Error(w, "Unable to create the groups", http.StatusBadRequest)
+			return
 		}
 
 		ctx := context.Background()
 		groupsCreatedByUser, err := keycloak.GroupsCreatedByUser(ctx, session.KeyCloakUser.ID)
 		if err != nil {
 			log.Fatal("Unable to find the group created by this user: ", err)
+			return
 		}
 
 		for _, groupID := range groupsCreatedByUser {
@@ -283,7 +266,7 @@ func GroupsHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+
 }
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {

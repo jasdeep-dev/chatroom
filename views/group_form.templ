@@ -1,20 +1,30 @@
 package views
 
-templ GroupForm() {
+templ GroupForm(responseText string) {
 	<div>
-		<button class="p-4" onclick="my_modal_5.showModal()">Create Group</button>
+		<button class="p-4" onclick="CreateGroupFunction()">Create Group</button>
 		<dialog id="my_modal_5" class="modal modal-bottom sm:modal-middle">
 			<div class="modal-box">
 				<form method="dialog">
 					<button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
 				</form>
+
 				<h3 class="font-bold text-lg">Create Group</h3>
 				<p class="py-4">You will automatically be added to this group.</p>
-				<form 
-					action="/api/groups"
-					method="post"
-					id="groupForm"
+
+				<div id="createGroupError" class="bg-base-200 flex p-2 m-2 rounded-xl hidden">
+					<span class="text-left errorMsg"></span>
+					<a class="ml-auto btn btn-sm btn-circle btn-ghost right-2 top-2" href="#" onclick="document.getElementById('createGroupError').classList.add('hidden');">x</a>
+				</div>
+
+				<form
+					class="p-3 rounded rounded-xl messageForm w-full"
+					id="messageForm"
 					style="position: relative; bottom: -2%;"
+					hx-post="/api/groups"
+					hx-trigger="submit"
+					htmx:beforeSwap
+					hx-on::after-request="this.reset()"
 				>
 					<label class="form-control w-full">
 						<div class="label">
