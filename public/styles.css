@@ -2535,6 +2535,10 @@ details.collapse summary::-webkit-details-marker {
   margin-left: auto;
 }
 
+.mr-2 {
+  margin-right: 0.5rem;
+}
+
 .mr-4 {
   margin-right: 1rem;
 }
@@ -2695,10 +2699,6 @@ details.collapse summary::-webkit-details-marker {
 
 .border-solid {
   border-style: solid;
-}
-
-.border-current {
-  border-color: currentColor;
 }
 
 .bg-base-100 {

@@ -10,7 +10,7 @@ templ KeyCloakGroups(keycloak_users []app.KeyCloakUser, groups []app.Group, sele
 			<li
 				id={ "li" + group.ID }
 				if selectedGroup.ID == group.ID {
-					class="border-current border-2 flex w-full my-2 rounded"
+					class="bg-base-100 border-2 flex w-full my-2 rounded"
 				} else {
 					class="bg-base-300 flex w-full my-2 rounded"
 				}
@@ -19,7 +19,7 @@ templ KeyCloakGroups(keycloak_users []app.KeyCloakUser, groups []app.Group, sele
 					class="flex my-2 pl-2 w-full"
 					href="#"
 					data-target={ group.ID }
-					hx-get={ "/api/messages?groupId=" + group.ID }
+					hx-get={ "/api/groups/"+ group.ID }
 					hx-trigger="click"
 					hx-target="#Chatroom"
 					hx-push-url="true"
@@ -27,7 +27,7 @@ templ KeyCloakGroups(keycloak_users []app.KeyCloakUser, groups []app.Group, sele
 				>
 					{ group.Name }
 				</a>
-				<span class="indicator-item badge badge-secondary ml-auto hidden">0</span>
+				<span class="badge badge-secondary indicator-item mb-auto ml-auto mr-2 mt-auto hidden">0</span>
 			</li>
 		}
 	</ul>

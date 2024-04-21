@@ -211,7 +211,6 @@ func subtractSlices(slice1 []app.KeyCloakUser, slice2 []app.KeyCloakUser) {
 		present[person.ID] = true
 	}
 	app.RestUsers = []app.KeyCloakUser{}
-	// Add to result only those from slice1 not in slice2
 	for _, person := range slice1 {
 		if _, found := present[person.ID]; !found {
 			app.RestUsers = append(app.RestUsers, person)
@@ -285,7 +284,7 @@ func GroupsHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		views.Groups(messages, session, group).Render(r.Context(), w)
+		views.Home(messages, session, app.AllUsers, app.Groups, group).Render(r.Context(), w)
 	} else {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
