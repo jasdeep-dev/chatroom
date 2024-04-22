@@ -26,7 +26,7 @@ func GetSession(sessionID string, r *http.Request) (app.UserSession, error) {
 		return userSession, err
 	}
 
-	err = json.Unmarshal(val.Value, &userSession)
+	err = json.Unmarshal(val.Value, &app.Session)
 	if err != nil {
 		return userSession, err
 	}

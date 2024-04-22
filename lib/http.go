@@ -75,12 +75,14 @@ func setBasicData() {
 
 	_, err = keycloak.NewKeycloakService().GetUsersViaAPI()
 	if err != nil {
-		log.Fatal("Unable to connect to Keycloak: ", err)
+		log.Println("Unable to connect to Keycloak: ", err)
+		return
 	}
 
 	err = keycloak.NewKeycloakService().GetUsersGroupsViaAPI(app.Session.KeyCloakUser.ID)
 	if err != nil {
-		log.Fatal("Unable to connect to Keycloak: ", err)
+		log.Println("Unable to connect to Keycloak: ", err)
+		return
 	}
 }
 
@@ -207,14 +209,15 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func subtractSlices(slice1 []app.KeyCloakUser, slice2 []app.KeyCloakUser) {
+func subtractSlices(allUsers []app.KeyCloakUser, groupUsers []app.KeyCloakUser) {
 
 	present := make(map[string]bool)
-	for _, person := range slice2 {
+	for _, person := range groupUsers {
 		present[person.ID] = true
 	}
+
 	app.RestUsers = []app.KeyCloakUser{}
-	for _, person := range slice1 {
+	for _, person := range allUsers {
 		if _, found := present[person.ID]; !found {
 			app.RestUsers = append(app.RestUsers, person)
 		}
@@ -317,24 +320,45 @@ func GroupsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
-	sessionData(w, r)
-	setBasicData()
+	handleError := func() {
+		url := createNewProvider(w, r)
 
-	var err error
-	kc := keycloak.NewKeycloakService()
-	err = kc.GetGroupMembersViaAPI(app.Groups[0].ID)
-	if err != nil {
-		log.Printf("Error getting groups: %v", err)
+		http.Redirect(w, r, url, http.StatusFound)
 	}
 
-	var messages []app.Message
-	messages, err = GetMessages(r.Context())
+	cookie, err := r.Cookie("session_id")
+	if err != nil {
+		handleError()
+		return
+	}
+
+	session, err := GetSession(cookie.Value, r)
+	if err != nil {
+		handleError()
+		return
+	}
+
+	kc := keycloak.NewKeycloakService()
+
+	messages, err := GetMessages(r.Context())
 	if err != nil {
 		log.Println("Error GetMessages in homeHandler", err)
 		return
 	}
 
-	views.Home(messages, app.Session, app.AllUsers, app.Groups, app.Groups[0]).Render(r.Context(), w)
+	keycloak.SetAdminToken()
+
+	keycloak_users, err := kc.GetUsersViaAPI()
+	if err != nil {
+		log.Fatal("Unable to connect to Keycloak: ", err)
+	}
+
+	err = kc.GetUsersGroupsViaAPI(session.UserID)
+	if err != nil {
+		log.Printf("Error getting groups: %v", err)
+	}
+
+	views.Home(messages, session, keycloak_users, app.Groups, app.Groups[0]).Render(r.Context(), w)
 }
 
 func userHandler(w http.ResponseWriter, r *http.Request) {
