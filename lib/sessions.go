@@ -31,7 +31,7 @@ func GetSession(sessionID string, r *http.Request) (app.UserSession, error) {
 		return userSession, err
 	}
 
-	return userSession, err
+	return app.Session, err
 }
 
 func GetUserFromSession(r *http.Request) (app.KeyCloakUser, error) {

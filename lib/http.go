@@ -222,7 +222,7 @@ func subtractSlices(allUsers []app.KeyCloakUser, groupUsers []app.KeyCloakUser) 
 			app.RestUsers = append(app.RestUsers, person)
 		}
 	}
-	fmt.Println("Avaiable users to add to the group!")
+	log.Println("Avaiable users to add to the group!")
 }
 
 func GroupsHandler(w http.ResponseWriter, r *http.Request) {
@@ -268,18 +268,20 @@ func GroupsHandler(w http.ResponseWriter, r *http.Request) {
 
 		var group app.Group
 		var err error
+		var messages []app.Message
 
 		var groupIds []string
 		for _, group = range app.Groups {
 			groupIds = append(groupIds, group.ID)
 		}
 
-		messages := GetMessagesByGroupID(context.Background(), groupID)
 		if !slices.Contains(groupIds, groupID) {
 			fmt.Println("User does not have the acess to this group")
 			views.Home(messages, app.Session, app.AllUsers, app.Groups, app.Groups[0]).Render(r.Context(), w)
 			return
 		}
+
+		messages = GetMessagesByGroupID(context.Background(), groupID)
 
 		group, err = kc.GetGroupByIDViaAPI(groupID)
 		if err != nil {
