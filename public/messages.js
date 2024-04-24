@@ -6,7 +6,7 @@ function RemoveUser(event){
 }
 function CreateGroupFunction() {
     my_modal_5.showModal()
-    document.getElementById("messageForm")?.addEventListener('htmx:beforeSwap', function(evt) {
+    document.getElementById("groupForm")?.addEventListener('htmx:beforeSwap', function(evt) {
         if (evt.detail.isError) {
             classList = document.getElementById("createGroupError").classList
             classList.remove("hidden");
@@ -15,6 +15,9 @@ function CreateGroupFunction() {
             setTimeout(function() {
                 classList.add("hidden");
             }, 5000);
+        }else{
+            my_modal_5.close()
+            window.location.href = evt.detail.xhr.response;
         }
     });
 }

@@ -253,14 +253,20 @@ func GroupsHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		var createdgroupID string
 		for _, groupID := range groupsCreatedByUser {
 			if !slices.Contains(app.GroupIds, groupID) {
+				createdgroupID = groupID
 				err = kc.AddUserToGroup(app.Session.KeyCloakUser.ID, groupID)
 				if err != nil {
 					log.Println("Unable to find the group: ", err)
 				}
+
 			}
 		}
+		responseUrl := fmt.Sprint("/api/groups/", createdgroupID)
+		w.Write([]byte(responseUrl))
+
 	} else if r.Method == http.MethodGet {
 		setBasicData()
 		vars := mux.Vars(r)

@@ -18,12 +18,11 @@ templ GroupForm(responseText string) {
 				</div>
 
 				<form
-					class="p-3 rounded rounded-xl messageForm w-full"
-					id="messageForm"
+					class="p-3 rounded rounded-xl groupForm w-full"
+					id="groupForm"
 					style="position: relative; bottom: -2%;"
 					hx-post="/api/groups"
 					hx-trigger="submit"
-					htmx:beforeSwap
 				>
 					<label class="form-control w-full">
 						<div class="label">
