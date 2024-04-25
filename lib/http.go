@@ -371,7 +371,21 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error getting groups: %v", err)
 	}
 
-	views.Home(messages, session, keycloak_users, app.Groups, app.Groups[0]).Render(r.Context(), w)
+	var group app.Group
+
+	if len(app.Groups) != 0 {
+		group, err := kc.GetGroupByIDViaAPI(app.Groups[0].ID)
+		if err != nil {
+			log.Printf("Error getting group by ID: %v", err)
+		}
+
+		app.GroupAdmin, err = kc.FindUserByID(group.Attributes["created_by"][0])
+		if err != nil {
+			log.Printf("Error getting user by ID: %v", err)
+		}
+	}
+
+	views.Home(messages, session, keycloak_users, app.Groups, group).Render(r.Context(), w)
 }
 
 func userHandler(w http.ResponseWriter, r *http.Request) {

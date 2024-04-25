@@ -5,9 +5,8 @@ import (
 )
 
 templ Messages(messages []app.Message, session app.UserSession, group app.Group) {
-
 	<div id="textchat" class="bg-base-100 rounded-xl h-full border-solid border-2">
-		<div class="skeleton w-32 h-32 hidden"></div>
+		<div class="skeleton h-full" hidden></div>
 		<div class="h-full grid bg-base-200 rounded-xl">
 			<nav class="bg-base-300 rounded-xl p-4 text-center flex row-span-2 flex mb-auto">
 				<div class="avatar placeholder mr-4">
@@ -74,41 +73,65 @@ templ UsersList(users []app.KeyCloakUser, groupID string, responseText string) {
 					</tr>
 				</thead>
 				<tbody>
+					@AdminUserRow()
 					for _, user := range users {
-						<tr>
-							<td>
-								<div class="flex items-center gap-3">
-									<div class="avatar placeholder mr-4">
-										<div class="bg-neutral text-neutral-content rounded-full w-12">
-											<span>{ string(user.FirstName[0]) }</span>
+						if user.ID != app.GroupAdmin.ID{
+							<tr>
+								<td>
+									<div class="flex items-center gap-3">
+										<div class="avatar placeholder mr-4">
+											<div class="bg-neutral text-neutral-content rounded-full w-12">
+												<span>{ string(user.FirstName[0]) }</span>
+											</div>
+										</div>
+										<div>
+											<div class="font-bold">{ user.FirstName }</div>
+											<div class="text-sm opacity-50">{ user.LastName }</div>
+										</div>
+										<div class="flex ml-auto">
+											<a
+												href="#"
+												data-target={ user.ID }
+												id={ "li-" + user.ID + groupID }
+												hx-delete={ "/api/users/" + user.ID + "/groups/" + groupID }
+												hx-trigger="click, groupId"
+												hx-target="#userSearchBox"
+												hx-on::after-request="RemoveUser(this)"
+												class="w-full"
+											>
+												<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+													<path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14"></path>
+												</svg>
+											</a>
 										</div>
 									</div>
-									<div>
-										<div class="font-bold">{ user.FirstName }</div>
-										<div class="text-sm opacity-50">{ user.LastName }</div>
-									</div>
-									<div class="flex ml-auto">
-										<a
-											href="#"
-											data-target={ user.ID }
-											id={ "li-" + user.ID + groupID }
-											hx-delete={ "/api/users/" + user.ID + "/groups/" + groupID }
-											hx-trigger="click, groupId"
-											hx-target="#userSearchBox"
-											hx-on::after-request="RemoveUser(this)"
-											class="w-full"
-										>
-											<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
-												<path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14"></path>
-											</svg>
-										</a>
-									</div>
-								</div>
-							</td>
-						</tr>
+								</td>
+							</tr>
+						}
 					}
 				</tbody>
 			</table>
 		</div>
 	</div>
+}
+
+templ AdminUserRow() {
+	<tr>
+		<td>
+			<div class="flex items-center gap-3">
+				<div class="avatar placeholder mr-4">
+					<div class="bg-neutral text-neutral-content rounded-full w-12">
+						<span>{ string(app.GroupAdmin.FirstName[0]) }</span>
+					</div>
+				</div>
+				<div>
+					<div class="font-bold">{ app.GroupAdmin.FirstName }</div>
+					<div class="text-sm opacity-50">{ app.GroupAdmin.LastName }</div>
+				</div>
+				<div class="flex ml-auto">
+					<div class="text-sm opacity-50">admin</div>
+				</div>
+			</div>
+		</td>
+	</tr>
 }

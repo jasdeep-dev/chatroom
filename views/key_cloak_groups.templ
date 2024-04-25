@@ -24,6 +24,7 @@ templ KeyCloakGroups(keycloak_users []app.KeyCloakUser, groups []app.Group, sele
 					hx-trigger="click"
 					hx-target="#Chatroom"
 					hx-push-url="true"
+					onclick="groupChanged(event)"
 					hx-on::after-request="this.parentNode.classList.add('bg-secondary-100')"
 				>
 					{ group.Name }

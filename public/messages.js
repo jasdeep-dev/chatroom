@@ -1,9 +1,11 @@
 function UserAdded(event){
     event.parentNode.setAttribute("hidden", true)
 }
+
 function RemoveUser(event){
     event.parentNode.parentNode.parentNode.setAttribute('hidden', true)
 }
+
 function CreateGroupFunction() {
     my_modal_5.showModal()
     document.getElementById("groupForm")?.addEventListener('htmx:beforeSwap', function(evt) {
@@ -22,6 +24,14 @@ function CreateGroupFunction() {
     });
 }
 
+function groupChanged(event){
+    prev = event.target.parentNode.parentNode.getElementsByClassName("bg-base-100")[0]
+    prev.classList.remove("bg-base-100")
+    prev.classList.add("bg-base-300")
+    event.target.parentNode.classList.remove('bg-base-300')
+    event.target.parentNode.classList.add('bg-base-100')
+    document.getElementById('textchat').innerHTML = `<div class="skeleton h-full"></div>`
+}
 function ScrollToTop(){
     var cont = document.querySelectorAll('#textchat .messageList')[0]
     if(cont){
@@ -33,31 +43,8 @@ function ScrollToTop(){
     });
 }
 
-function updateUsers(jsondata){
-    // if(jsondata.id == ""){
-    //     return
-    // }
-    // var user = document.getElementById("user_"+jsondata.id);
-    // if(user == null){
+function updateUsers(jsondata){}
 
-    //     var name = jsondata.first_name;
-
-    //     var li = document.createElement('li');
-    //     li.className = 'bg-base-100 rounded p-2 my-2';
-    //     li.id = 'user_' + name;
-
-    //     var span = document.createElement('span');
-    //     span.className = 'indicator-item badge badge-xs badge-success';
-    //     span.id = 'status_' + name;
-    
-    //     li.appendChild(span);
-    
-    //     var textNode = document.createTextNode(name);
-    //     li.appendChild(textNode);
-    
-    //     var userList = document.getElementById('users_list');
-    //     userList.appendChild(li);
-    }
 function updateMessages(jsondata) {
     const timestampStr = jsondata.TimeStamp;
     const timestamp = new Date(timestampStr);
