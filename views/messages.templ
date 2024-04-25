@@ -4,18 +4,18 @@ import (
 	"chatroom/app"
 )
 
-templ Messages(messages []app.Message, session app.UserSession, group app.Group) {
+templ Messages(messages []app.Message, session app.UserSession, group app.Group, groupName string) {
 	<div id="textchat" class="bg-base-100 rounded-xl h-full border-solid border-2">
 		<div class="skeleton h-full" hidden></div>
 		<div class="h-full grid bg-base-200 rounded-xl">
 			<nav class="bg-base-300 rounded-xl p-4 text-center flex row-span-2 flex mb-auto">
 				<div class="avatar placeholder mr-4">
 					<div class="bg-neutral text-neutral-content rounded-full w-12">
-						<span>{ string(group.Name[0]) }</span>
+						<span>{ string(groupName[0]) }</span>
 					</div>
 				</div>
 				<div class="text-left flex items-center">
-					<p>{ group.Name }</p>
+					<p>{ groupName }</p>
 				</div>
 				<a class="ml-auto cursor-pointer flex items-center" onclick="add_user_to_group.showModal()">
 					<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">

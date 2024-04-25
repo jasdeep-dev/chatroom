@@ -117,3 +117,16 @@ func SetAdminToken() {
 	// Set environment variable
 	os.Setenv("ADMIN_ACCESS_TOKEN", accessToken)
 }
+
+func GetGroupByName(ctx context.Context, groupName string) (string, error) {
+	var err error
+	var id string
+
+	query := `SELECT id FROM public.keycloak_group WHERE name=$1 LIMIT 1 OFFSET 0`
+
+	err = app.KeycloackDBConn.QueryRow(ctx, query, groupName).Scan(&id)
+	if err != nil {
+		return id, err
+	}
+	return id, nil
+}

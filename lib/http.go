@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"slices"
+	"sort"
 	"strings"
 
 	"github.com/gorilla/mux"
@@ -39,6 +40,8 @@ func StartHTTP() {
 
 	mux.HandleFunc("/api/search", searchHandler)
 
+	mux.HandleFunc("/api/users/{userID}", UserMessagesHandler)
+
 	// Start the server
 	err := http.ListenAndServe(Settings.HttpServer, mux)
 	if err != nil {
@@ -47,6 +50,8 @@ func StartHTTP() {
 }
 
 func sessionData(w http.ResponseWriter, r *http.Request) {
+	app.PublicGroupID = "ba018e56-9f30-4a62-bc48-7ba3a59ce485"
+	app.PersonalGroupID = "42dd286d-1c72-4e22-b703-10b269c44bbd"
 	handleError := func() {
 		url := createNewProvider(w, r)
 
@@ -86,6 +91,91 @@ func setBasicData() {
 	}
 }
 
+func UserMessagesHandler(w http.ResponseWriter, r *http.Request) {
+	sessionData(w, r)
+	var user app.KeyCloakUser
+	var err error
+	kc := keycloak.NewKeycloakService()
+
+	vars := mux.Vars(r)
+	userID := vars["userID"]
+
+	user, err = kc.FindUserByID(userID)
+	if err != nil {
+		log.Println("Unable to find the error")
+	}
+
+	group := checkIfGroupExist(user.Username)
+
+	err = kc.GetGroupMembersViaAPI(group.ID)
+	if err != nil {
+		log.Println("Unable to fetch the group members")
+	}
+
+	for _, usr := range app.GroupUsers {
+		if usr.ID == group.Attributes["created_by"][0] {
+			app.GroupAdmin = usr
+		}
+	}
+
+	err = kc.AddUserToGroup(user.ID, group.ID)
+	if err != nil {
+		log.Println("Unable to add the user to the group", user.Username)
+	}
+
+	err = kc.AddUserToGroup(app.Session.KeyCloakUser.ID, group.ID)
+	if err != nil {
+		log.Println("Unable to add the user to the group: ", app.Session.KeyCloakUser.Username)
+	}
+
+	err = kc.GetUsersGroupsViaAPI(app.Session.KeyCloakUser.ID)
+	if err != nil {
+		log.Println("Error in fetching the groups")
+	}
+
+	messages := GetMessagesByGroupID(context.Background(), group.ID)
+
+	subtractSlices(app.AllUsers, app.GroupUsers)
+
+	views.Home(messages, app.Session, app.AllUsers, app.Groups, group).Render(r.Context(), w)
+}
+
+func userName(username string) string {
+	stringsArray := []string{username, app.Session.KeyCloakUser.Username}
+
+	sort.Strings(stringsArray)
+	concatenatedString := strings.Join(stringsArray, "_")
+	return concatenatedString
+}
+
+func checkIfGroupExist(username string) app.Group {
+	concatenatedString := userName(username)
+	kc := keycloak.NewKeycloakService()
+
+	var err error
+	var id string
+	var group app.Group
+
+	id, err = keycloak.GetGroupByName(context.Background(), concatenatedString)
+	if err != nil {
+		log.Println("Group does not exist")
+		err = kc.CreateGroup(concatenatedString, app.PersonalGroupID)
+		if err != nil {
+			log.Println("Could not create the Group")
+		}
+		id, err = keycloak.GetGroupByName(context.Background(), concatenatedString)
+		if err != nil {
+			log.Println("Could find the Group")
+		}
+	}
+
+	group, err = kc.GetGroupByIDViaAPI(id)
+	if err != nil {
+		log.Println("Could not find the Group")
+	}
+
+	return group
+}
 func GroupUsersHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	userID := vars["userID"]
@@ -179,7 +269,7 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 			GroupID: r.Form.Get("groupId"),
 		}
 
-		sendMessage(context.Background(), message, app.Session, nil, w, r)
+		sendMessage(context.Background(), message, app.Session, nil, r)
 
 	} else if r.Method == http.MethodGet {
 		groupID := r.URL.Query().Get("groupId")
@@ -240,7 +330,7 @@ func GroupsHandler(w http.ResponseWriter, r *http.Request) {
 
 		name := r.Form.Get("name")
 
-		err = kc.CreateGroup(name, app.Session.KeyCloakUser.ID)
+		err = kc.CreateGroup(name, app.PublicGroupID)
 		if err != nil {
 			http.Error(w, "Unable to create the groups", http.StatusBadRequest)
 			return
@@ -333,6 +423,8 @@ func GroupsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
+	app.PublicGroupID = "ba018e56-9f30-4a62-bc48-7ba3a59ce485"
+	app.PersonalGroupID = "42dd286d-1c72-4e22-b703-10b269c44bbd"
 	handleError := func() {
 		url := createNewProvider(w, r)
 

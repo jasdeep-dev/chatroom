@@ -7,7 +7,18 @@ templ KeyCloakUsers(users []app.KeyCloakUser) {
     <ul id="users_list">
         for _, user := range users {
             <li id={ fmt.Sprintf("user_%v", user.ID) } class="bg-base-100 rounded p-2 my-2">
-                { app.Titleize(user.FirstName) }
+                <a
+					id={ "li" + user.ID }
+					href="#"
+					data-target={ user.ID }
+					hx-get={ "/api/users/"+ user.ID }
+					hx-trigger="click"
+					hx-target="#Chatroom"
+					hx-push-url="true"
+					onclick="userChanged(event)"
+                >
+                { app.Titleize(user.Username) }
+                </a>
             </li>
         }
     </ul>

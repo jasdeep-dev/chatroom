@@ -6,7 +6,7 @@ templ Home(messages []app.Message, session app.UserSession, keycloak_users []app
     @Layout(messages, session){
         <script>ScrollToTop()</script>
         <div class="flex justify-between" style="height: calc(100vh - 200px)">
-            @LeftPanel(keycloak_users, groups, group)
+            @LeftPanel(keycloak_users, app.Groups, group)
             @RightPanel(session, messages, group)
         </div>
     }

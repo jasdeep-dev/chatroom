@@ -103,7 +103,7 @@ func listenForMessages(ctx context.Context, sessionID string, conn *websocket.Co
 			log.Println("sendMessage: Session not found", sessionID)
 		}
 
-		sendMessage(ctx, messageData, session, conn, w, r)
+		sendMessage(ctx, messageData, session, conn, r)
 	}
 }
 

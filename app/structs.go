@@ -145,6 +145,7 @@ type Group struct {
 	Path          string              `json:"path"`
 	SubGroupCount int                 `json:"subGroupCount"`
 	SubGroups     []string            `json:"subGroups"`
+	ParentGroup   string              `json:"parentId"`
 	Attributes    map[string][]string `json:"attributes"`
 }
 
@@ -165,3 +166,8 @@ var Groups []Group
 
 var Session UserSession
 var GroupAdmin KeyCloakUser
+
+var PublicGroupID string
+var PersonalGroupID string
+var PublicGroup []Group
+var PersonalGroup []Group

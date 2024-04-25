@@ -2,6 +2,7 @@ package views
 
 import (
 	"chatroom/app"
+	"strings"
 )
 
 templ KeyCloakGroups(keycloak_users []app.KeyCloakUser, groups []app.Group, selectedGroup app.Group) {
@@ -33,4 +34,53 @@ templ KeyCloakGroups(keycloak_users []app.KeyCloakUser, groups []app.Group, sele
 			</li>
 		}
 	</ul>
+}
+
+templ PersonalGroups(keycloak_users []app.KeyCloakUser, groups []app.Group, selectedGroup app.Group) {
+	<ul id="groupsList">
+		for _, group := range groups {
+			<li
+				id="GroupSelection"
+				if selectedGroup.ID == group.ID {
+					class="bg-base-100 border-2 flex w-full my-2 rounded"
+				} else {
+					class="bg-base-300 flex w-full my-2 rounded"
+				}
+			>
+				<a
+					class="flex my-2 pl-2 w-full"
+					id={ "li" + group.ID }
+					href="#"
+					data-target={ group.ID }
+					hx-get={ "/api/groups/"+ group.ID }
+					hx-trigger="click"
+					hx-target="#Chatroom"
+					hx-push-url="true"
+					onclick="groupChanged(event)"
+					hx-on::after-request="this.parentNode.classList.add('bg-secondary-100')"
+				>
+					{ chatName(group.Name) }
+				</a>
+				<span class="badge badge-secondary indicator-item mb-auto ml-auto mr-2 mt-auto hidden">0</span>
+			</li>
+		}
+	</ul>
+}
+
+func chatName(groupName string) string{
+	username := ""
+	names := strings.Split(groupName, "_")
+
+	for _, name := range names{
+		if name != app.Session.KeyCloakUser.Username{
+			username = name
+		}
+	}
+
+	if username == ""{
+		return "me"
+	}
+
+	return username
+
 }

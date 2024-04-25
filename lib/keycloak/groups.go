@@ -70,6 +70,15 @@ func (kc *KeycloakService) GetUsersGroupsViaAPI(userID string) (err error) {
 		return err
 	}
 
+	app.PublicGroup = []app.Group{}
+	app.PersonalGroup = []app.Group{}
+	for _, group := range app.Groups {
+		if group.ParentGroup == app.PublicGroupID {
+			app.PublicGroup = append(app.PublicGroup, group)
+		} else if group.ParentGroup == app.PersonalGroupID {
+			app.PersonalGroup = append(app.PersonalGroup, group)
+		}
+	}
 	return nil
 }
 
@@ -101,18 +110,17 @@ func (kc *KeycloakService) GetGroupsViaAPI() (err error) {
 	return nil
 }
 
-func (kc *KeycloakService) CreateGroup(name string, userID string) error {
-	url := fmt.Sprintf("%s/admin/realms/%s/groups", kc.URL, kc.Realm)
+func (kc *KeycloakService) CreateGroup(name string, parentGroup string) error {
+	url := fmt.Sprintf("%s/admin/realms/%s/groups/%s/children", kc.URL, kc.Realm, parentGroup)
 
 	group := struct {
 		Name       string                 `json:"name"`
 		Path       string                 `json:"path"`
 		Attributes map[string]interface{} `json:"attributes"`
 	}{
-		Name: app.Titleize(name),
-		Path: fmt.Sprintf("/%s", name),
+		Name: name,
 		Attributes: map[string]interface{}{
-			"created_by": []string{userID},
+			"created_by": []string{app.Session.KeyCloakUser.ID},
 		},
 	}
 
@@ -184,10 +192,10 @@ func GroupsCreatedByUser(ctx context.Context, userID string) (groupIds []string,
         SELECT kg.id
         FROM keycloak_group kg
         JOIN group_attribute ga ON kg.id = ga.group_id
-        WHERE ga.name = 'created_by' AND ga.value = $1;
+        WHERE ga.name = 'created_by' AND ga.value = $1 AND kg.parent_group = $2;
     `
 
-	rows, err := app.KeycloackDBConn.Query(ctx, query, userID)
+	rows, err := app.KeycloackDBConn.Query(ctx, query, userID, app.PublicGroup)
 	if err != nil {
 		log.Println("Error fetching groups from Keycloak:", err)
 		return nil, err

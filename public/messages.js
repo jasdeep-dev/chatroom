@@ -58,7 +58,7 @@ function updateMessages(jsondata) {
 
     if(cont == null){
 
-        var list = document.querySelector("#li"+jsondata.GroupID+ " span")
+        var list = document.getElementById("li"+jsondata.GroupID).parentElement.children[1]
         list.classList.remove("hidden")
         var currentCount = parseInt(list.innerText);
         var newCount = currentCount + 1;

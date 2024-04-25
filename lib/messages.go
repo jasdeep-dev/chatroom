@@ -78,7 +78,7 @@ func deliverUsersToWebSocketConnections(user app.KeyCloakUser) {
 	}
 }
 
-func sendMessage(ctx context.Context, message app.MessageData, session app.UserSession, sockConn *websocket.Conn, w http.ResponseWriter, r *http.Request) {
+func sendMessage(ctx context.Context, message app.MessageData, session app.UserSession, sockConn *websocket.Conn, r *http.Request) {
 	if message.Message == "" {
 		log.Println("sendMessage: Message is blank")
 		return
