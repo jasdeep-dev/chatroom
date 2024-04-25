@@ -99,7 +99,7 @@ func GroupUsersHandler(w http.ResponseWriter, r *http.Request) {
 
 		var response string
 
-		err = kc.AddUserToGroup(userID, "groupID")
+		err = kc.AddUserToGroup(userID, groupID)
 		if err != nil {
 			log.Println(response, err)
 			views.UsersList(app.GroupUsers, groupID, "Unable to add the user to group").Render(r.Context(), w)
@@ -119,7 +119,7 @@ func GroupUsersHandler(w http.ResponseWriter, r *http.Request) {
 
 	} else if r.Method == http.MethodDelete {
 
-		err = kc.RemoveUserFromGroup(userID, "groupID")
+		err = kc.RemoveUserFromGroup(userID, groupID)
 		if err != nil {
 			log.Println("Unable to remove the user", err)
 			views.SearchBar(groupID, "Unable to remove the user").Render(r.Context(), w)
@@ -266,7 +266,6 @@ func GroupsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		responseUrl := fmt.Sprint("/api/groups/", createdgroupID)
 		w.Write([]byte(responseUrl))
-
 	} else if r.Method == http.MethodGet {
 		setBasicData()
 		vars := mux.Vars(r)
@@ -297,6 +296,12 @@ func GroupsHandler(w http.ResponseWriter, r *http.Request) {
 		err = kc.GetGroupMembersViaAPI(group.ID)
 		if err != nil {
 			log.Printf("Error getting groups: %v", err)
+		}
+
+		for _, usr := range app.GroupUsers {
+			if usr.ID == group.Attributes["created_by"][0] {
+				app.GroupAdmin = usr
+			}
 		}
 
 		subtractSlices(app.AllUsers, app.GroupUsers)

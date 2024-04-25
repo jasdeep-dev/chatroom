@@ -140,11 +140,12 @@ type UserGroupMembership struct {
 }
 
 type Group struct {
-	ID            string   `json:"id"`
-	Name          string   `json:"name"`
-	Path          string   `json:"path"`
-	SubGroupCount int      `json:"subGroupCount"`
-	SubGroups     []string `json:"subGroups"`
+	ID            string              `json:"id"`
+	Name          string              `json:"name"`
+	Path          string              `json:"path"`
+	SubGroupCount int                 `json:"subGroupCount"`
+	SubGroups     []string            `json:"subGroups"`
+	Attributes    map[string][]string `json:"attributes"`
 }
 
 type MessageData struct {
@@ -163,3 +164,4 @@ var RestUsers []KeyCloakUser
 var Groups []Group
 
 var Session UserSession
+var GroupAdmin KeyCloakUser
