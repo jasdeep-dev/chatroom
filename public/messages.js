@@ -7,7 +7,6 @@ function RemoveUser(event){
 }
 
 function CreateGroupFunction() {
-    my_modal_5.showModal()
     document.getElementById("groupForm")?.addEventListener('htmx:beforeSwap', function(evt) {
         if (evt.detail.isError) {
             classList = document.getElementById("createGroupError").classList
@@ -21,6 +20,12 @@ function CreateGroupFunction() {
             my_modal_5.close()
             window.location.href = evt.detail.xhr.response;
         }
+    });
+}
+
+function CreateDirectChat(event) {
+    event.target?.addEventListener('htmx:afterRequest', function(evt) {
+        window.location.href = evt.detail.xhr.responseURL
     });
 }
 

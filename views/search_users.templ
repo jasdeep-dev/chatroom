@@ -54,3 +54,18 @@ templ SearchBar(groupID string, responseText string) {
 		<div id="loading" style="display:none;">Loading...</div>
 	</div>
 }
+
+templ SearchUsers(users []app.KeyCloakUser) {
+	for _, user := range users {
+		<li class="pt-2">
+			<a
+				href="#"
+				onclick="CreateDirectChat(event)"
+				data-target={ user.ID }
+				id={ "li-" + user.ID }
+				hx-post={ "/api/users/" + user.ID }
+				class="btn w-full"
+			>{ user.FirstName + " " + user.LastName }</a>
+		</li>
+	}
+}

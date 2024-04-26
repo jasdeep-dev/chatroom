@@ -39,6 +39,7 @@ func StartHTTP() {
 	mux.HandleFunc("/api/groups/{groupID}", GroupsHandler)
 
 	mux.HandleFunc("/api/search", searchHandler)
+	mux.HandleFunc("/api/users/search", searchUsersHandler)
 
 	mux.HandleFunc("/api/users/{userID}", UserMessagesHandler)
 
@@ -137,7 +138,10 @@ func UserMessagesHandler(w http.ResponseWriter, r *http.Request) {
 
 	subtractSlices(app.AllUsers, app.GroupUsers)
 
-	views.Home(messages, app.Session, app.AllUsers, app.Groups, group).Render(r.Context(), w)
+	if r.Method == http.MethodGet {
+		views.Home(messages, app.Session, app.AllUsers, app.Groups, group).Render(r.Context(), w)
+
+	}
 }
 
 func userName(username string) string {
@@ -251,6 +255,22 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	views.SearchedUsers(matches, groupIds[0]).Render(r.Context(), w)
+}
+
+func searchUsersHandler(w http.ResponseWriter, r *http.Request) {
+	query := r.FormValue("search")
+
+	var matches []app.KeyCloakUser
+	users, err := keycloak.NewKeycloakService().GetUsersViaAPI()
+	if err != nil {
+		log.Println("Error in fetching the users")
+	}
+	for _, user := range users {
+		if strings.Contains(strings.ToLower(user.FirstName), strings.ToLower(query)) {
+			matches = append(matches, user)
+		}
+	}
+	views.SearchUsers(matches).Render(r.Context(), w)
 }
 
 func MessageHandler(w http.ResponseWriter, r *http.Request) {
