@@ -43,7 +43,11 @@ templ Navbar(session app.UserSession) {
 			</li>
 			<!-- Set the theme -->
 			<li>
-				<select name="selectThemeOption" onchange="addTheThemeToLocalStorage(this.value)" class="select w-full max-w-xs bg-primary-100">
+				<select 
+					name="selectThemeOption"
+					onchange="addTheThemeToLocalStorage(this.value)"
+					class="select w-full max-w-xs bg-primary-100"
+				>
 					<option disabled selected>Pick a Theme</option>
 					<option>dark</option>
 					<option>light</option>

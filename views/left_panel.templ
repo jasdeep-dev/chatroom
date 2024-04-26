@@ -3,7 +3,7 @@ package views
 import "chatroom/app"
 
 templ LeftPanel(keycloak_users []app.KeyCloakUser, groups []app.Group, group app.Group) {
-	<div class="w-1/3 bg-base-200 h-full overflow-auto">
+	<div class="w-1/3 bg-base-200 h-full overflow-auto rounded-xl">
 		<div class="collapse bg-base-200 collapse-open">
 			<div class="collapse-title text-xl font-medium flex px-4">
 				<div class="mr-auto text-left flex items-center">
@@ -17,11 +17,11 @@ templ LeftPanel(keycloak_users []app.KeyCloakUser, groups []app.Group, group app
 					</a>
 				</div>
 			</div>
+			@GroupForm("")
 			<div class="collapse-content">
 				@KeyCloakGroups(keycloak_users, app.PublicGroup, group)
 			</div>
 		</div>
-        <hr/>
 
 		<div class="collapse bg-base-200 collapse-open">
 			<div class="collapse-title text-xl font-medium flex px-4">
@@ -42,8 +42,6 @@ templ LeftPanel(keycloak_users []app.KeyCloakUser, groups []app.Group, group app
 				@PersonalGroups(keycloak_users, app.PersonalGroup, group)
 			</div>
 		</div>
-        <hr/>
-		@GroupForm("")
 	</div>
 }
 

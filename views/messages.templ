@@ -5,10 +5,10 @@ import (
 )
 
 templ Messages(messages []app.Message, session app.UserSession, group app.Group, groupName string, chatType string) {
-	<div id="textchat" class="bg-base-100 rounded-xl h-full border-solid border-2">
+	<div id="textchat" class="bg-base-100 h-full border-solid">
 		<div class="skeleton h-full" hidden></div>
 		<div class="h-full grid bg-base-200 rounded-xl">
-			<nav class="bg-base-300 rounded-xl p-4 text-center flex row-span-2 flex mb-auto">
+			<nav class="bg-base-300 p-4 text-center rounded-t-lg flex row-span-2 flex mb-auto">
 				<div class="avatar placeholder mr-4">
 					<div class="bg-neutral text-neutral-content rounded-full w-12">
 						<span>{ string(groupName[0]) }</span>
