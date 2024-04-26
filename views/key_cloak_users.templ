@@ -17,7 +17,7 @@ templ KeyCloakUsers(users []app.KeyCloakUser) {
 					hx-push-url="true"
 					onclick="userChanged(event)"
                 >
-                { app.Titleize(user.Username) }
+                { user.Username }
                 </a>
             </li>
         }
