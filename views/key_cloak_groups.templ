@@ -59,7 +59,7 @@ templ PersonalGroups(keycloak_users []app.KeyCloakUser, groups []app.Group, sele
 					onclick="groupChanged(event)"
 					hx-on::after-request="this.parentNode.classList.add('bg-secondary-100')"
 				>
-					{ chatName(group.Name) }
+					{ app.Titleize(chatName(group.Name)) }
 				</a>
 				<span class="badge badge-secondary indicator-item mb-auto ml-auto mr-2 mt-auto hidden">0</span>
 			</li>

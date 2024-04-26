@@ -6,9 +6,9 @@ templ RightPanel(session app.UserSession, messages []app.Message, group app.Grou
 	<div class="w-2/3 ml-4" id="rightPanel">
 		if group.ID != ""{
 			if group.ParentGroup == app.PublicGroupID {
-				@Messages(messages, session, group, group.Name)
+				@Messages(messages, session, group, app.Titleize(group.Name))
 			} else if group.ParentGroup == app.PersonalGroupID {
-				@Messages(messages, session, group, chatName(group.Name))
+				@Messages(messages, session, group, app.Titleize(chatName(group.Name)))
 			}
 		}
 	</div>
