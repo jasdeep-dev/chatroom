@@ -1,6 +1,8 @@
 package views
 
 import "chatroom/app"
+import "os"
+import "fmt"
 
 templ Navbar(session app.UserSession) {
 	<script type="text/javascript">
@@ -25,7 +27,7 @@ templ Navbar(session app.UserSession) {
 			<!-- Link to Keycloak User Page -->
 			<li>
 				<a
-					href="http://192.168.2.12:9000/realms/chatroom/account"
+					href={ templ.URL(fmt.Sprintf("%s/realms/chatroom/account", os.Getenv("KEYCLOAK_URL"))) }
 					class="btn"
 					target="_blank"
 					id="user_name"
@@ -35,15 +37,22 @@ templ Navbar(session app.UserSession) {
 			</li>
 			<!-- Logout -->
 			<li>
-				<form action="http://192.168.2.12:9000/realms/chatroom/protocol/openid-connect/logout" method="post">
+				<form
+					action={ templ.URL(fmt.Sprintf("%s/realms/chatroom/protocol/openid-connect/logout", os.Getenv("KEYCLOAK_URL"))) }
+					method="post"
+				>
 					<input type="hidden" value="chatroom" name="client_id"/>
-					<input name="post_logout_redirect_uri" value="http://192.168.2.12:8080/logout" type="hidden"/>
+					<input
+						name="post_logout_redirect_uri"
+						value={ (fmt.Sprintf("%s/logout", os.Getenv("APP_URL")))}
+						type="hidden"
+					/>
 					<input type="submit" value="Logout" class="btn"/>
 				</form>
 			</li>
 			<!-- Set the theme -->
 			<li>
-				<select 
+				<select
 					name="selectThemeOption"
 					onchange="addTheThemeToLocalStorage(this.value)"
 					class="select w-full max-w-xs bg-primary-100"

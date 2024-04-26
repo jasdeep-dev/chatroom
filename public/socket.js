@@ -1,4 +1,6 @@
-var ws = new WebSocket("ws://192.168.2.12:3000/ws");
+
+var webSocketConnection = process.env.SOCKETCONN
+var ws = new WebSocket("ws://"+webSocketConnection+"/ws");
 
 document.addEventListener("DOMContentLoaded", function() {
 
