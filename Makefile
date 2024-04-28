@@ -1,7 +1,7 @@
 dev:
 	@tailwindcss -i views/css/styles.css -o public/styles.css
 	@templ generate
-	# @go run .
+	@go run .
 
 build:
 	@tailwindcss -i views/css/styles.css -o public/styles.css

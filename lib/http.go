@@ -44,6 +44,7 @@ func StartHTTP() {
 	mux.HandleFunc("/api/users/{userID}", UserMessagesHandler)
 
 	// Start the server
+	log.Println("Starting HTTP server on :", Settings.HttpServer)
 	err := http.ListenAndServe(Settings.HttpServer, mux)
 	if err != nil {
 		log.Fatal("ListenAndServe:", err)

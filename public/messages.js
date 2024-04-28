@@ -32,12 +32,13 @@ function CreateDirectChat(event) {
 
 function groupChanged(event){
     prev = event.target.parentNode.parentNode.getElementsByClassName("bg-base-100")[0]
-    prev.classList.remove("bg-base-100")
-    prev.classList.add("bg-base-300")
+    prev?.classList.remove("bg-base-100")
+    prev?.classList.add("bg-base-300")
     event.target.parentNode.classList.remove('bg-base-300')
     event.target.parentNode.classList.add('bg-base-100')
     document.getElementById('textchat').innerHTML = `<div class="skeleton h-full"></div>`
 }
+
 function ScrollToTop(){
     var cont = document.querySelectorAll('#textchat .messageList')[0]
     if(cont){

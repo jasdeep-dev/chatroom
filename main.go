@@ -38,7 +38,7 @@ func main() {
 	// Connect to memcahed
 	err = lib.InitCache()
 	if err != nil {
-		log.Fatal("Unable to connect to Memcached: ", err)
+		log.Println("Unable to connect to Memcached: ", err)
 	}
 
 	go lib.MessageReceiver()

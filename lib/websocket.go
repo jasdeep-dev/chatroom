@@ -111,7 +111,7 @@ func StartWebSocket() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ws", handleWebSocket) // Register the WebSocket handler with the ServeMux
 
-	log.Println("Starting server on :3000")
+	log.Println("Starting Web Socket server on :3000")
 	err := http.ListenAndServe(":3000", mux) // Start the server
 	if err != nil {
 		log.Fatal("ListenAndServe:", err)

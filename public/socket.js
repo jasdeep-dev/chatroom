@@ -1,15 +1,13 @@
+var scriptElement = document.querySelector('script[src="/public/socket.js"]');
+var dataAttributeValue = scriptElement.getAttribute('data');
 
-var webSocketConnection = process.env.SOCKETCONN
-var ws = new WebSocket("ws://"+webSocketConnection+"/ws");
-
+var ws = new WebSocket(dataAttributeValue);
 document.addEventListener("DOMContentLoaded", function() {
-
     let messageForm = document.getElementById('messageform')
     console.log("mesage", messageForm)
 
     ws.onopen = function() {
         console.log("Connected to the WebSocket server.");
-
         var user_name = document.getElementById("user_name")
         user_name.style.color = "green";
     };
